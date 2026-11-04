@@ -4,7 +4,9 @@ A single-file space shooter: one HTML page with a canvas and synthesized Web Aud
 
 ## Play
 
-Open `void-reavers.html` in a browser.
+**Online:** https://mjweiss1936-design.github.io/void-reavers/void-reavers.html
+
+Or open `void-reavers.html` in a browser.
 
 ## The campaign
 

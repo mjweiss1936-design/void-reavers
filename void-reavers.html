@@ -294,8 +294,9 @@
       Your cutter has no shields: <b>one hit downs it</b>. You eject in a space suit with a single thruster and no brakes,
       and have to fly yourself back to the station for a new cutter. <b>Get hit or run out of air on the way, and the run is over.</b>
       <span class="mono">Laser</span> shreds light hulls and is the only thing that breaks <span class="mono">asteroids</span>.
-      Don't crash into them. A <span class="mono">missile</span> cracks shielded gunships, but
-      <span class="mono">wardens</span> and the flagship shoot missiles down. <b>Don't hug a reaver when it blows.</b>
+      Don't crash into them. You carry a rack of ten <span class="mono">missiles</span>: fire them in a fast salvo, and they reload
+      one by one after a short pause. A missile cracks shields; the laser only wears them down. <span class="mono">Wardens</span> and the flagship shoot missiles down,
+      so swamp them with a salvo. <b>Don't hug a reaver when it blows.</b>
     </div>
     <div class="bestiary" id="bestiary"></div>
     <div class="keys">
@@ -1503,7 +1504,7 @@ Coming home. Tell the quartermaster I only lost a few.
 chatter:L(`
 Ore haulers are holding at the beacon until you clear the lanes.
 Reminder, Halcyon: their death blasts are lethal. Don't hug the kills.
-Gunships shrug off lasers. Save a missile for them.
+Gunship shields soak up laser fire. A missile cracks them fast, or keep hosing until the shield pops.
 Wardens will shoot your missiles down. Laser them instead.
 Splitters break in two when they die. Watch for the pieces.
 Interceptors are fast but flimsy. Track them and they pop.
@@ -1593,7 +1594,7 @@ If the cutter falls, the station falls.
 hintGunship:L(`
 Shielded gunship on scope. Lasers bounce off. Use a missile.
 That's a gunship, Halcyon. Missile it.
-Gunship with purple shields. Only a missile cracks it.
+Gunship with purple shields. A missile cracks it, or wear the shield down with the laser.
 Heavy gunship nearby. Press 2 for missiles.
 `),
 hintWarden:L(`
@@ -2055,7 +2056,7 @@ window.addEventListener('resize',()=>{ orientCheck(); if(TOUCH && !stick.on) sti
 if(TOUCH) setTimeout(stickRest,0);
 
 // ---- entities ----
-const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,shield:0};   // shield: a spare cell soaks one hit
+const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,mis:10,mcool:0,misT:0};   // mis: missiles in the rack
 let bullets=[], missiles=[], enemies=[], burning=[], particles=[], efire=[], shockwaves=[];
 let state='menu', deaths=0, showMap=false, shake=0, flash=0, t=0, lastCause='blast';
 let wreck=null, pod=null, deathTimer=0, thrustOn=false, revOn=false;
@@ -2110,7 +2111,7 @@ const TYPES = {
   raider:     {r:14, hp:1, shield:false, speed:.3,  fireGap:230, col:'#c23a52', desc:'Light hull. Laser food.'},
   interceptor:{r:12, hp:1, shield:false, speed:1.0, fireGap:170, col:'#ff9a3d', desc:'Fast. Chases you. Laser kills it — if you can track it.'},
   splitter:   {r:17, hp:2, shield:false, speed:.35, fireGap:250, col:'#5fd06a', desc:'Its crew bail out in two jolly boats when it dies. Catch them for a bonus. Laser works.'},
-  gunship:    {r:22, hp:3, shield:true,  speed:.22, fireGap:150, col:'#b06dc0', desc:'Shielded. Only a missile cracks it. Hits hard.'},
+  gunship:    {r:22, hp:3, shield:true,  speed:.22, fireGap:150, col:'#b06dc0', desc:'Shielded. A missile cracks it, or hold the laser on it until the shield bursts. Hits hard.'},
   warden:     {r:14, hp:2, shield:false, speed:.4,  fireGap:200, col:'#2fd3ff', pd:true, desc:'Point-defense frigate. Shoots your missiles out of the air — finish it with the laser.'},
   jolly:      {r:6,  hp:1, shield:false, speed:2.1, fireGap:9999, col:'#ffb02a', desc:'A splitter crew\'s escape boat. Scatters from the blast, then turns and fights with a pea-shooter. One hit kills it.'}
 };
@@ -2589,7 +2590,7 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   outpost=makeOutpost(px,py); spawnPt={x:px,y:py+90};
   if(LV.horde){ outpost.alive=false; outpost.hp=0; outpost.none=true; }   // the Cradle: no station, the spot is just your jump point
   ship.x=spawnPt.x; ship.y=spawnPt.y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2;
-  ship.cool=0; ship.invuln=90; ship.alive=true; ship.suit=false; ship.r=7; finalDeath=false;
+  ship.cool=0; ship.invuln=90; ship.alive=true; ship.suit=false; ship.r=7; finalDeath=false; ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;
   bullets=[]; missiles=[]; particles=[]; efire=[]; shockwaves=[]; fireballs=[]; debris=[]; delayedBooms=[]; husks=[];
   boss=null; bossDead=false; bossFled=false; emissiles=[]; pdFlashes=[]; warpLines=[]; bossBanner=0;
   muzzles=[]; lights=[]; pops=[]; heat=0; lockT=0; lastShot=''; wreck=null; pod=null;
@@ -2621,6 +2622,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   let x=o.x, y=o.y;
   for(let k=0;k<12 && rocks.some(R=>Math.hypot(R.x-x,R.y-y)<R.r+30);k++){ x=o.x+rnd(-120,120); y=o.y+rnd(40,140); }
   ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.suit=false; ship.r=7;
+  ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;   // a fresh cutter comes with a full rack
   wreck=null; pod=null; state='play';
   efire=efire.filter(f=>Math.hypot(f.x-x,f.y-y)>260); emissiles=emissiles.filter(m=>Math.hypot(m.x-x,m.y-y)>360);
   // the launch fires a repulsor pulse, so reavers camping the launch point get shoved clear and lose their aim
@@ -3037,14 +3039,19 @@ const BLAST = {big:46, small:28, ship:0}; // lethal radius of an enemy's death b
 
 // ---- weapons ----
 // the reaver a missile should chase: closest to the line it's flying, within range and a cone ahead (jolly boats are too small to lock)
+// (a salvo spreads itself out: a reaver that already has missiles on the way looks less attractive than an untouched one)
 function missileLock(x,y,a,range,cone){ let best=null, bs=1e9;
   for(const e of enemies){ if(!e.alive || e.boat || e.warp>0) continue;
     const dx=e.x-x, dy=e.y-y, d=Math.hypot(dx,dy); if(d>range) continue;
     const off=Math.abs(((Math.atan2(dy,dx)-a+Math.PI*3)%TAU)-Math.PI); if(off>cone) continue;
-    const s=d*(1+off*5); if(s<bs){ bs=s; best=e; } }
+    let locks=0; for(const m of missiles) if(m.tg===e) locks++;
+    const need=e.shield?2:Math.ceil(e.hp/3);   // one missile is enough for most hulls
+    const s=d*(1+off*5)*(locks>=need?2.5+locks*1.5:1); if(s<bs){ bs=s; best=e; } }
   return best; }
+const MIS_MAX=10, MIS_GAP=11, MIS_WAIT=60, MIS_EACH=80;   // rack size, frames between missiles, pause before reloading, frames per reload
 function fire(){
-  if(ship.cool>0 || !ship.alive) return;
+  if(!ship.alive) return;
+  if(ship.weapon==='laser' ? ship.cool>0 : (ship.mcool>0 || ship.mis<1)) return;
   const nx=Math.cos(ship.a), ny=Math.sin(ship.a);
   if(ship.weapon==='laser'){
     ship.cool=9;
@@ -3053,11 +3060,11 @@ function fire(){
     bullets.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,vx:ship.vx+sx*8.6,vy:ship.vy+sy*8.6,life:72});
     VRAudio.sfx.laser();
   }else{
-    ship.cool=78;   // much slower reload than the laser (9) — the blaster is your rapid-fire option
+    ship.mis--; ship.mcool=MIS_GAP; ship.misT=0;
     missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,520,.9)});
     VRAudio.sfx.missile();
   }
-  coolMax=ship.cool; lastShot=ship.weapon;
+  lastShot=ship.weapon;
   const laser=ship.weapon==='laser';
   muzzles.push({x:ship.x+nx*(ship.r+3),y:ship.y+ny*(ship.r+3),life:4,max:4,r:laser?7:11,col:laser?'#43f0ff':'#ffb347'});
 }
@@ -3104,10 +3111,13 @@ function update(){
     if(ship.y>WORLD-ship.r){ship.y=WORLD-ship.r;ship.vy=-Math.abs(ship.vy)*.4;}
     if(wallV>1.2) VRAudio.sfx.bump();
     const firing=keys[' ']||keys['j']||touchFire.laser||touchFire.rocket;
-    if(ship.cool>0 && --ship.cool===0 && lastShot==='rocket' && !firing) VRAudio.sfx.ready();   // missile rack reloaded
+    if(ship.cool>0) ship.cool--;
+    // the missile rack: ten tubes. Fire them as fast as you like; a short pause after your last one, and they reload one by one
+    if(ship.mcool>0) ship.mcool--;
+    if(ship.mis<MIS_MAX && ++ship.misT>=MIS_WAIT && (ship.misT-MIS_WAIT)%MIS_EACH===0){ ship.mis++;
+      if(ship.mis===MIS_MAX) VRAudio.sfx.ready(); }   // a chime when the rack is full again
     if(ship.invuln>0) ship.invuln--;
     if(firing) fire();
-    if(TOUCH && t%5===0) tMissile.classList.toggle('cool', ship.cool>0 && lastShot==='rocket');   // the missile rack is reloading
     }
     runT++;
   }
@@ -3313,7 +3323,10 @@ function update(){
       if((b.x-e.x)**2+(b.y-e.y)**2<(e.r+2)**2){
         b.life=0;
         if(e.shield){ for(let i=0;i<5;i++)particles.push({x:b.x,y:b.y,vx:rnd(-1.5,1.5),vy:rnd(-1.5,1.5),life:12,max:12,col:'#9ff6ff',r:1,grav:0});
-          e.shieldHit=10; e.shieldA=Math.atan2(b.y-e.y,b.x-e.x); VRAudio.sfx.deflect(b.x,b.y); }
+          e.shieldHit=10; e.shieldA=Math.atan2(b.y-e.y,b.x-e.x);
+          // the laser can't punch through, but it wears the shield down: keep it on target and the shield bursts
+          e.shieldHp=(e.shieldHp==null?SHIELD_HP:e.shieldHp)-1;
+          if(e.shieldHp<=0) breakShield(e); else VRAudio.sfx.deflect(b.x,b.y); }
         else { e.hp--; e.flash=6; sparks(e.x,e.y);
           if(e.hp<=0){ kill(e); if(b.wing && Math.random()<.5 && cool('wingKill',600)) say('wing','wingKill'); } else VRAudio.sfx.hit(e.x,e.y); }
         break;
@@ -3532,6 +3545,14 @@ function bossFinale(){   // the jar goes: one huge blast cuts the Cerebrant off,
   beginJump(false);
 }
 
+const SHIELD_HP=14;   // laser hits a shield soaks before it bursts (a missile ignores it)
+function breakShield(e){
+  e.shield=false; e.shieldHp=0; e.flash=8;
+  shockwaves.push({x:e.x,y:e.y,delay:0,r0:e.r+4,max:e.r+46,life:0,maxlife:22,col:'#b46cff'});
+  for(let i=0;i<18;i++){ const a=rnd(0,TAU), sp=rnd(1,2.8); particles.push({x:e.x+Math.cos(a)*(e.r+6),y:e.y+Math.sin(a)*(e.r+6),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rnd(14,26),max:26,col:Math.random()<.5?'#d9b8ff':'#b46cff',r:1,grav:0}); }
+  VRAudio.sfx.zap(e.x,e.y,true); VRAudio.sfx.deflect(e.x,e.y);
+  pops.push({x:e.x,y:e.y-e.r-10,txt:'SHIELD DOWN',col:'#d9b8ff',life:70});
+}
 function sparks(x,y){ for(let i=0;i<6;i++)particles.push({x,y,vx:rnd(-2,2),vy:rnd(-2,2),life:14,max:14,col:'#fff',r:1,grav:0}); }
 // celebratory burst for the finale (warm + cool colors) — no screen flash or shake, unlike a real blast
 function firework(x,y){
@@ -3852,11 +3873,14 @@ let lastFr=-1, lastSec=-1, lastScore=-1, hudKey='', postKey='', lastShield=-1, o
 const elWarn=document.querySelector('.warn'), elObj=document.getElementById('m-obj'), elObjT=document.getElementById('m-objt'), elObjV=document.getElementById('m-objv');
 function updateHUD(){ document.getElementById('deaths').textContent=deaths; }
 // per-frame HUD bits: missile reload bar, clock, score, mission strip (DOM only touched when they change)
+let lastMis=-1; const elChipR=document.getElementById('chip-rocket');
 const elReload=document.getElementById('reload-bar'), elClock=document.getElementById('clock'), elScore=document.getElementById('score');
 const elM=Object.fromEntries(['box','level','count','fill','ghost','mark','post','pname','hp','hpt'].map(k=>[k,document.getElementById('m-'+k)]));
 function hudTick(){
-  const fr=ship.cool>0 && lastShot==='rocket' ? 1-ship.cool/coolMax : 1;
+  // the bar under the weapons is the missile rack: full when all ten tubes are loaded
+  const fr=(ship.mis+(ship.mis<MIS_MAX && ship.misT>=MIS_WAIT ? ((ship.misT-MIS_WAIT)%MIS_EACH)/MIS_EACH : 0))/MIS_MAX;
   if(Math.abs(fr-lastFr)>.004){ lastFr=fr; elReload.style.transform='scaleX('+fr.toFixed(3)+')'; }
+  if(ship.mis!==lastMis){ lastMis=ship.mis; elChipR.textContent='2·MISSILE ×'+ship.mis; tMissile.textContent='MISSILE '+ship.mis; tMissile.classList.toggle('cool',ship.mis<1); }
   const sec=Math.floor((bossDead?clearT:runT)/60);   // the clock stops when the flagship dies, matching the clear time
   if(sec!==lastSec){ lastSec=sec; elClock.textContent=fmtTime(sec); }
   if(score!==lastScore){ elScore.textContent=score.toLocaleString('en-US');
@@ -4522,8 +4546,9 @@ function scorch(img){ const c=document.createElement('canvas'); c.width=img.widt
 // engine flicker, blinking eye lights, the gunship's shield, the splitter's glowing seam, the warden's PD turret
 function pirateShape(gg,e){
   const S=SHIPS[e.type], H=HULLS[e.type], fl=(t>>1)&1, blink=(Math.sin(e.wob*2)>-.3), r=e.r;
-  if(e.type==='gunship'){
-    gg.strokeStyle='rgba(180,70,255,'+(0.35+0.22*Math.sin(e.wob))+')'; gg.lineWidth=2;
+  if(e.shield!=null ? e.shield : e.type==='gunship'){   // any shielded hull (a gunship, or a reaver wearing stolen plating)
+    const sf=e.shieldHp==null?1:clamp(e.shieldHp/SHIELD_HP,.15,1), weak=sf<.35 && (t>>2)&1;   // it thins and flickers as the laser wears it down
+    gg.strokeStyle='rgba(180,70,255,'+((0.35+0.22*Math.sin(e.wob))*sf*(weak?.4:1))+')'; gg.lineWidth=sf>.5?2:1;
     gg.beginPath(); gg.arc(0,0,r+6,0,TAU); gg.stroke();
     // shield ripple where a laser bolt just glanced off
     if(e.shieldHit>0){ const ra=e.shieldA-e.a, k=e.shieldHit/10;
