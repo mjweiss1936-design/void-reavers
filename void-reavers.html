@@ -2417,6 +2417,25 @@ function breakRock(k){   // shot to pieces: two or three smaller rocks fly off (
   if(R.threat && outpost.alive && cool('rockSaved',600) && Math.random()<.6) say('post','rockSaved');
 }
 function shatterRock(k){ const R=rocks[k]; rocks.splice(k,1); VRAudio.sfx.crumble(R.x,R.y,R.size); rockDust(R); }
+// an asteroid slamming into the station: a fireball where it strikes the hull, rubble flying back off it,
+// the station rocking and burning there for a while (bigger rock, bigger everything)
+function rockImpact(k){
+  const R=rocks[k], o=outpost; rocks.splice(k,1);
+  const a=Math.atan2(R.y-o.y,R.x-o.x), ix=o.x+Math.cos(a)*o.r*.9, iy=o.y+Math.sin(a)*o.r*.9, sz=R.size;
+  boom(ix,iy,sz>=3?'ship':'big',R.r*.9);
+  VRAudio.sfx.crumble(R.x,R.y,sz); VRAudio.sfx.clank(ix,iy); rockDust(R);
+  shake=Math.min(26,shake+4+sz*3); flash=Math.max(flash,.08*sz);
+  // the rock breaks up against the hull: chunks tumble back out the way it came, and the smaller ones survive as rocks
+  const bounce=a;   // away from the station
+  for(let i=0;i<6+sz*4;i++){ const d=bounce+rnd(-1.1,1.1), sp=rnd(.8,2.6)*(1+sz*.2);
+    debris.push({x:ix,y:iy,vx:Math.cos(d)*sp,vy:Math.sin(d)*sp,a:rnd(0,TAU),spin:rnd(-.25,.25),size:rnd(1.5,2.5+sz*1.3),life:ri(40,90),max:90,
+      col:Math.random()<.5?ROCKPAL[LV.rock].base:ROCKPAL[LV.rock].lite,cold:Math.random()<.65}); }   // (most chunks are cold rock; a few glow)
+  if(sz>=2) for(let i=0;i<sz-1;i++){ const d=bounce+rnd(-.9,.9), sp=rnd(.5,1);
+    rocks.push(makeRock(ix+Math.cos(d)*(R.r*.6+12),iy+Math.sin(d)*(R.r*.6+12),1,Math.cos(d)*sp,Math.sin(d)*sp)); }
+  // and the station burns where it was hit
+  if(sz>=2) for(let i=0;i<sz;i++) delayedBooms.push({x:ix+rnd(-8,8),y:iy+rnd(-8,8),kind:'small',size:6+sz*2,delay:10+i*12});
+  o.burns=(o.burns||[]).concat([{x:Math.cos(a)*o.r*.8,y:Math.sin(a)*o.r*.8,t:200+sz*120}]);
+}
 function bounceRocks(){   // rocks shove each other apart instead of overlapping
   for(let i=0;i<rocks.length;i++){ const A=rocks[i];
     for(let j=i+1;j<rocks.length;j++){ const B=rocks[j], dx=B.x-A.x, dy=B.y-A.y, rr=A.r+B.r;
@@ -2473,6 +2492,11 @@ function updatePost(){
   if(!o.alive){ if(t%6===0) particles.push({x:o.x+rnd(-22,22),y:o.y+rnd(-14,14),vx:rnd(-.3,.3),vy:rnd(-.5,-.1),life:rnd(30,60),max:60,
       col:Math.random()<.35?'#ff9a3d':'#4a4452',r:rnd(1,2.5),grav:0}); return; }
   if(state==='play' && !levelDone && t%60===0) score+=4;   // every second the station survives is worth something
+  // where rocks have hit, the hull burns and smokes for a while
+  if(o.burns && o.burns.length){ for(const b of o.burns){ b.t--;
+      if(t%3===0) particles.push({x:o.x+b.x+rnd(-3,3),y:o.y+b.y+rnd(-3,3),vx:b.x/o.r*.4+rnd(-.2,.2),vy:b.y/o.r*.4+rnd(-.35,-.05),
+        life:rnd(25,55),max:55,col:Math.random()<.4?'#ff9a3d':Math.random()<.5?'#5a4a5e':'#3b3346',r:rnd(1,2.5),grav:0}); }
+    o.burns=o.burns.filter(b=>b.t>0); }
   // its little defence laser: every couple of seconds it zaps the nearest unshielded reaver inside 360, which covers
   // anything close enough to be shooting at it (shields shrug it off)
   if(o.gun==null) o.gun=60;
@@ -3112,7 +3136,7 @@ function fire(){
     VRAudio.sfx.laser();
   }else{
     ship.mis--; ship.mcool=MIS_GAP; ship.misT=0;
-    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,520,.9)});
+    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,640,1.3)||missileLock(ship.x,ship.y,ship.a,480,Math.PI)});   // what you aim at, else whatever's near
     VRAudio.sfx.missile();
   }
   lastShot=ship.weapon;
@@ -3218,15 +3242,17 @@ function update(){
     // a missile keeps the lock it launched with (the reaver nearest where you aimed), so it can't be dragged off
     // into someone else's dogfight; if that target dies it looks for a new one ahead of it, never behind
     if(m.tg && !m.tg.alive) m.tg=null;
-    if(!m.tg && m.life%6===0) m.tg=missileLock(m.x,m.y,m.a,520,.9);
+    if(!m.tg && m.life%6===0) m.tg=missileLock(m.x,m.y,m.a,600,1.3)||missileLock(m.x,m.y,m.a,420,Math.PI);
     const best=m.tg;
     if(best){
-      const want=Math.atan2(best.y-m.y,best.x-m.x), dd=Math.hypot(best.x-m.x,best.y-m.y);
+      const dd=Math.hypot(best.x-m.x,best.y-m.y), lead=Math.min(dd/3.4,40);   // aim where it's going to be
+      const want=Math.atan2(best.y+(best.vy||0)*lead-m.y,best.x+(best.vx||0)*lead-m.x);
       let diff=((want-m.a+Math.PI*3)%TAU)-Math.PI;
-      const tr=dd<160?.11:.065; m.a+=clamp(diff,-tr,tr);   // tighter turns once it's close, so it doesn't orbit
+      const tr=dd<160?.12:.075; m.a+=clamp(diff,-tr,tr);   // tighter turns once it's close, so it doesn't orbit
     }
-    m.vx+=Math.cos(m.a)*0.14; m.vy+=Math.sin(m.a)*0.14;
-    const ms=Math.hypot(m.vx,m.vy),MM=3.4; if(ms>MM){m.vx*=MM/ms;m.vy*=MM/ms;}
+    // the motor pushes it along its nose, and the fins bleed off sideways drift, so it goes where it points
+    const MM=3.4; m.vx+=(Math.cos(m.a)*MM-m.vx)*.09; m.vy+=(Math.sin(m.a)*MM-m.vy)*.09;
+    const ms=Math.hypot(m.vx,m.vy); if(ms>MM){m.vx*=MM/ms;m.vy*=MM/ms;}
     m.x+=m.vx; m.y+=m.vy; m.life--;
     if(++m.trail%2===0) particles.push({x:m.x,y:m.y,vx:rnd(-.2,.2),vy:rnd(-.2,.2),life:16,max:16,col:'#ffb347',r:1.5,grav:0});
   }
@@ -3337,7 +3363,7 @@ function update(){
   bounceRocks();
   if(outpost){
     for(let k=rocks.length-1;k>=0;k--){ const R=rocks[k];
-      if(outpost.alive && (R.x-outpost.x)**2+(R.y-outpost.y)**2<(outpost.r*.8+R.r*.8)**2){ hurtPost(ROCK_DMG[R.size],R.x,R.y,true); shatterRock(k); } }
+      if(outpost.alive && (R.x-outpost.x)**2+(R.y-outpost.y)**2<(outpost.r*.8+R.r*.8)**2){ hurtPost(ROCK_DMG[R.size],R.x,R.y,true); rockImpact(k); } }
     updatePost();
   }
   if(state==='play'||state==='dying') updateWing();
@@ -3467,7 +3493,7 @@ function updateFX(){
 
   // flaming fragments tumble off, trailing fire
   for(const d of debris){ d.vx*=.975; d.vy*=.975; d.x+=d.vx; d.y+=d.vy; d.a+=d.spin; d.life--;
-    if((d.life&1)===0) particles.push({x:d.x,y:d.y,vx:rnd(-.4,.4),vy:rnd(-.4,.4),
+    if(!d.cold && (d.life&1)===0) particles.push({x:d.x,y:d.y,vx:rnd(-.4,.4),vy:rnd(-.4,.4),
       life:rnd(10,22),max:22,col:Math.random()<.5?'#ff9a3d':'#ff5a2a',r:rnd(1,2),grav:0}); }
   debris=debris.filter(d=>d.life>0);
 
