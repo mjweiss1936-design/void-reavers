@@ -1,5 +1,11 @@
 <title>Void Reavers</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Void Reavers">
+<meta name="theme-color" content="#05060d">
 <style>
   /* Single-dark arcade CRT world. Layout: fullscreen canvas stage + left HUD stack + top-right map + overlays. */
   :root{
@@ -72,13 +78,52 @@
   .btn:focus-visible{outline:3px solid #fff; outline-offset:3px}
   .overlay.hidden{display:none}
 
+  /* ---- touch mode (phones, landscape): a floating stick under the left thumb, fire buttons under the right ---- */
   #touch{position:fixed; inset:0; z-index:8; display:none; pointer-events:none}
-  .pad{position:absolute; pointer-events:auto; border:1px solid rgba(67,240,255,.3);
-    background:rgba(11,16,34,.5); border-radius:50%; width:70px; height:70px; display:flex; align-items:center;
-    justify-content:center; color:var(--ink); font-size:11px; letter-spacing:.08em; backdrop-filter:blur(3px)}
-  .pad:active{background:rgba(67,240,255,.25)}
   body.touch #touch{display:block}
-  @media (hover:hover) and (pointer:fine){ body.touch #touch{display:none} }
+  body.cine #touch, body.paused #touch{display:none}
+  #t-zone{position:absolute; left:0; top:22%; bottom:0; width:48%; pointer-events:auto; touch-action:none}
+  .stick-base,.stick-knob{position:absolute; border-radius:50%; pointer-events:none; transform:translate(-50%,-50%)}
+  .stick-base{width:128px; height:128px; border:2px solid rgba(67,240,255,.28); background:rgba(11,16,34,.28);
+    box-shadow:inset 0 0 24px rgba(67,240,255,.12)}
+  .stick-base::before{content:""; position:absolute; inset:28%; border-radius:50%; border:1px dashed rgba(67,240,255,.22)}   /* inside: aim only */
+  .stick-knob{width:56px; height:56px; background:radial-gradient(circle at 40% 35%,rgba(160,250,255,.75),rgba(67,240,255,.35));
+    border:1px solid rgba(200,255,255,.7); box-shadow:0 0 14px rgba(67,240,255,.5)}
+  #t-zone.idle .stick-base,#t-zone.idle .stick-knob{opacity:.45}
+  #t-zone.burn .stick-knob{background:radial-gradient(circle at 40% 35%,#fff,rgba(67,240,255,.8)); box-shadow:0 0 22px #43f0ff}
+  .pad{position:absolute; pointer-events:auto; touch-action:none; border:1px solid rgba(67,240,255,.35);
+    background:rgba(11,16,34,.5); border-radius:50%; width:64px; height:64px; display:flex; align-items:center;
+    justify-content:center; color:var(--ink); font-size:10px; letter-spacing:.1em; backdrop-filter:blur(3px);
+    -webkit-tap-highlight-color:transparent; -webkit-touch-callout:none}
+  .pad.on{background:rgba(67,240,255,.32); transform:scale(.94)}
+  #t-fire{width:92px; height:92px; font-size:12px; border:2px solid var(--laser); color:#bff9ff;
+    right:calc(18px + env(safe-area-inset-right,0px)); bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+  #t-fire.on{background:rgba(67,240,255,.42)}
+  #t-missile{width:68px; height:68px; border:2px solid var(--rocket); color:#ffe0b0;
+    right:calc(118px + env(safe-area-inset-right,0px)); bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+  #t-missile.on{background:rgba(255,179,71,.4)}
+  #t-missile.cool{opacity:.45}
+  #t-brake{width:56px; height:56px; right:calc(36px + env(safe-area-inset-right,0px)); bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+  #t-map{width:46px; height:46px; font-size:9px; right:calc(120px + env(safe-area-inset-right,0px)); bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  /* the HUD squeezes up to make room for thumbs */
+  body.touch #hud-bottom{display:none}
+  body.touch #hud-top{transform:scale(.72); transform-origin:top left}
+  body.touch #hud-mission{transform:translateX(-50%) scale(.8); transform-origin:top center; left:50%; right:auto; top:env(safe-area-inset-top,0px)}
+  body.touch #sys-ctl{bottom:auto; top:calc(92px + env(safe-area-inset-top,0px))}
+  body.touch:not(.cine) #comms{left:50%; bottom:calc(8px + env(safe-area-inset-bottom,0px)); width:min(360px,38vw);
+    transform:translate(-50%,10px); padding:5px 8px 5px 5px; gap:8px}
+  body.touch:not(.cine) #comms.show{transform:translate(-50%,0)}
+  body.touch:not(.cine) #comms .cface{width:44px; height:44px}
+  body.touch:not(.cine) .ctext{font-size:11px; min-height:2.6em; margin-top:2px}
+  body.touch .keys .kb{display:none} .keys .tc{display:none} body.touch .keys .tc{display:revert}
+  body.touch #cine-skip{font-size:13px; padding:9px 14px}
+  /* portrait on a phone: ask for landscape (the game pauses underneath) */
+  #rotate{position:fixed; inset:0; z-index:40; display:none; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    background:var(--void); color:var(--ink); text-align:center; padding:24px; letter-spacing:.14em; font-size:13px; text-transform:uppercase}
+  #rotate .ph{width:46px; height:80px; border:3px solid var(--laser); border-radius:9px; box-shadow:0 0 18px rgba(67,240,255,.5);
+    animation:turnPh 2.2s ease-in-out infinite}
+  @keyframes turnPh{0%,25%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+  @media (orientation:portrait){ body.touch #rotate{display:flex} }
 
   /* CRT glass: faint scanlines + vignette over the playfield (HUD and menus sit above it) */
   body::after{content:""; position:fixed; inset:0; z-index:4; pointer-events:none;
@@ -215,12 +260,13 @@
 </div>
 
 <div id="touch">
-  <div class="pad" id="t-left"  style="left:16px; bottom:120px">◀</div>
-  <div class="pad" id="t-right" style="left:100px; bottom:120px">▶</div>
-  <div class="pad" id="t-thrust"style="left:58px; bottom:200px">▲</div>
-  <div class="pad" id="t-fire"  style="right:16px; bottom:150px; width:84px; height:84px; border-color:var(--laser)">FIRE</div>
-  <div class="pad" id="t-swap"  style="right:30px; bottom:244px; width:58px; height:58px">SWAP</div>
+  <div id="t-zone" class="idle"><div class="stick-base"></div><div class="stick-knob"></div></div>
+  <div class="pad" id="t-fire">LASER</div>
+  <div class="pad" id="t-missile">MISSILE</div>
+  <div class="pad" id="t-brake">BRAKE</div>
+  <div class="pad" id="t-map">MAP</div>
 </div>
+<div id="rotate"><div class="ph"></div><div>Turn your phone sideways</div><div style="color:var(--dim);font-size:10px">Void Reavers plays in landscape</div></div>
 
 <div id="sys-ctl">
   <button class="aud" id="btn-pause" title="Pause (P)">❚❚</button>
@@ -252,14 +298,19 @@
     </div>
     <div class="bestiary" id="bestiary"></div>
     <div class="keys">
-      <b>W / ↑</b><span>impulse thrust (you keep drifting)</span>
-      <b>S / ↓</b><span>reverse thruster (retro burn)</span>
-      <b>A D / ← →</b><span>rotate the cutter</span>
-      <b>Space / J</b><span>fire selected weapon</span>
-      <b>1 · 2</b><span>select laser · missile</span>
-      <b>M</b><span>full sector map</span>
-      <b>P / Esc</b><span>pause</span>
-      <b>N · V</b><span>music · sound effects on/off</span>
+      <b class="kb">W / ↑</b><span class="kb">impulse thrust (you keep drifting)</span>
+      <b class="kb">S / ↓</b><span class="kb">reverse thruster (retro burn)</span>
+      <b class="kb">A D / ← →</b><span class="kb">rotate the cutter</span>
+      <b class="kb">Space / J</b><span class="kb">fire selected weapon</span>
+      <b class="kb">1 · 2</b><span class="kb">select laser · missile</span>
+      <b class="kb">M</b><span class="kb">full sector map</span>
+      <b class="kb">P / Esc</b><span class="kb">pause</span>
+      <b class="kb">N · V</b><span class="kb">music · sound effects on/off</span>
+      <b class="tc">Left thumb</b><span class="tc">touch anywhere on the left and drag: a small push turns the cutter to aim, a big push burns the engine that way</span>
+      <b class="tc">Right thumb</b><span class="tc">hold LASER or MISSILE to fire · BRAKE burns the retro thrusters</span>
+      <b class="tc">MAP · ❚❚</b><span class="tc">sector map · pause</span>
+      <b class="tc">Cutscenes</b><span class="tc">tap to move the dialogue on · SKIP to jump ahead</span>
+      <b class="tc">Tip</b><span class="tc">on iPhone, Share → Add to Home Screen plays it full screen. Sound needs the silent switch off.</span>
     </div>
     <button class="btn" id="o-btn">Launch</button>
   </div>
@@ -1843,7 +1894,8 @@ const bb = document.createElement('canvas');
 const g = bb.getContext('2d');
 let VW = 480, VH = 270, scale = 1;
 
-const VIEW_W = 840;   // wider backbuffer = more of the sector on screen (zoomed out)
+// wider backbuffer = more of the sector on screen (zoomed out); phones zoom in a little so the ships aren't specks
+const VIEW_W = (matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search)) ? 680 : 840;
 function resize(){
   const w = window.innerWidth, h = window.innerHeight;
   if(!w || !h) return;   // hidden or collapsed view: keep the last size (0/0 would make VH NaN and crash the draw)
@@ -1952,18 +2004,49 @@ const tap=(id,fn)=>document.getElementById(id).addEventListener('click',e=>{ e.c
 tap('btn-pause',()=>setPause(!paused)); tap('btn-music',()=>toggleMusic()); tap('btn-sfx',()=>toggleSfx());
 document.getElementById('pause').addEventListener('click',()=>setPause(false));
 
-if(matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
-const bindPad=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
-  const on=e=>{e.preventDefault();fn(true);}, off=e=>{e.preventDefault();fn(false);};
-  el.addEventListener('touchstart',on,{passive:false}); el.addEventListener('touchend',off);
-  el.addEventListener('mousedown',on); el.addEventListener('mouseup',off); el.addEventListener('mouseleave',off); };
-bindPad('t-left', v=>keys['arrowleft']=v);
-bindPad('t-right',v=>keys['arrowright']=v);
-bindPad('t-thrust',v=>keys['arrowup']=v);
-bindPad('t-fire', v=>keys[' ']=v);
-const swap=()=>selectWeapon(ship.weapon==='laser'?'rocket':'laser');
-document.getElementById('t-swap').addEventListener('touchstart',e=>{e.preventDefault();swap();});
-document.getElementById('t-swap').addEventListener('click',swap);
+// ---- touch mode: on for phones and tablets (or add ?touch to the address to try it with a mouse) ----
+const TOUCH=matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search);
+if(TOUCH) document.body.classList.add('touch');
+// the stick floats: it centres wherever your left thumb lands. Inside the dashed ring it only turns the cutter
+// (aim without drifting); push past it and the engine burns toward where you're pointing.
+const stick={on:false,id:null,ox:0,oy:0,mag:0,ang:0}, STICK_R=56;
+const tZone=document.getElementById('t-zone'), tBase=tZone.querySelector('.stick-base'), tKnob=tZone.querySelector('.stick-knob');
+function stickRest(){   // idle: park a faint stick where the thumb usually sits
+  const r=tZone.getBoundingClientRect(), x=Math.min(150,r.width*.45), y=Math.max(80,r.height-100);   // (150 clears the notch)
+  for(const el of [tBase,tKnob]){ el.style.left=x+'px'; el.style.top=y+'px'; }
+  tZone.className='idle';
+}
+function stickMove(cx,cy){ const r=tZone.getBoundingClientRect(), dx=cx-r.left-stick.ox, dy=cy-r.top-stick.oy, d=Math.hypot(dx,dy);
+  stick.mag=Math.min(1,d/STICK_R); stick.ang=Math.atan2(dy,dx);
+  const k=Math.min(d,STICK_R)/(d||1); tKnob.style.left=(stick.ox+dx*k)+'px'; tKnob.style.top=(stick.oy+dy*k)+'px';
+  tZone.className=stick.mag>STICK_BURN?'burn':''; }
+const STICK_AIM=.18, STICK_BURN=.55;
+const capture=(el,id)=>{ try{ el.setPointerCapture(id); }catch(e){} };   // keep the finger even if it slides off (never fatal)
+tZone.addEventListener('pointerdown',e=>{ e.preventDefault(); if(stick.on) return;
+  const r=tZone.getBoundingClientRect(); stick.on=true; stick.id=e.pointerId; stick.ox=e.clientX-r.left; stick.oy=e.clientY-r.top; stick.mag=0;
+  capture(tZone,e.pointerId);
+  tBase.style.left=tKnob.style.left=stick.ox+'px'; tBase.style.top=tKnob.style.top=stick.oy+'px'; tZone.className=''; });
+tZone.addEventListener('pointermove',e=>{ if(stick.on && e.pointerId===stick.id){ e.preventDefault(); stickMove(e.clientX,e.clientY); } });
+const stickUp=e=>{ if(e.pointerId!==stick.id) return; stick.on=false; stick.id=null; stick.mag=0; stickRest(); };
+tZone.addEventListener('pointerup',stickUp); tZone.addEventListener('pointercancel',stickUp);
+// hold-buttons for the right thumb (each tracks its own finger, so you can fire while braking)
+const holdPad=(id,fn)=>{ const el=document.getElementById(id); let pid=null;
+  el.addEventListener('pointerdown',e=>{ e.preventDefault(); pid=e.pointerId; capture(el,pid); el.classList.add('on'); fn(true); });
+  const up=e=>{ if(e.pointerId!==pid) return; pid=null; el.classList.remove('on'); fn(false); };
+  el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
+  el.addEventListener('contextmenu',e=>e.preventDefault()); };
+const touchFire={laser:false,rocket:false};
+holdPad('t-fire',   v=>{ touchFire.laser=v; if(v) selectWeapon('laser'); });
+holdPad('t-missile',v=>{ touchFire.rocket=v; selectWeapon(v?'rocket':'laser'); });   // let go and you're back on the laser
+const tMissile=document.getElementById('t-missile');
+holdPad('t-brake',  v=>keys['arrowdown']=v);
+holdPad('t-map',    v=>{ if(v) toggleMap(); });
+// cutscenes: a tap anywhere moves the dialogue on
+cv.addEventListener('pointerdown',()=>{ if(TOUCH && state==='cine') commsSkip(); });
+// a phone turned to portrait mid-fight pauses (the rotate screen covers it)
+function orientCheck(){ if(TOUCH && innerHeight>innerWidth && state==='play' && !paused) setPause(true); }
+window.addEventListener('resize',()=>{ orientCheck(); if(TOUCH && !stick.on) stickRest(); });
+if(TOUCH) setTimeout(stickRest,0);
 
 // ---- entities ----
 const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,shield:0};   // shield: a spare cell soaks one hit
@@ -2862,6 +2945,8 @@ function toggleMap(){ if(state==='play'){ showMap=!showMap; VRAudio.sfx.ui(showM
 function setPause(p){
   if((p && state!=='play') || p===paused) return;
   paused=p; VRAudio.setPaused(p); VRAudio.setEngine(false,false,0); VRAudio.sfx.ui(p?'pause':'resume');
+  document.body.classList.toggle('paused',p);
+  if(p){ stick.on=false; stick.mag=0; touchFire.laser=touchFire.rocket=false; keys['arrowdown']=false; }
   document.getElementById('pause').classList.toggle('hidden',!p);
 }
 function syncAudioUI(){
@@ -2971,6 +3056,9 @@ function update(){
     if(keys['d']||keys['arrowright']) ship.a+=turn;
     thrustOn=keys['w']||keys['arrowup'];
     revOn=keys['s']||keys['arrowdown'];
+    if(stick.on && stick.mag>STICK_AIM){   // touch stick: swing the nose toward it, and burn once it's pushed hard and nearly lined up
+      const df=((stick.ang-ship.a+Math.PI*3)%TAU)-Math.PI; ship.a+=clamp(df,-turn*1.25,turn*1.25);
+      if(stick.mag>STICK_BURN && Math.abs(df)<1.1) thrustOn=true; }
     if(thrustOn){
       ship.vx+=Math.cos(ship.a)*0.11; ship.vy+=Math.sin(ship.a)*0.11;
       if(t%2===0) thrustPuff();
@@ -2992,10 +3080,11 @@ function update(){
     if(ship.y<ship.r){ship.y=ship.r;ship.vy=Math.abs(ship.vy)*.4;}
     if(ship.y>WORLD-ship.r){ship.y=WORLD-ship.r;ship.vy=-Math.abs(ship.vy)*.4;}
     if(wallV>1.2) VRAudio.sfx.bump();
-    const firing=keys[' ']||keys['j'];
+    const firing=keys[' ']||keys['j']||touchFire.laser||touchFire.rocket;
     if(ship.cool>0 && --ship.cool===0 && lastShot==='rocket' && !firing) VRAudio.sfx.ready();   // missile rack reloaded
     if(ship.invuln>0) ship.invuln--;
     if(firing) fire();
+    if(TOUCH && t%5===0) tMissile.classList.toggle('cool', ship.cool>0 && lastShot==='rocket');   // the missile rack is reloading
     runT++;
   }
   if(state==='play') levelT++;
