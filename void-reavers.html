@@ -3022,6 +3022,13 @@ function revPuff(){
 const BLAST = {big:46, small:28, ship:0}; // lethal radius of an enemy's death blast (visual blast is larger)
 
 // ---- weapons ----
+// the reaver a missile should chase: closest to the line it's flying, within range and a cone ahead (jolly boats are too small to lock)
+function missileLock(x,y,a,range,cone){ let best=null, bs=1e9;
+  for(const e of enemies){ if(!e.alive || e.boat || e.warp>0) continue;
+    const dx=e.x-x, dy=e.y-y, d=Math.hypot(dx,dy); if(d>range) continue;
+    const off=Math.abs(((Math.atan2(dy,dx)-a+Math.PI*3)%TAU)-Math.PI); if(off>cone) continue;
+    const s=d*(1+off*5); if(s<bs){ bs=s; best=e; } }
+  return best; }
 function fire(){
   if(ship.cool>0 || !ship.alive) return;
   const nx=Math.cos(ship.a), ny=Math.sin(ship.a);
@@ -3033,7 +3040,7 @@ function fire(){
     VRAudio.sfx.laser();
   }else{
     ship.cool=78;   // much slower reload than the laser (9) — the blaster is your rapid-fire option
-    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0});
+    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,520,.9)});
     VRAudio.sfx.missile();
   }
   coolMax=ship.cool; lastShot=ship.weapon;
@@ -3128,12 +3135,15 @@ function update(){
   bullets=bullets.filter(b=>b.life>0&&b.x>0&&b.y>0&&b.x<WORLD&&b.y<WORLD);
 
   for(const m of missiles){
-    let best=null,bd=1e9;
-    for(const e of enemies){ if(!e.alive||e.boat)continue; const d=(e.x-m.x)**2+(e.y-m.y)**2; if(d<bd){bd=d;best=e;} }   // (too small to lock onto a jolly boat)
-    if(best && bd<520*520){
-      const want=Math.atan2(best.y-m.y,best.x-m.x);
+    // a missile keeps the lock it launched with (the reaver nearest where you aimed), so it can't be dragged off
+    // into someone else's dogfight; if that target dies it looks for a new one ahead of it, never behind
+    if(m.tg && !m.tg.alive) m.tg=null;
+    if(!m.tg && m.life%6===0) m.tg=missileLock(m.x,m.y,m.a,520,.9);
+    const best=m.tg;
+    if(best){
+      const want=Math.atan2(best.y-m.y,best.x-m.x), dd=Math.hypot(best.x-m.x,best.y-m.y);
       let diff=((want-m.a+Math.PI*3)%TAU)-Math.PI;
-      m.a+=clamp(diff,-0.05,0.05);
+      const tr=dd<160?.11:.065; m.a+=clamp(diff,-tr,tr);   // tighter turns once it's close, so it doesn't orbit
     }
     m.vx+=Math.cos(m.a)*0.14; m.vy+=Math.sin(m.a)*0.14;
     const ms=Math.hypot(m.vx,m.vy),MM=3.4; if(ms>MM){m.vx*=MM/ms;m.vy*=MM/ms;}
