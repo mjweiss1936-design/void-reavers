@@ -227,7 +227,7 @@
       <span id="chip-rocket" class="chip">2·MISSILE</span>
     </div>
     <div class="reload" id="reload"><i id="reload-bar"></i></div>
-    <div class="warn">⚠ SHIELDS OFFLINE · ONE HIT DOWNS YOU</div>
+    <div class="warn" style="display:none"></div>
   </div>
   <div class="stat">
     <div class="row">
@@ -291,7 +291,8 @@
       <span class="mono">station</span> (it scores while it lives, and if it falls you fly the sector again), and drive the flagship off.
       Then follow it into <b>the Cradle</b>: no station, just <b>hordes</b>, and the flagship's last stand.<br><br>
       Your station has a small <b>defence laser</b>. Watch for a <b>disabled fighter</b> drifting in the sector: park alongside her and she'll fly as your <b>escort</b> until she's shot down.<br><br>
-      No shields: <b>one hit downs your cutter</b>, but Command launches a backup and your progress holds.
+      Your cutter has no shields: <b>one hit downs it</b>. You eject in a space suit with a single thruster and no brakes,
+      and have to fly yourself back to the station for a new cutter. <b>Get hit or run out of air on the way, and the run is over.</b>
       <span class="mono">Laser</span> shreds light hulls and is the only thing that breaks <span class="mono">asteroids</span>.
       Don't crash into them. A <span class="mono">missile</span> cracks shielded gunships, but
       <span class="mono">wardens</span> and the flagship shoot missiles down. <b>Don't hug a reaver when it blows.</b>
@@ -1303,26 +1304,11 @@ Clean shot! That boulder's dust.
 Collision averted. Remind me to buy you a drink.
 `),
 cmdDeath:L(`
-Halcyon's down! Launching the backup cutter.
-We lost your ship, pilot. Spare cutter's warming up.
-Pod recovered. Get back out there.
-That one hurt. Backup cutter is hot. Go.
-You're alive, the ship isn't. Next one's yours.
-Ejection confirmed. Strapping you into a fresh cutter.
-Cutter destroyed. We have more. Try to keep this one.
-Don't let it rattle you. New ship, same mission.
-Pilot recovered. Launching replacement.
-Shake it off, Halcyon. Your next ride is ready.
-Another cutter for the scrapyard. The quartermaster will be thrilled.
-Good ejection. Bad day. Back in the saddle.
-Your pod's aboard. Fresh cutter on the rail.
-We can replace ships. We can't replace you. Fly smarter.
-Down but not out. Relaunching.
-They got you. Now go get them back.
-Backup cutter is fueled and armed. Launching.
-That's a cutter lost, pilot. Your progress stands. Go finish it.
-You're okay. The hull's not. Swapping you out.
-Pod picked up. Launching you right back into it.
+Halcyon's down! Did you get out? Talk to me!
+We lost your ship! Pilot, check in!
+Cutter's gone. Is that a suit beacon? Come on, Halcyon...
+Ejection! We've got your beacon, pilot. Hang on.
+Your cutter's breaking up! Punch out!
 `),
 gloat:L(`
 Ha! Burn, little cutter!
@@ -1726,12 +1712,32 @@ The {ship} is gone. No survivors on the scope.
 Hauler down. That's on the reavers, not you. Keep fighting.
 The {ship} broke up. We'll remember her crew.
 `),
+evaStart:L(`
+You're out! Suit thruster only, Halcyon. No brakes. Line it up and burn for {post}.
+Pilot's alive! Get yourself home to {post}. Keep away from the fighting.
+We see your suit beacon. Point at {post} and go. Easy on the thruster; you can't stop.
+You're on EVA. Sixty seconds of air. Fly home to {post} and we'll have a cutter waiting.
+`),
+evaLow:L(`
+Fifteen seconds of air! Burn for home, now!
+Your air's nearly gone, pilot! Straight line to us!
+Air warning! Don't stop, don't turn back!
+`),
+evaLost:L(`
+We've lost the pilot's beacon... Halcyon? Halcyon!
+Suit breach. The pilot's gone. God help us.
+No life signs. We've lost Halcyon.
+`),
+evaAir:L(`
+Suit's out of air... we've lost the pilot.
+Halcyon's beacon just went quiet. Out of air. Damn it.
+`),
 drop:L(`
-Supply drop in sector {s}: a spare shield cell. The reavers want it too!
-Command's pushed a shield cell out to sector {s}. Beat the reavers to it!
-Shield cell, sector {s}! Grab it and you can take a hit.
-We've dropped you a shield cell in sector {s}. The reavers are racing you for it.
-Pod away! Sector {s}. One shield cell, first come, first served.
+Supply drop in sector {s}: a station repair crate. The reavers want it too!
+Command's pushed a repair crate out to sector {s}. Beat the reavers to it!
+Repair crate, sector {s}! Grab it and the station gets patched.
+We've dropped a repair crate in sector {s}. The reavers are racing you for it.
+Pod away! Sector {s}. Hull plating for the station, first come, first served.
 A shield cell just landed in sector {s}. Don't let them take it.
 `),
 derelict:L(`
@@ -1766,16 +1772,16 @@ They got the drifter. Damn it.
 We've lost the disabled fighter. No beacon, no pilot.
 `),
 dropGot:L(`
-Got the cell. Shields... well, one shield, online.
-Shield cell's in. I can take a hit now.
-Grabbed it! Feels good to have a little armor.
-The cell's mine. Thanks, Command.
+Got the crate. Tugs, come and get it.
+Repair crate's ours. The station will thank me.
+Grabbed it! That's fresh plating for the station.
+The crate's mine. Thanks, Command.
 `),
 dropLost:L(`
-They grabbed the cell! That reaver's shielded now. Use a missile.
-Too slow! A reaver took the shield cell. Missiles will crack it.
+They grabbed the crate! That reaver bolted our plating on. It's shielded now. Use a missile.
+Too slow! A reaver took the crate and armoured up with it. Missiles will crack it.
 They got there first. Watch for the shielded one.
-Lost the drop. One of them is wearing our shield now.
+Lost the drop. One of them is wearing our hull plating now.
 `),
 shieldPop:L(`
 There goes your shield cell! No margin left, pilot.
@@ -1991,7 +1997,7 @@ window.addEventListener('keydown', e=>{
     if(!levelDone){ for(const e of enemies) e.alive=false; levelKills=Math.max(levelKills,quota); }
     else if(boss && boss.warp<=0 && !boss.flee && !boss.dying) boss.hp=Math.min(boss.hp,boss.fleeAt+1);
   }
-  if((k==='enter'||k===' ') && (state==='menu'||state==='win')) startRun();
+  if((k==='enter'||k===' ') && (state==='menu'||state==='win'||state==='over')) startRun();
   else if((k==='enter'||k===' ') && state==='failed') retrySector();
 });
 window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
@@ -2097,7 +2103,7 @@ let chain=[], chainRun=0;   // ships caught touching a blast (going up a beat la
 let failT=0, levelStart={score:0,kills:0,bossHP:46}, retries=0;   // countdown to SECTOR LOST once the station falls; what a retry rewinds to
 let outpost=null, spawnPt={x:WORLD/2,y:WORLD/2}, rocks=[], pops=[], waveT=0, rogueT=0, fadeIn=0, lvlBanner=0;
 let bossPending=0, bossHP=46, bossFled=false, streak=0, streakT=-999, saidHalf=false, saidFew=false, tally=null, hinted={};
-const CAUSES={shot:'Hull breached by pirate fire', ram:'Rammed by a reaver', blast:'Caught in a death blast', rock:'Smashed into an asteroid'};
+const CAUSES={shot:'Hull breached by pirate fire', ram:'Rammed by a reaver', blast:'Caught in a death blast', rock:'Smashed into an asteroid', air:'Ran out of air on EVA'};
 
 // enemy archetypes
 const TYPES = {
@@ -2251,9 +2257,12 @@ function updateJob(){
         say('cmd','haulerDocked',{ship:f.name,post:LV.post}); goodBanner('+30 STATION HULL','THE '+f.name.toUpperCase()+' DOCKED · REPAIR CREWS ARE ON IT'); job=null; } }
   }else{   // drop: first to touch the pod gets the cell
     if(ship.alive && Math.hypot(ship.x-f.x,ship.y-f.y)<26){
-      ship.shield=1; job=null; VRAudio.sfx.ready(); shockwaves.push({x:ship.x,y:ship.y,delay:0,r0:4,max:40,life:0,maxlife:22,col:'#43f0ff'});
+      job=null; VRAudio.sfx.ready(); shockwaves.push({x:ship.x,y:ship.y,delay:0,r0:4,max:40,life:0,maxlife:22,col:'#43f0ff'});
       for(const e of enemies) if(e.prey===f){ e.prey=null; e.goal='hunt'; }
-      say('you','dropGot'); goodBanner('SHIELD CELL ONLINE','IT WILL TAKE ONE HIT FOR YOU'); return; }
+      if(outpost.alive){ outpost.hp=Math.min(outpost.maxhp,outpost.hp+25); outpost.warn50=outpost.hp<=50; outpost.warn30=outpost.hp<=30;
+        pops.push({x:outpost.x,y:outpost.y-34,txt:'+25 HULL',col:'#4dffa6',life:90}); }
+      addScore(300,f.x,f.y-14,'#4dffa6');
+      say('you','dropGot'); goodBanner('REPAIR CRATE SECURED','+300 · +25 STATION HULL · THE TUGS ARE HAULING IT IN'); return; }
     const g=enemies.find(e=>e.alive&&e.goal==='grab'&&e.prey===f&&Math.hypot(e.x-f.x,e.y-f.y)<22);
     if(g){ g.shield=true; g.hp=Math.max(g.hp,2); job=null; sparks(f.x,f.y);   // a reaver wears your shield now
       for(const e of enemies) if(e.prey===f){ e.prey=null; e.goal='hunt'; }
@@ -2539,6 +2548,10 @@ function updateWing(){
     wingT=ri(2400,3600); }
 }
 function drawWing(toS){
+  if(ship.suit && !(outpost && outpost.alive)){ const[px,py]=toS(spawnPt.x,spawnPt.y);   // no station: the jump-point recovery beacon
+    g.strokeStyle='#4dffa6'; g.lineWidth=1;
+    for(let k=0;k<3;k++){ const ph=((t+k*20)%60)/60; g.globalAlpha=(1-ph)*.6; g.beginPath(); g.arc(px,py,8+ph*40,0,TAU); g.stroke(); }
+    g.globalAlpha=1; g.fillStyle=(t>>3)&1?'#4dffa6':'#d6ffe9'; g.fillRect(px-3,py-3,6,6); }
   const D=derelict;
   if(D){ const[px,py]=toS(D.x,D.y);
     if(px>-60&&py>-60&&px<VW+60&&py<VH+60){
@@ -2561,13 +2574,13 @@ function drawWing(toS){
 
 // ---- sector flow: build it, play it, win it, chase the flagship out of it ----
 function startRun(){
-  score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; bossHP=46; hinted={}; ship.shield=0; escort=null;
+  score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; bossHP=46; hinted={}; escort=null;
   cine=null; document.body.classList.remove('cine'); commsReset();
   setupLevel(0);
   document.getElementById('overlay').classList.add('hidden');
   playCine(introShots(),()=>{ beginLevel(); fadeIn=45; VRAudio.play('play'); VRAudio.sfx.launch(); });
 }
-document.getElementById('o-btn').addEventListener('click', ()=>state==='failed'?retrySector():startRun());
+document.getElementById('o-btn').addEventListener('click', ()=>state==='failed'?retrySector():startRun());   // ('over' and 'win' start a new run)
 function setupLevel(i){   // the sector itself: backdrop, station, rocks, standing patrols
   level=i; LV=LEVELS[i]; quota=LV.quota;
   buildBackdrop(LV);
@@ -2576,7 +2589,7 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   outpost=makeOutpost(px,py); spawnPt={x:px,y:py+90};
   if(LV.horde){ outpost.alive=false; outpost.hp=0; outpost.none=true; }   // the Cradle: no station, the spot is just your jump point
   ship.x=spawnPt.x; ship.y=spawnPt.y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2;
-  ship.cool=0; ship.invuln=90; ship.alive=true;
+  ship.cool=0; ship.invuln=90; ship.alive=true; ship.suit=false; ship.r=7; finalDeath=false;
   bullets=[]; missiles=[]; particles=[]; efire=[]; shockwaves=[]; fireballs=[]; debris=[]; delayedBooms=[]; husks=[];
   boss=null; bossDead=false; bossFled=false; emissiles=[]; pdFlashes=[]; warpLines=[]; bossBanner=0;
   muzzles=[]; lights=[]; pops=[]; heat=0; lockT=0; lastShot=''; wreck=null; pod=null;
@@ -2607,7 +2620,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   const o=outpost.alive?{x:outpost.x,y:outpost.y+70}:spawnPt;
   let x=o.x, y=o.y;
   for(let k=0;k<12 && rocks.some(R=>Math.hypot(R.x-x,R.y-y)<R.r+30);k++){ x=o.x+rnd(-120,120); y=o.y+rnd(40,140); }
-  ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.shield=0;
+  ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.suit=false; ship.r=7;
   wreck=null; pod=null; state='play';
   efire=efire.filter(f=>Math.hypot(f.x-x,f.y-y)>260); emissiles=emissiles.filter(m=>Math.hypot(m.x-x,m.y-y)>360);
   // the launch fires a repulsor pulse, so reavers camping the launch point get shoved clear and lose their aim
@@ -2620,6 +2633,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   updateHUD();
 }
 function beginJump(next){   // hyperspace out of the sector: tally the bonuses on the way out
+  if(ship.suit){ ship.suit=false; ship.vx=ship.vy=0; }   // on EVA when the sector's done: the jump ship scoops you up
   jumpNext=next; state='winning'; winTimer=0;
   const sb=outpost.none?1500*LV.horde.length:outpost.alive?Math.round(outpost.hp*25):0, cb=1500*(level+1);   // (the Cradle pays for hordes instead)
   if(outpost.alive) postsSaved++;
@@ -3066,6 +3080,8 @@ function update(){
     if(stick.on && stick.mag>STICK_AIM){   // touch stick: swing the nose toward it, and burn once it's pushed hard and nearly lined up
       const df=((stick.ang-ship.a+Math.PI*3)%TAU)-Math.PI; ship.a+=clamp(df,-turn*1.25,turn*1.25);
       if(stick.mag>STICK_BURN && Math.abs(df)<1.1) thrustOn=true; }
+    if(ship.suit){ updateEVA(); }   // on EVA: one little thruster, no brakes, no guns
+    else {
     if(thrustOn){
       ship.vx+=Math.cos(ship.a)*0.11; ship.vy+=Math.sin(ship.a)*0.11;
       if(t%2===0) thrustPuff();
@@ -3092,6 +3108,7 @@ function update(){
     if(ship.invuln>0) ship.invuln--;
     if(firing) fire();
     if(TOUCH && t%5===0) tMissile.classList.toggle('cool', ship.cool>0 && lastShot==='rocket');   // the missile rack is reloading
+    }
     runT++;
   }
   if(state==='play') levelT++;
@@ -3122,13 +3139,14 @@ function update(){
       if(pod.t%32===16) VRAudio.sfx.beacon(pod.x,pod.y);   // the pod's rescue beacon
     }
     // staggered secondary blasts on the wreck
-    if(wreck && (deathTimer===16||deathTimer===34||deathTimer===52||deathTimer===68))
+    if(wreck && (deathTimer===12||deathTimer===24||deathTimer===36))
       boom(wreck.x+rnd(-9,9),wreck.y+rnd(-9,9),'small');
     // the reactor goes up
-    if(deathTimer===86 && wreck){ boom(wreck.x,wreck.y,'ship',14); wreck.fade=6; }   // and the wreck burns away inside it
+    if(deathTimer===46 && wreck){ boom(wreck.x,wreck.y,'ship',14); wreck.fade=6; }   // and the wreck burns away inside it
     if(wreck && wreck.fade && --wreck.fade<=0) wreck=null;
-    // a backup cutter launches; everything you've done in the sector still counts
-    if(deathTimer===165) respawn();
+    // the pilot is clear of the wreck: you're flying a space suit now, and it's a long way home
+    if(!finalDeath && deathTimer===54) startEVA();
+    if(finalDeath && deathTimer===200) gameOver();
   }
 
   for(const b of bullets){ b.x+=b.vx; b.y+=b.vy; b.life--; }
@@ -3726,15 +3744,91 @@ function boatAI(e){
   // they only cut and run if left alone a long while, or when there's nothing left to fight for
   if(e.age>=e.run || !ship.alive && e.age>60) e.flee=40;
 }
+// ---- EVA: your cutter is gone and you're in a space suit with one small thruster (no reverse, no guns). Get back to the
+// station (or, with no station, the jump-point beacon) and a new cutter launches. Get hit, or run out of air, and that's it. ----
+const O2_MAX=60*60, EVA_THRUST=.05, EVA_MAX=2.1;
+let finalDeath=false;
+function evaHome(){ return outpost && outpost.alive ? {x:outpost.x,y:outpost.y,r:outpost.r+22,name:LV.post} : {x:spawnPt.x,y:spawnPt.y,r:34,name:'the jump-point beacon'}; }
+function startEVA(){
+  const p=pod||{x:ship.x,y:ship.y,vx:0,vy:0};
+  Object.assign(ship,{suit:true,alive:true,r:4,x:p.x,y:p.y,vx:p.vx*.6,vy:p.vy*.6,invuln:90,o2:O2_MAX,cool:0,warned:false});   // (a small target)
+  const h=evaHome(); ship.a=Math.atan2(h.y-ship.y,h.x-ship.x);   // you come round facing home
+  pod=null; state='play'; showMap=false;
+  VRAudio.play(boss?'boss':'play');
+  alarmBanner('EJECTED · ON EVA','ONE THRUSTER · NO BRAKES · '+Math.round(O2_MAX/60)+'s OF AIR · FLY HOME TO '+h.name.toUpperCase(),220);
+  say('cmd','evaStart',{post:h.name},2);
+  updateHUD();
+}
+function updateEVA(){
+  revOn=false;
+  if(thrustOn){ ship.vx+=Math.cos(ship.a)*EVA_THRUST; ship.vy+=Math.sin(ship.a)*EVA_THRUST;
+    if(t%3===0){ const bk=ship.a+Math.PI; particles.push({x:ship.x+Math.cos(bk)*4,y:ship.y+Math.sin(bk)*4,vx:Math.cos(bk)*rnd(.6,1.2)+rnd(-.15,.15),vy:Math.sin(bk)*rnd(.6,1.2)+rnd(-.15,.15),life:rnd(8,14),max:14,col:'#d6fbff',r:1,grav:0}); } }
+  for(const p of planets){ const dx=p.x-ship.x, dy=p.y-ship.y, d=Math.hypot(dx,dy), reach=p.r*6;
+    if(d<reach && d>1){ const f=0.035*(1-d/reach)*(p.r/70); ship.vx+=dx/d*f; ship.vy+=dy/d*f; } }
+  ship.vx*=.998; ship.vy*=.998;   // almost nothing slows you down out here
+  const sp=Math.hypot(ship.vx,ship.vy); if(sp>EVA_MAX){ ship.vx*=EVA_MAX/sp; ship.vy*=EVA_MAX/sp; }
+  ship.x+=ship.vx; ship.y+=ship.vy;
+  if(ship.x<6){ship.x=6;ship.vx=Math.abs(ship.vx)*.4;} if(ship.x>WORLD-6){ship.x=WORLD-6;ship.vx=-Math.abs(ship.vx)*.4;}
+  if(ship.y<6){ship.y=6;ship.vy=Math.abs(ship.vy)*.4;} if(ship.y>WORLD-6){ship.y=WORLD-6;ship.vy=-Math.abs(ship.vy)*.4;}
+  if(ship.invuln>0) ship.invuln--;
+  // air: a warning at fifteen seconds, then a heartbeat of beeps
+  ship.o2--;
+  if(!ship.warned && ship.o2<=15*60){ ship.warned=true; say('cmd','evaLow',null,2); }
+  if(ship.o2<=10*60 && ship.o2%40===0) VRAudio.sfx.lock();
+  if(ship.o2<=0){ ship.invuln=0; killShip('air'); return; }
+  // home: touch the station (or the beacon) and a fresh cutter launches around you
+  const h=evaHome();
+  if(Math.hypot(ship.x-h.x,ship.y-h.y)<h.r){
+    ship.suit=false; addScore(250,ship.x,ship.y-14,'#4dffa6');
+    goodBanner('PILOT RECOVERED','+250 · BACKUP CUTTER LAUNCHING',170);
+    respawn(); }
+}
+function pilotLost(cause,by){   // no cutter, no suit: the run is over
+  lastCause=cause||'shot'; ship.alive=false; ship.suit=false; finalDeath=true;
+  state='dying'; deathTimer=0; wreck=null; pod=null;
+  for(let i=0;i<22;i++){ const a=rnd(0,TAU), s=rnd(.3,2.2); particles.push({x:ship.x,y:ship.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(30,70),max:70,col:Math.random()<.5?'#d6fbff':'#9fb6e0',r:rnd(1,2),grav:0}); }   // a burst of vented air
+  boom(ship.x,ship.y,'small',6); shake=Math.min(shake+6,26); flash=Math.max(flash,.25);
+  VRAudio.play(null,0,2); VRAudio.sfx.alarm();
+  comms.q=comms.q.filter(m=>m.pri>=2);
+  const who=by&&by.alien&&by.alive?by.alien:boss&&!boss.dying?'cerebrant':anyCaptain();
+  if(who && cause!=='air' && Math.random()<.8) say(who,'gloat');
+  say('cmd',cause==='air'?'evaAir':'evaLost',null,2);
+  updateHUD();
+}
+function gameOver(){   // LOST IN THE VOID: the run ends where you fell
+  state='over'; showMap=false; commsReset(); VRAudio.setEngine(false,false,0); VRAudio.jingle('lost','menu');
+  const record=score>bestScore;
+  if(record){ bestScore=score; try{ localStorage.setItem('vr-best-score',String(score)); }catch(e){} }
+  showBest();
+  const title=document.getElementById('o-title'); title.className='title dead'; title.textContent='LOST IN THE VOID';
+  document.getElementById('o-tag').textContent=(CAUSES[lastCause]||'Lost on EVA')+' · '+LV.name;
+  document.getElementById('o-brief').innerHTML=
+    `Your cutter went down and you didn't make it home.<br><br>`+
+    `Score <span class="mono">${score.toLocaleString('en-US')}</span>${record?' — <b>new high score!</b>':''} · reached sector <span class="mono">${level+1} of ${LEVELS.length}</span><br>`+
+    `Reavers destroyed <span class="mono">${kills}</span> · cutters lost <span class="mono">${deaths}</span><br><br>`+
+    `Next time: when you're on EVA, keep away from the fight and line up your burn. There are no brakes.`;
+  document.getElementById('o-btn').textContent='New Run';
+  document.getElementById('bestiary').style.display='none';
+  document.querySelector('.keys').style.display='none';
+  document.getElementById('overlay').classList.remove('hidden');
+}
+function drawAstronaut(px,py){
+  g.save(); g.translate(px,py); g.rotate(ship.a);
+  if(thrustOn){ g.fillStyle=(t>>1)&1?'#ffffff':'#9ff6ff'; g.fillRect(-7-rnd(0,3),-1,3,2); }   // the one thruster
+  g.fillStyle='#8a96aa'; g.fillRect(-5,-3,3,6);      // backpack
+  g.fillStyle='#e9f0fa'; g.fillRect(-2,-3,6,6);      // suit
+  g.fillStyle='#c7d2e2'; g.fillRect(-1,-4,3,1); g.fillRect(-1,3,3,1);   // arms
+  g.fillStyle='#ffb02a'; g.fillRect(3,-2,2,4);       // visor
+  g.fillStyle='#fff7d6'; g.fillRect(4,-2,1,1);
+  g.restore();
+  // air gauge under you
+  const f=clamp(ship.o2/O2_MAX,0,1), low=ship.o2<15*60;
+  g.fillStyle='rgba(5,8,18,.7)'; g.fillRect(px-11,py+9,22,3);
+  g.fillStyle=low?((t>>3)&1?'#ff4d6d':'#ffd0d6'):'#9ff6ff'; g.fillRect(px-10,py+10,Math.round(20*f),1);
+}
 function killShip(cause,by){
   if(!ship.alive)return;
-  if(ship.shield>0){   // a spare shield cell takes the hit instead, once
-    ship.shield=0; ship.invuln=70; flash=Math.max(flash,.15);
-    shockwaves.push({x:ship.x,y:ship.y,delay:0,r0:8,max:48,life:0,maxlife:24,col:'#9ff6ff'});
-    for(let i=0;i<14;i++){ const a=rnd(0,TAU), sp=rnd(1,3); particles.push({x:ship.x+Math.cos(a)*12,y:ship.y+Math.sin(a)*12,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rnd(12,24),max:24,col:'#9ff6ff',r:1,grav:0}); }
-    VRAudio.sfx.deflect(ship.x,ship.y); VRAudio.sfx.zap(ship.x,ship.y,true);
-    say('cmd','shieldPop',null,2); return;
-  }
+  if(ship.suit){ pilotLost(cause,by); return; }   // on EVA there's no backup: this is the end of the run
   lastCause=cause||'blast';
   ship.alive=false; deaths++;
   state='dying'; deathTimer=0;
@@ -3780,14 +3874,15 @@ function hudTick(){
   if(key!==hudKey){ hudKey=key; elM.level.textContent=lab; elM.count.textContent=cnt;
     elM.fill.style.transform=`scaleX(${clamp(fill,0,1).toFixed(3)})`; elM.ghost.style.transform=`scaleX(${clamp(ghost,0,1).toFixed(3)})`;
     elM.mark.style.left=(mark*100).toFixed(1)+'%'; elM.mark.style.display=mark>0?'block':'none'; elM.box.classList.toggle('boss',!!boss); }
-  // a spare shield cell shows in the weapon panel; the far objective gets its own row under the station
-  if(ship.shield!==lastShield){ lastShield=ship.shield;
-    elWarn.textContent=ship.shield?'◈ SHIELD CELL ONLINE · SOAKS ONE HIT':'⚠ SHIELDS OFFLINE · ONE HIT DOWNS YOU'; elWarn.classList.toggle('shielded',!!ship.shield); }
+  // the weapon panel's status line only shows up on EVA (no cutter, no guns); the far objective gets its own row under the station
+  const evaNow=!!(ship.suit&&ship.alive);
+  if(evaNow!==lastShield){ lastShield=evaNow;
+    elWarn.textContent=evaNow?'⚠ ON EVA · NO WEAPONS · FLY HOME':''; elWarn.style.display=evaNow?'':'none'; }
   let ot='', ov='', oc='';
   if(job){ const j=job;
     if(j.kind==='beacon'){ ot='Destroy the beacon · sector '+j.s; ov=fmtTime(Math.ceil(j.fuse/60)); oc='beacon'+(j.fuse<1200?' urgent':''); }
     else if(j.kind==='rescue'){ ot=j.free?'Escort the '+j.name+' home':'Rescue the '+j.name+' · sector '+j.s; ov=Math.ceil(j.hp/j.maxhp*100)+'%'; oc='rescue'+(!j.free&&j.hp<12?' urgent':''); }
-    else { ot='Shield cell · sector '+j.s+' · race them'; ov='◈'; oc='drop'; } }
+    else { ot='Repair crate · sector '+j.s+' · race them'; ov='◈'; oc='drop'; } }
   else if(fleet){ ot='The fleet is coming through'; ov=fleet.left+' more'; oc='beacon urgent'; }
   else if(horde && !levelDone){ const n=LV.horde.length;
     if(horde.rest>0 && horde.i<n){ ot=(horde.i?'Breather · horde ':'Horde ')+(horde.i+1)+' of '+n+' incoming'; ov=fmtTime(Math.ceil(horde.rest/60)); oc='drop'; }
@@ -3989,7 +4084,7 @@ function draw(){
   for(const f of muzzles){ const[px,py]=toS(f.x,f.y); glow(px,py,f.r*(.5+f.life/8),f.col,f.life/f.max); }
   for(const b of fireballs){ if(b.life<0) continue; const[px,py]=toS(b.x,b.y), pr=b.life/b.maxlife; glow(px,py,b.max*2.4,b.col,(1-pr)*.32); }
   for(const L of lights){ const[px,py]=toS(L.x,L.y), pr=L.life/L.max; glow(px,py,L.r*(.55+.45*pr),'#ff9a4a',(1-pr)*(1-pr)*.7); }
-  if(ship.alive && (state==='play'||state==='winning') && !(ship.invuln>0 && (t>>2)&1)){
+  if(ship.alive && !ship.suit && (state==='play'||state==='winning') && !(ship.invuln>0 && (t>>2)&1)){
     const[px,py]=toS(ship.x,ship.y), hot=thrustOn||state==='winning';
     glow(px-Math.cos(ship.a)*10,py-Math.sin(ship.a)*10,hot?15:6,'#43f0ff',hot?.5+Math.random()*.2:.22); }
   g.globalAlpha=1; g.globalCompositeOperation='source-over';
@@ -4011,13 +4106,19 @@ function draw(){
 
   if(flash>0){ g.fillStyle=`rgba(255,140,120,${flash*.55})`; g.fillRect(0,0,VW,VH); }
 
-  // cutter lost: what got you, while the backup spins up
-  if(state==='dying' && deathTimer>24){
-    g.globalAlpha=Math.min(1,(deathTimer-24)/20); g.textAlign='center';
-    g.fillStyle='#ff4d6d'; g.font='bold 18px monospace'; g.fillText('CUTTER LOST',VW/2,VH*.34);
+  // cutter lost: what got you, while the pilot punches out (or, on EVA, the end)
+  if(state==='dying' && (finalDeath ? deathTimer>20 : deathTimer>10)){
+    g.globalAlpha=Math.min(1,(deathTimer-10)/14); g.textAlign='center';
+    g.fillStyle='#ff4d6d'; g.font='bold 18px monospace'; g.fillText(finalDeath?'PILOT LOST':'CUTTER LOST',VW/2,VH*.34);
     g.fillStyle='#cfe3ff'; g.font='9px monospace';
-    g.fillText((CAUSES[lastCause]||CAUSES.blast).toUpperCase()+' · BACKUP CUTTER LAUNCHING',VW/2,VH*.34+16);
+    g.fillText((CAUSES[lastCause]||CAUSES.blast).toUpperCase()+(finalDeath?' · NO ONE IS COMING':' · EJECTING'),VW/2,VH*.34+16);
     g.globalAlpha=1; g.textAlign='left'; }
+  // on EVA: the air left, and which way home is
+  if(state==='play' && ship.suit && ship.alive){ const h=evaHome(), s=Math.ceil(ship.o2/60), low=s<=15;
+    g.textAlign='center'; g.font='bold 10px monospace';
+    g.fillStyle=low?((t>>3)&1?'#ff4d6d':'#ffd0d6'):'#9ff6ff';
+    g.fillText('EVA · AIR '+s+'s · '+Math.round(Math.hypot(h.x-ship.x,h.y-ship.y))+' m TO '+h.name.toUpperCase(),VW/2,VH-(TOUCH?78:40));
+    g.textAlign='left'; }
 
   // hyperspace jump (victory) — streaks race from the center, then white-out
   if(state==='winning'){
@@ -4126,6 +4227,7 @@ function drawIndicators(cx,cy){
   for(const R of rocks) if(R.threat) mark(R.x,R.y,'#ffb347',4,(t>>3)&1?.95:.5);
   if(job) mark(job.x,job.y,job.kind==='beacon'?'#ff4d6d':job.kind==='rescue'?'#4dffa6':'#43f0ff',job.kind==='beacon'?7:6,(t>>3)&1?1:.55);   // the far objective, always
   if(derelict) mark(derelict.x,derelict.y,(t>>3)&1?'#4dffa6':'#ffffff',6,1);   // the drifting fighter, always
+  if(ship.suit && ship.alive){ const h=evaHome(); mark(h.x,h.y,(t>>2)&1?'#4dffa6':'#ffffff',9,1); }   // on EVA: home, big and bright
   if(escort) mark(escort.x,escort.y,'#4dffa6',4,.7);
   g.globalAlpha=1;
 }
@@ -4227,7 +4329,7 @@ function drawPlanet(px,py,p){
     g.beginPath(); g.ellipse(0,0,r*1.7,r*1.7*p.ringTilt,0,-0.2,Math.PI+0.2); g.stroke(); g.restore(); }
 }
 
-function drawShip(px,py){ drawCutter(px,py,ship.a,thrustOn,revOn); }
+function drawShip(px,py){ if(ship.suit) drawAstronaut(px,py); else drawCutter(px,py,ship.a,thrustOn,revOn); }
 function drawCutter(px,py,a,thrust,rev){   // the Halcyon (also flown by cutscenes)
   g.save(); g.translate(px,py); g.rotate(a);
   // twin afterburner flames
@@ -4544,7 +4646,7 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
   job:job&&{kind:job.kind,x:job.x,y:job.y,hp:job.hp,fuse:job.fuse,free:job.free}, jobI, fleet:fleet&&fleet.left, alarm:alarm&&alarm.title, shield:ship.shield,
   chain:chain.length, chainRun, failT, retries, debris:debris.length, goodQ:goodQ.length, alarmGood:!!(alarm&&alarm.good), wingT,
   escort:escort&&{x:escort.x,y:escort.y,hp:escort.hp,tg:!!escort.tg}, derelict:derelict&&{x:derelict.x,y:derelict.y,hp:derelict.hp,prog:derelict.prog},
-  postGun:outpost&&outpost.gun,
+  postGun:outpost&&outpost.gun, suit:!!ship.suit, o2:ship.o2, finalDeath,
   husks:husks.map(h=>({type:h.type,x:h.x,y:h.y,t:h.t,hide:h.hide,frag:h.frag,beacon:!!h.beacon,hulk:h.hulk||null})),
   cores:fireballs.filter(b=>b.grow).map(b=>({x:b.x,y:b.y,max:b.max,life:b.life,maxlife:b.maxlife,grow:b.grow})),
   comms:comms.cur&&comms.cur.text, queue:comms.q.length, cine:cine&&{i:cine.i,n:cine.shots.length,lt:cine.lt,actors:cine.actors.length,cam:cine.cam}});

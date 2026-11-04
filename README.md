@@ -8,6 +8,8 @@ Open `void-reavers.html` in a browser.
 
 ## The campaign
 
+Your cutter has no shields, so one hit destroys it. You then eject in a space suit with a single thruster, no brakes and 60 seconds of air, and must fly back to the station for a new cutter. If you're hit or run out of air on the way, the run is over.
+
 There are four sectors. In the first three you defend a station from Reaver packs, stop beacon jobs before their 45-second fuse runs out, and fight off the clan flagship. The fourth sector, the Cradle, has no station: you survive three hordes and then face the flagship's last stand.
 
 ## On a phone
