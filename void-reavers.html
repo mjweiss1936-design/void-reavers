@@ -1708,10 +1708,10 @@ That's a chain reaction, Halcyon. Do it again.
 Packed tight and burned together. Ha!
 `),
 jolly:L(`
-Jolly boats! That splitter's crew is bailing out. Catch them for a bonus, or let them run.
-Escape boats off that splitter. They'll jump in a few seconds. Your call, Halcyon.
-Crew's abandoning ship! Those little boats are worth a few points if you're quick.
-Lifeboats. Unarmed. They glow before they jump, so that's your last chance.
+Jolly boats! That splitter's crew bailed out, and they're turning to fight!
+Escape boats off that splitter, and they're armed. Pea-shooters, but don't let them get lucky.
+Crew's abandoning ship! Those little boats are coming about. Swat them!
+Lifeboats with guns. Weak hulls, one hit each. Clean them up, Halcyon.
 `),
 hordeStart:L(`
 Horde inbound! {n} contacts, and every one of them is coming for you!
@@ -1990,7 +1990,7 @@ const TYPES = {
   splitter:   {r:17, hp:2, shield:false, speed:.35, fireGap:250, col:'#5fd06a', desc:'Its crew bail out in two jolly boats when it dies. Catch them for a bonus. Laser works.'},
   gunship:    {r:22, hp:3, shield:true,  speed:.22, fireGap:150, col:'#b06dc0', desc:'Shielded. Only a missile cracks it. Hits hard.'},
   warden:     {r:14, hp:2, shield:false, speed:.4,  fireGap:200, col:'#2fd3ff', pd:true, desc:'Point-defense frigate. Shoots your missiles out of the air — finish it with the laser.'},
-  jolly:      {r:6,  hp:1, shield:false, speed:2.1, fireGap:9999, col:'#ffb02a', desc:'A splitter crew\'s escape boat. Unarmed; it runs, then jumps clear.'}
+  jolly:      {r:6,  hp:1, shield:false, speed:2.1, fireGap:9999, col:'#ffb02a', desc:'A splitter crew\'s escape boat. Scatters from the blast, then turns and fights with a pea-shooter. One hit kills it.'}
 };
 
 function selectWeapon(w){
@@ -3432,7 +3432,7 @@ function splitOff(e){   // a splitter's crew bail out in two jolly boats: they r
   const base=rnd(0,TAU);
   for(let i=0;i<2;i++){ const a=base+i*Math.PI+rnd(-.5,.5);
     const c=makeEnemy('jolly', e.x+Math.cos(a)*e.r*.6, e.y+Math.sin(a)*e.r*.6, true, 'roam');
-    Object.assign(c,{boat:true, age:0, run:ri(170,230), head:a, a, spaced:false,
+    Object.assign(c,{boat:true, age:0, run:ri(1500,1800), head:a, a, spaced:false,
       vx:Math.cos(a)*2.8+(e.vx||0)*.4, vy:Math.sin(a)*2.8+(e.vy||0)*.4});
     enemies.push(c); }
   if(!hinted.jolly){ hinted.jolly=true; say('cmd','jolly'); }
@@ -3442,11 +3442,20 @@ function splitOff(e){   // a splitter's crew bail out in two jolly boats: they r
 // (the flee code takes it from there: it sits glowing for a moment — your last chance — then it's gone)
 function boatAI(e){
   e.age++;
-  const fx=e.x-ship.x, fy=e.y-ship.y;
-  if(ship.alive && fx*fx+fy*fy<420*420) e.head=Math.atan2(fy,fx);
-  const a=e.head+Math.sin(e.age*.13+e.wob)*.55;
+  const fx=e.x-ship.x, fy=e.y-ship.y, fd=Math.hypot(fx,fy)||1, fight=ship.alive && e.age>=40 && fd<900;
+  let a, top=e.speed;
+  if(fight){   // once clear of the blast the crew turn and fight: buzz around you at pea-shooter range, jinking
+    if(!e.turned){ e.turned=true; e.side=Math.random()<.5?1:-1; }
+    if(e.age%150===0 && Math.random()<.4) e.side*=-1;
+    const want=170, r=(fd-want)/want;   // pull in when far, back off when close, circle in between
+    a=Math.atan2(-fy,-fx)+e.side*Math.PI/2*(1-clamp(r,-1,1)) + Math.sin(e.age*.11+e.wob)*.35;
+    top=1.55;
+  } else {
+    if(ship.alive && fd<420) e.head=Math.atan2(fy,fx);
+    a=e.head+Math.sin(e.age*.13+e.wob)*.55;
+  }
   e.vx+=Math.cos(a)*.1; e.vy+=Math.sin(a)*.1;
-  const s=Math.hypot(e.vx,e.vy); if(s>e.speed){ const k=Math.max(e.speed,s*.985)/s; e.vx*=k; e.vy*=k; }   // the launch kick bleeds off
+  const s=Math.hypot(e.vx,e.vy); if(s>top){ const k=Math.max(top,s*.985)/s; e.vx*=k; e.vy*=k; }   // the launch kick bleeds off
   for(const R of rocks){ const rx=e.x-R.x, ry=e.y-R.y, rr=R.r+e.r+14, d2=rx*rx+ry*ry;
     if(d2<rr*rr){ const d=Math.sqrt(d2)||1, k=(rr-d)/rr*.3; e.vx+=rx/d*k; e.vy+=ry/d*k;
       if(d<R.r+e.r){ e.x=R.x+rx/d*(R.r+e.r); e.y=R.y+ry/d*(R.r+e.r); } } }
@@ -3456,7 +3465,16 @@ function boatAI(e){
   e.a+=clamp(((Math.atan2(e.vy,e.vx)-e.a+Math.PI*3)%TAU)-Math.PI,-.25,.25);
   if(e.age%3===0) particles.push({x:e.x-Math.cos(e.a)*7,y:e.y-Math.sin(e.a)*7,vx:-Math.cos(e.a)*.6+rnd(-.2,.2),vy:-Math.sin(e.a)*.6+rnd(-.2,.2),
     life:rnd(8,14),max:14,col:Math.random()<.5?'#d8ff9a':'#ffb02a',r:1,grav:0});   // sputtering thruster
-  if(e.age>=e.run) e.flee=40;
+  // pea-shooter: small, slow amber shots, a long gap between them
+  if(e.boatGun==null) e.boatGun=ri(20,45);
+  if(fight && --e.boatGun<=0){
+    if(fd<330){ const sa=Math.atan2(-fy,-fx)+rnd(-.14,.14), bs=2.1;
+      efire.push({x:e.x+Math.cos(sa)*e.r,y:e.y+Math.sin(sa)*e.r,vx:Math.cos(sa)*bs,vy:Math.sin(sa)*bs,life:120,dmg:1,src:e,pea:true});
+      muzzles.push({x:e.x+Math.cos(sa)*e.r,y:e.y+Math.sin(sa)*e.r,life:3,max:3,r:5,col:'#ffb02a'});
+      VRAudio.sfx.eshot(e.x,e.y,false); e.boatGun=Math.round(ri(65,95)*aggroMul()); }
+    else e.boatGun=10; }
+  // they only cut and run if left alone a long while, or when there's nothing left to fight for
+  if(e.age>=e.run || !ship.alive && e.age>60) e.flee=40;
 }
 function killShip(cause,by){
   if(!ship.alive)return;
@@ -3619,6 +3637,8 @@ function draw(){
 
   // enemy fire — bright glowing tracer with a hot core, unmistakable against the dust
   for(const f of efire){ const[px,py]=toS(f.x,f.y);
+    if(f.pea){ g.globalAlpha=.45; g.fillStyle='#ffb02a'; g.fillRect(px-3,py-3,6,6);   // a jolly boat's pea-shot: small amber bead
+      g.globalAlpha=1; g.fillStyle='#ffe2a0'; g.fillRect(px-1.5,py-1.5,3,3); continue; }
     g.save(); g.translate(px,py); g.rotate(Math.atan2(f.vy,f.vx));
     g.globalAlpha=.4; g.fillStyle='#ff3b5c'; g.fillRect(-5,-4,12,8);   // halo
     g.globalAlpha=1;  g.fillStyle='#ff2a4a'; g.fillRect(-4,-2,9,4);    // body
@@ -3708,7 +3728,7 @@ function draw(){
     glow(sx,sy,16,outpost.alive?'#4dffa6':'#ff6a3d',outpost.alive?.2+.08*Math.sin(t*.08):.3*((t>>2)&1));
     if(outpost.hit>0) glow(sx,sy,outpost.r*1.5,'#9ff6ff',outpost.hit/8*.35); }
   for(const R of rocks) if(R.flash>0){ const[px,py]=toS(R.x,R.y); glow(px,py,R.r*1.1,'#ffe8c8',R.flash/5*.35); }
-  for(const f of efire){ const[px,py]=toS(f.x,f.y); glow(px,py,9,'#ff2a4a',.5); }
+  for(const f of efire){ const[px,py]=toS(f.x,f.y); if(f.pea) glow(px,py,6,'#ffb02a',.45); else glow(px,py,9,'#ff2a4a',.5); }
   for(const b of bullets){ const[px,py]=toS(b.x,b.y); glow(px,py,6,'#43f0ff',.55); }
   for(const m of missiles){ const[px,py]=toS(m.x,m.y); glow(px,py,8,'#ffb347',.55); }
   for(const m of emissiles){ const[px,py]=toS(m.x,m.y); glow(px,py,11,'#ff6a3d',.6); }
@@ -4252,7 +4272,7 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
   ship:{x:ship.x,y:ship.y,vx:ship.vx,vy:ship.vy,a:ship.a,alive:ship.alive,invuln:ship.invuln,cool:ship.cool,weapon:ship.weapon},
   enemies:enemies.filter(e=>e.alive).map(e=>({type:e.type,x:e.x,y:e.y,vx:e.vx,vy:e.vy,r:e.r,shield:e.shield,warp:e.warp,flee:e.flee,goal:e.goal,alien:e.alien})),
   rocks:rocks.map(R=>({x:R.x,y:R.y,vx:R.vx,vy:R.vy,r:R.r,size:R.size,threat:R.threat})),
-  efire:efire.map(f=>({x:f.x,y:f.y,vx:f.vx,vy:f.vy})), emissiles:emissiles.map(m=>({x:m.x,y:m.y,vx:m.vx,vy:m.vy})),
+  efire:efire.map(f=>({x:f.x,y:f.y,vx:f.vx,vy:f.vy,pea:!!f.pea})), emissiles:emissiles.map(m=>({x:m.x,y:m.y,vx:m.vx,vy:m.vy})),
   boss:boss&&{x:boss.x,y:boss.y,vx:boss.vx,vy:boss.vy,hp:boss.hp,r:boss.r,warp:boss.warp,flee:boss.flee,fleeAt:boss.fleeAt},
   post:outpost&&{x:outpost.x,y:outpost.y,r:outpost.r,hp:outpost.hp,alive:outpost.alive},
   burning:burning.map(b=>({x:b.x,y:b.y,t:b.t,alien:b.alien})), talker:comms.cur&&comms.cur.who,
