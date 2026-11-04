@@ -281,6 +281,7 @@
 
 <div id="overlay" class="overlay">
   <div class="card">
+    <img id="o-skull" alt="" style="display:none; width:162px; height:150px; margin:0 auto 14px; image-rendering:pixelated; filter:drop-shadow(0 0 14px rgba(255,77,109,.55))">
     <h1 class="title" id="o-title">VOID REAVERS</h1>
     <p class="tag" id="o-tag">Frontier Patrol · Sector Theta-9</p>
     <p class="best" id="o-best"></p>
@@ -1338,6 +1339,26 @@ Ha! Your ship burns so pretty.
 That is what happens in our sector.
 And they call you a patrol? Ha!
 `),
+scramble:L(`
+{post} scrambling fighters! Three Lancers launching. We'll hold the station; you hunt!
+Red alert on {post}! All Lancers, launch, launch, launch!
+That's a whole fleet. {post} is putting up its Lancers. Three birds in the air.
+`),
+lancerDown:L(`
+Lancer down! Two left... no, check that. We're thinning out.
+We've lost a Lancer! Keep them off the station!
+Another Lancer gone. They're paying for every one.
+`),
+lancersGone:L(`
+That's the last of our Lancers. It's all on you now, Halcyon.
+All Lancers lost. {post} is naked out here.
+`),
+bayLaunch:L(`
+Welcome home, pilot. Bay two, cutter's on the rail. Clamps locked... and away you go!
+Got you aboard! Fresh cutter, full rack. Catapult's charging. Hang on to something.
+Pilot recovered! Strapping you in. Bay doors opening. Go get them.
+That was a long walk home, Halcyon. Your new ride's on the rail. Launching!
+`),
 respawn:L(`
 Back in the fight.
 Okay. Round two.
@@ -1983,6 +2004,7 @@ window.addEventListener('keydown', e=>{
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   keys[k]=true;
   if(e.repeat) return;   // held keys auto-repeat: don't let a held fire button skip the end screen
+  if(state==='launch'){ if(k===' '||k==='enter'||k==='escape') endLaunch(); return; }   // skip the launch bay
   if(state==='cine'){   // cutscenes: Space moves the dialogue on, Enter or Esc skips the scene
     if(k===' ') commsSkip(); else if(k==='enter'||k==='escape') skipCine(); else if(k==='n') toggleMusic(); else if(k==='v') toggleSfx();
     return; }
@@ -2049,7 +2071,7 @@ const tMissile=document.getElementById('t-missile');
 holdPad('t-brake',  v=>keys['arrowdown']=v);
 holdPad('t-map',    v=>{ if(v) toggleMap(); });
 // cutscenes: a tap anywhere moves the dialogue on
-cv.addEventListener('pointerdown',()=>{ if(TOUCH && state==='cine') commsSkip(); });
+cv.addEventListener('pointerdown',()=>{ if(state==='launch') endLaunch(); else if(TOUCH && state==='cine') commsSkip(); });
 // a phone turned to portrait mid-fight pauses (the rotate screen covers it)
 function orientCheck(){ if(TOUCH && innerHeight>innerWidth && state==='play' && !paused) setPause(true); }
 window.addEventListener('resize',()=>{ orientCheck(); if(TOUCH && !stick.on) stickRest(); });
@@ -2289,6 +2311,7 @@ function fleetArrives(f){   // too late: the beacon burns out and the clan pours
   VRAudio.sfx.klaxon(); flash=Math.max(flash,.45); shake=Math.min(26,shake+10);
   alarmBanner('THE FLEET IS HERE',LV.fleet+' REAVERS INBOUND · ALL OF THEM ON THE QUOTA',320);
   say('cmd','fleet',null,2); const a=anyCaptain(); say(a||pickCaptain(),'fleetTaunt',null,2);
+  scrambleLancers();
 }
 function updateFleet(){   // ten at a time, a couple of seconds apart: half on the station, half on you
   if(!fleet || --fleet.t>0) return;
@@ -2503,50 +2526,81 @@ function updateWing(){
     for(const f of efire){ if(f.life>0 && (f.x-D.x)**2+(f.y-D.y)**2<(D.r+2)**2){ f.life=0; D.hp--; D.hit=6; sparks(f.x,f.y); } }
     if(D.hp<=0){ boom(D.x,D.y,'big',12); derelict=null; wingT=ri(2400,3600); say('cmd','derelictLost',null,2); }
     else if(D.prog>=RESCUE_T){   // her reactor catches: she's yours
-      escort={x:D.x,y:D.y,vx:D.vx,vy:D.vy,a:D.a,hp:WING_HP,cool:40,hit:0,side:Math.random()<.5?1:-1,tg:null,thrust:false};
+      escort={x:D.x,y:D.y,vx:D.vx,vy:D.vy,a:D.a,hp:WING_HP,cool:40,hit:0,side:Math.random()<.5?1:-1,tg:null,thrust:false,tick:0};
       derelict=null; addScore(500,D.x,D.y-20,'#4dffa6');
       shockwaves.push({x:D.x,y:D.y,delay:0,r0:4,max:70,life:0,maxlife:28,col:'#4dffa6'});
       goodBanner('ESCORT JOINED','+500 · KITE FLIES ON YOUR WING UNTIL SHE GOES DOWN');
       say('wing','wingJoin',null,2);
     }
   }
-  const E=escort; if(!E) return;
+  if(escort && !flyFighter(escort,ship,'kite')){ const E=escort; escort=null;
+    say('wing','wingDown',null,2); alarmBanner('ESCORT DOWN','KITE PUNCHED OUT · ANOTHER DRIFTER MAY TURN UP',150);
+    wingT=ri(2400,3600); }
+  // the station's scrambled fighters
+  if(scrambleT>0 && --scrambleT===0) launchLancers();
+  for(let i=lancers.length-1;i>=0;i--) if(!flyFighter(lancers[i],outpost,'lancer')){ lancers.splice(i,1);
+    say('post',lancers.length?'lancerDown':'lancersGone',null,1); }
+}
+// one allied fighter's brain: pick the nearest reaver near whatever it guards (you, or the station), strafe it at ~150 px,
+// and otherwise hold formation. Returns false the frame it's shot down.
+function flyFighter(E,guard,kind){
+  const lancer=kind==='lancer', reach=lancer?560:420, leashMax=lancer?900:700;
   if(E.hit>0) E.hit--; if(E.cool>0) E.cool--;
-  // pick a fight: the nearest reaver near you (or near her), otherwise hold formation off your wing
-  if(t%10===0){ E.tg=null; let bd=420*420;
+  if(t%10===E.tick){ E.tg=null; let bd=reach*reach;
     for(const e of enemies){ if(!e.alive || e.warp>0) continue;
-      const d=Math.min((e.x-E.x)**2+(e.y-E.y)**2,(e.x-ship.x)**2+(e.y-ship.y)**2); if(d<bd){ bd=d; E.tg=e; } } }
+      const d=Math.min((e.x-E.x)**2+(e.y-E.y)**2,(e.x-guard.x)**2+(e.y-guard.y)**2); if(d<bd){ bd=d; E.tg=e; } } }
   if(E.tg && !E.tg.alive) E.tg=null;
-  const leash=Math.hypot(ship.x-E.x,ship.y-E.y);
+  const leash=Math.hypot(guard.x-E.x,guard.y-E.y);
   let gx,gy,top;
-  if(E.tg && leash<700){ const e=E.tg, ox=E.x-e.x, oy=E.y-e.y, d=Math.hypot(ox,oy)||1;   // strafe at ~150, circling
-    const ang=Math.atan2(oy,ox)+E.side*.9; gx=e.x+Math.cos(ang)*150; gy=e.y+Math.sin(ang)*150; top=4.2;
+  if(E.tg && leash<leashMax){ const e=E.tg, ox=E.x-e.x, oy=E.y-e.y;   // strafe at ~150, circling
+    const ang=Math.atan2(oy,ox)+E.side*.9; gx=e.x+Math.cos(ang)*150; gy=e.y+Math.sin(ang)*150; top=lancer?3.8:4.2;
     if(t%200===0 && Math.random()<.4) E.side*=-1; }
+  else if(lancer){ const fa=t*.012+E.slot*TAU/3; gx=guard.x+Math.cos(fa)*110; gy=guard.y+Math.sin(fa)*110; top=leash>300?5:2.2; }   // a combat patrol around the station
   else { const fa=ship.a+Math.PI*.75*E.side; gx=ship.x+Math.cos(fa)*48; gy=ship.y+Math.sin(fa)*48; top=leash>300?6:Math.max(1.2,Math.hypot(ship.vx,ship.vy)+1.4); }
   const dx=gx-E.x, dy=gy-E.y, dd=Math.hypot(dx,dy)||1, want=Math.min(top,dd*.06);
   E.vx+=(dx/dd*want-E.vx)*.08; E.vy+=(dy/dd*want-E.vy)*.08;
   for(const R of rocks){ const rx=E.x-R.x, ry=E.y-R.y, rr=R.r+22, d2=rx*rx+ry*ry;
     if(d2<rr*rr){ const d=Math.sqrt(d2)||1, k=(rr-d)/rr*.4; E.vx+=rx/d*k; E.vy+=ry/d*k; } }
   E.x=clamp(E.x+E.vx,10,WORLD-10); E.y=clamp(E.y+E.vy,10,WORLD-10);
-  const face=E.tg?Math.atan2(E.tg.y-E.y,E.tg.x-E.x):(Math.hypot(E.vx,E.vy)>.6?Math.atan2(E.vy,E.vx):ship.a);
+  const face=E.tg?Math.atan2(E.tg.y-E.y,E.tg.x-E.x):(Math.hypot(E.vx,E.vy)>.6?Math.atan2(E.vy,E.vx):E.a);
   E.a+=clamp(((face-E.a+Math.PI*3)%TAU)-Math.PI,-.12,.12);
   E.thrust=Math.hypot(E.vx,E.vy)>1.2;
-  // guns: a short burst of the same cyan laser you fly with, once she's lined up
+  // guns: a short burst of cyan laser once lined up
   if(E.tg && E.cool<=0 && state==='play'){ const e=E.tg, d=Math.hypot(e.x-E.x,e.y-E.y),
       off=Math.abs(((Math.atan2(e.y-E.y,e.x-E.x)-E.a+Math.PI*3)%TAU)-Math.PI);
     if(d<340 && off<.25){ const a=E.a+rnd(-.04,.04);
       bullets.push({x:E.x+Math.cos(a)*9,y:E.y+Math.sin(a)*9,vx:E.vx+Math.cos(a)*7.8,vy:E.vy+Math.sin(a)*7.8,life:56,wing:true});
       VRAudio.sfx.zap(E.x,E.y,false); E.cool=ri(18,26); } }
-  // she can be hurt: enemy fire, missiles and rams all chip her hull
+  // it can be hurt: enemy fire, missiles and rams all chip the hull
   const hurt=(n,x,y)=>{ E.hp-=n; E.hit=8; sparks(x,y); VRAudio.sfx.clank(x,y);
-    if(E.hp>0 && cool('wingHit',500)) say('wing','wingHit'); };
+    if(!lancer && E.hp>0 && cool('wingHit',500)) say('wing','wingHit'); };
   for(const f of efire){ if(f.life>0 && (f.x-E.x)**2+(f.y-E.y)**2<12*12){ f.life=0; hurt(1,f.x,f.y); } }
   for(const m of emissiles){ if(m.life>0 && (m.x-E.x)**2+(m.y-E.y)**2<14*14){ m.life=0; boom(m.x,m.y,'small'); hurt(2,m.x,m.y); } }
   for(const e of enemies){ if(e.alive && e.warp<=0 && (e.x-E.x)**2+(e.y-E.y)**2<(e.r+8)**2){ hurt(e.boat?0:1,E.x,E.y); kill(e); } }
-  if(E.hp<=0){ escort=null; boom(E.x,E.y,'big',12);
-    spawnFragments(E.x,E.y,{type:'kite',r:8,vx:E.vx,vy:E.vy},4);
-    say('wing','wingDown',null,2); alarmBanner('ESCORT DOWN','KITE PUNCHED OUT · ANOTHER DRIFTER MAY TURN UP',150);
-    wingT=ri(2400,3600); }
+  if(E.hp<=0){ boom(E.x,E.y,'big',12); spawnFragments(E.x,E.y,{type:'kite',r:8,vx:E.vx,vy:E.vy},4); return false; }
+  return true;
+}
+// the beacon's fleet came through: the station scrambles its three Lancers (once a sector)
+let lancers=[], scrambled=false, scrambleT=0;
+const LANCER_HP=3;
+function scrambleLancers(){
+  if(scrambled || !outpost || !outpost.alive || outpost.none) return;
+  scrambled=true; scrambleT=90;
+  say('post','scramble',{post:LV.post},2);
+}
+function launchLancers(){
+  if(!outpost.alive) return;
+  for(let i=0;i<3;i++){ const a=-Math.PI/2+(i-1)*.7;
+    lancers.push({x:outpost.x+Math.cos(a)*outpost.r,y:outpost.y+Math.sin(a)*outpost.r,vx:Math.cos(a)*3.5,vy:Math.sin(a)*3.5,a,hp:LANCER_HP,cool:30+i*8,hit:0,
+      side:i%2?1:-1,tg:null,thrust:true,slot:i,tick:(i*3)%10}); }
+  shockwaves.push({x:outpost.x,y:outpost.y,delay:0,r0:outpost.r,max:outpost.r+60,life:0,maxlife:26,col:'#ffb347'});
+  VRAudio.sfx.launch();
+  goodBanner('STATION SCRAMBLES FIGHTERS','THREE LANCERS LAUNCHING FROM '+LV.post.toUpperCase()+' · THEY GUARD THE STATION',200);
+}
+function drawFighter(px,py,E,filter,max,col){
+  g.save(); g.filter=filter; g.translate(px,py); g.scale(.85,.85); drawCutter(0,0,E.a,E.thrust,false); g.restore();
+  if(E.hit>0){ g.fillStyle=`rgba(255,120,120,${E.hit/10})`; g.fillRect(px-6,py-6,12,12); }
+  for(let i=0;i<max;i++){ g.fillStyle=i<E.hp?col:col+'33'; g.fillRect(px-7+i*4,py+13,3,2); }   // hull, in pips
 }
 function drawWing(toS){
   if(ship.suit && !(outpost && outpost.alive)){ const[px,py]=toS(spawnPt.x,spawnPt.y);   // no station: the jump-point recovery beacon
@@ -2563,19 +2617,15 @@ function drawWing(toS){
       g.beginPath(); g.arc(px,py,70,0,TAU); g.stroke(); g.globalAlpha=1;   // get inside this ring
       if(D.prog>0){ g.lineWidth=3; g.strokeStyle='#4dffa6'; g.beginPath(); g.arc(px,py,18,-Math.PI/2,-Math.PI/2+TAU*D.prog/RESCUE_T); g.stroke(); g.lineWidth=1; }
     } }
-  const E=escort;
-  if(E){ const[px,py]=toS(E.x,E.y);
-    if(px>-60&&py>-60&&px<VW+60&&py<VH+60){
-      g.save(); g.filter='hue-rotate(-50deg) saturate(1.3)'; g.translate(px,py); g.scale(.85,.85);
-      drawCutter(0,0,E.a,E.thrust,false); g.restore();
-      if(E.hit>0){ g.fillStyle=`rgba(255,120,120,${E.hit/10})`; g.fillRect(px-6,py-6,12,12); }
-      for(let i=0;i<WING_HP;i++){ g.fillStyle=i<E.hp?'#4dffa6':'rgba(77,255,166,.2)'; g.fillRect(px-7+i*4,py+13,3,2); }   // her hull, in pips
-    } }
+  const on=(x,y)=>{ const p=toS(x,y); return p[0]>-60&&p[1]>-60&&p[0]<VW+60&&p[1]<VH+60?p:null; };
+  if(escort){ const p=on(escort.x,escort.y); if(p) drawFighter(p[0],p[1],escort,'hue-rotate(-50deg) saturate(1.3)',WING_HP,'#4dffa6'); }
+  for(const L of lancers){ const p=on(L.x,L.y); if(p) drawFighter(p[0],p[1],L,'hue-rotate(160deg) saturate(1.5)',LANCER_HP,'#ffb347'); }   // the station's Lancers: amber
 }
 
 // ---- sector flow: build it, play it, win it, chase the flagship out of it ----
 function startRun(){
   score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; bossHP=46; hinted={}; escort=null;
+  document.getElementById('o-skull').style.display='none';
   cine=null; document.body.classList.remove('cine'); commsReset();
   setupLevel(0);
   document.getElementById('overlay').classList.add('hidden');
@@ -2600,6 +2650,7 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   job=null; jobI=0; jobWait=0; alarm=null; goodQ=[]; fleet=null; chain=[]; chainRun=0;
   horde=LV.horde?{i:0,left:0,t:0,rest:300}:null;
   derelict=null; wingT=ri(1500,2700);   // a disabled fighter turns up somewhere in the sector after a while
+  lancers=[]; scrambled=false; scrambleT=0;   // the station's fighters: one scramble per sector
   if(escort) Object.assign(escort,{x:ship.x-46,y:ship.y+34,vx:0,vy:0,a:-Math.PI/2,cool:60});   // your escort jumps in with you
   failT=0; levelStart={score,kills,bossHP};
   waveT=ri(420,600); rogueT=ri(LV.rogue[0]*.5,LV.rogue[0]);
@@ -3076,6 +3127,7 @@ function update(){
   if(shake>0) shake*=0.87;
   if(fadeIn>0) fadeIn--;
   if(state==='cine'){ cineTick(); commsTick(); updateFX(); VRAudio.listen(camX+VW/2,camY+VH/2); return; }   // a cutscene runs the show
+  if(state==='launch'){ launchTick(); commsTick(); return; }   // in the launch bay: the sector waits for you
 
   thrustOn=false; revOn=false;
   if((state==='play'||state==='winning') && ship.alive){
@@ -3801,8 +3853,78 @@ function updateEVA(){
   const h=evaHome();
   if(Math.hypot(ship.x-h.x,ship.y-h.y)<h.r){
     ship.suit=false; addScore(250,ship.x,ship.y-14,'#4dffa6');
-    goodBanner('PILOT RECOVERED','+250 · BACKUP CUTTER LAUNCHING',170);
-    respawn(); }
+    startLaunch(); }
+}
+// ---- back in a cutter: a first-person launch down the station's bay — the catapult creeps, kicks, the doors open, and you're out ----
+const LAUNCH_LEN=190;
+let launchT=0;
+const bayStars=Array.from({length:140},()=>({x:rnd(-1,1),y:rnd(-1,1),z:rnd(.2,1),c:Math.random()<.15?'#ffd6a8':'#dcefff'}));
+function startLaunch(){
+  state='launch'; launchT=0; showMap=false; VRAudio.setEngine(false,false,0);
+  if(alarm && /EVA/.test(alarm.title)) alarm=null;   // the eject warning is old news
+  comms.q=comms.q.filter(m=>m.pri>=2); say('post','bayLaunch',null,2);
+}
+function launchTick(){ launchT++;
+  if(launchT===8) VRAudio.sfx.clank(ship.x,ship.y);   // clamps lock on
+  if(launchT===62) VRAudio.sfx.ready();                 // catapult charged
+  if(launchT===74) VRAudio.sfx.launch();                // and it fires
+  if(launchT>=LAUNCH_LEN) endLaunch(); }
+function endLaunch(){ if(state!=='launch') return;
+  respawn(); fadeIn=26;
+  goodBanner('BACK IN THE FIGHT','PILOT RECOVERED · +250 · FRESH CUTTER, FULL MISSILE RACK',170); }
+function drawLaunch(){
+  const T=launchT, cx=VW/2, cy=VH*.45, F=VW*.42;
+  // how far down the bay you've come: a slow creep onto the rail, then the catapult throws you
+  const run=T<74 ? T*.0035 : .26+Math.pow((T-74)/38,2)*2.6, ZD=4.2, zd=ZD-run, open=clamp((T-30)/50,0,1);
+  const P=(x,y,z)=>[cx+x*F/z, cy+y*F/z];
+  g.fillStyle='#04050b'; g.fillRect(0,0,VW,VH);
+  if(zd>.16){
+    // the open doors: space beyond, with the stars sliding as you close on them
+    const [dl,dt]=P(-1,-.6,zd), [dr,db]=P(1,.6,zd), gap=(dr-dl)/2*open;
+    g.save(); g.beginPath(); g.rect(cx-gap,dt,gap*2,db-dt); g.clip();
+    g.fillStyle='#02030a'; g.fillRect(cx-gap,dt,gap*2,db-dt);
+    for(const s of bayStars){ const px=cx+s.x*(dr-dl)*.9, py=cy+s.y*(db-dt)*.9; g.fillStyle=s.c; g.globalAlpha=s.z; g.fillRect(px|0,py|0,1,1); }
+    g.globalAlpha=1; g.restore();
+    // the door halves, hazard-striped, sliding apart
+    for(const side of [-1,1]){ const x0=side<0?dl:cx+gap, x1=side<0?cx-gap:dr;
+      if(x1-x0<1) continue; g.fillStyle='#2a3142'; g.fillRect(x0,dt,x1-x0,db-dt);
+      g.save(); g.beginPath(); g.rect(x0,dt,x1-x0,db-dt); g.clip(); g.fillStyle='#d9a400';
+      const st=Math.max(4,(db-dt)/8); for(let y=dt-st*2;y<db;y+=st*2){ g.beginPath(); g.moveTo(side<0?x1-st:x0,y); g.lineTo(side<0?x1:x0+st,y); g.lineTo(side<0?x1:x0+st,y+st); g.lineTo(side<0?x1-st:x0,y+st*2); g.closePath(); g.fill(); }
+      g.restore(); }
+    // the bay's ribs rushing past: steel frames with strip lights, closer ones brighter
+    for(let i=12;i>=0;i--){ const z=(i*.35)+.35-(run%.35); if(z>=zd || z<.12) continue;
+      const [l,tp]=P(-1,-.6,z), [r,bt]=P(1,.6,z), a=clamp(1.4-z/ZD*1.3,0,1);
+      g.globalAlpha=a; g.strokeStyle='#3d4a63'; g.lineWidth=Math.max(1,F/z*.04); g.strokeRect(l,tp,r-l,bt-tp);
+      const lit=((i+Math.floor(run/.35))%2)?'#43f0ff':'#ffb347', ls=Math.max(1,F/z*.03);
+      g.fillStyle=lit; g.fillRect(l,cy-ls,ls*1.5,ls*2); g.fillRect(r-ls*1.5,cy-ls,ls*1.5,ls*2);   // side strip lights
+      g.fillStyle='#ff4d6d'; if(((T>>3)+i)&1) g.fillRect(cx-ls,bt-ls*1.5,ls*2,ls*1.2); }       // the rail's warning lamps
+    g.globalAlpha=1;
+    // the launch rail running down the floor to the doors
+    const [rl0,rb0]=P(-.08,.6,.2), [rr0]=P(.08,.6,.2), [rl1,rb1]=P(-.08,.6,zd), [rr1]=P(.08,.6,zd);
+    g.fillStyle='#1a2030'; g.beginPath(); g.moveTo(rl0,rb0); g.lineTo(rr0,rb0); g.lineTo(rr1,rb1); g.lineTo(rl1,rb1); g.closePath(); g.fill();
+  } else {
+    // out: the stars streak past, then settle
+    const k=clamp((T-120)/50,0,1), len=(1-k)*40+2;
+    for(const s of bayStars){ const px=cx+s.x*VW*.6, py=cy+s.y*VH*.6, dx=px-cx, dy=py-cy, d=Math.hypot(dx,dy)||1;
+      g.strokeStyle=s.c; g.globalAlpha=s.z; g.lineWidth=1; g.beginPath(); g.moveTo(px,py); g.lineTo(px+dx/d*len*s.z,py+dy/d*len*s.z); g.stroke(); }
+    g.globalAlpha=1;
+  }
+  if(T>=108 && T<120){ g.fillStyle=`rgba(220,250,255,${(1-(T-108)/12)*.7})`; g.fillRect(0,0,VW,VH); }   // the flash as you clear the doors
+  // your cockpit: canopy struts, the dash, and its little screens
+  g.fillStyle='#0b0f1a';
+  g.beginPath(); g.moveTo(0,VH); g.lineTo(0,VH*.08); g.lineTo(VW*.07,0); g.lineTo(VW*.13,0); g.lineTo(VW*.2,VH*.72); g.lineTo(VW*.8,VH*.72); g.lineTo(VW*.87,0); g.lineTo(VW*.93,0); g.lineTo(VW,VH*.08); g.lineTo(VW,VH); g.closePath(); g.fill();
+  g.fillStyle='#141b2c'; g.fillRect(VW*.2,VH*.72,VW*.6,VH*.28);
+  g.fillStyle='#223149'; g.fillRect(VW*.2,VH*.72,VW*.6,2);
+  const scr=(x,w,col,lines)=>{ const y=VH*.77, h=VH*.15; g.fillStyle='#03060c'; g.fillRect(x,y,w,h); g.strokeStyle=col; g.globalAlpha=.6; g.strokeRect(x+.5,y+.5,w-1,h-1); g.globalAlpha=1;
+    g.fillStyle=col; g.font='8px monospace'; g.textAlign='left'; lines.forEach((s,i)=>g.fillText(s,x+5,y+12+i*10)); };
+  scr(VW*.23,VW*.16,'#4dffa6',['BAY 2 · RAIL',T<62?'CLAMPS LOCKED':T<74?'CATAPULT ARMED':'LAUNCH',T<74?'■'.repeat(1+(T>>3)%8):'▶▶▶']);
+  scr(VW*.42,VW*.16,'#43f0ff',['CUTTER '+String(deaths+1).padStart(2,'0'),'LASER  ONLINE','MISSILES ×'+MIS_MAX]);
+  scr(VW*.61,VW*.16,'#ffb347',['NO SHIELDS','PILOT  OK',(T>>4)&1?'GOOD HUNTING':'']);
+  // gunsight
+  g.strokeStyle='rgba(67,240,255,.55)'; g.lineWidth=1; g.beginPath(); g.arc(cx,cy,10,0,TAU); g.moveTo(cx-18,cy); g.lineTo(cx-6,cy); g.moveTo(cx+6,cy); g.lineTo(cx+18,cy); g.moveTo(cx,cy-18); g.lineTo(cx,cy-6); g.stroke();
+  // shake as the catapult fires
+  if(T>=74 && T<104) shake=Math.max(shake,3);
+  g.textAlign='center'; g.fillStyle='rgba(207,227,255,.55)'; g.font='8px monospace'; g.fillText(TOUCH?'TAP TO SKIP':'SPACE TO SKIP',cx,VH-6); g.textAlign='left';
 }
 function pilotLost(cause,by){   // no cutter, no suit: the run is over
   lastCause=cause||'shot'; ship.alive=false; ship.suit=false; finalDeath=true;
@@ -3816,12 +3938,42 @@ function pilotLost(cause,by){   // no cutter, no suit: the run is over
   say('cmd',cause==='air'?'evaAir':'evaLost',null,2);
   updateHUD();
 }
+// skull and crossbones, pixel art: drawn on the field when the pilot is lost, and on the game-over card
+const SKULL=[
+"....XXXXXXX....",
+"..XXXXXXXXXXX..",
+".XXXXXXXXXXXXX.",
+".XXXXXXXXXXXXX.",
+"XXX...XXX...XXX",
+"XX.....X.....XX",
+"XX..o..X..o..XX",
+"XXX...XXX...XXX",
+".XXXXXX.XXXXXX.",
+"..XXXX...XXXX..",
+"...XXXXXXXXX...",
+"...X.X.X.X.X...",
+"...XXXXXXXXX..."];
+let skullImg=null;
+function skullArt(){ if(skullImg) return skullImg;
+  const W=27, H=25, c=document.createElement('canvas'); c.width=W; c.height=H; const q=c.getContext('2d');
+  // two crossed bones behind, with knobbly ends
+  const bone=(x0,y0,x1,y1)=>{ const n=Math.max(Math.abs(x1-x0),Math.abs(y1-y0));
+    for(let i=0;i<=n;i++){ const x=Math.round(x0+(x1-x0)*i/n), y=Math.round(y0+(y1-y0)*i/n); q.fillStyle='#d8d2c0'; q.fillRect(x,y,2,2); q.fillStyle='#9c9583'; q.fillRect(x,y+2,2,1); }
+    for(const [x,y] of [[x0,y0],[x1,y1]]){ q.fillStyle='#ece6d4'; q.fillRect(x-2,y-1,3,3); q.fillRect(x,y-2,3,3); } };
+  bone(2,23,24,9); bone(2,9,24,23);
+  const ox=6, oy=1;
+  SKULL.forEach((row,y)=>[...row].forEach((ch,x)=>{
+    if(ch==='X'){ q.fillStyle=y>=10?'#cfc8b4':'#f2ecdc'; q.fillRect(ox+x,oy+y,1,1); }
+    else if(ch==='o'){ q.fillStyle='#ff2a3a'; q.fillRect(ox+x,oy+y,1,1); } }));   // a red glint deep in each eye
+  q.fillStyle='rgba(0,0,0,.25)'; q.fillRect(ox+1,oy+4,13,1);   // brow shadow
+  return skullImg=c; }
 function gameOver(){   // LOST IN THE VOID: the run ends where you fell
   state='over'; showMap=false; commsReset(); VRAudio.setEngine(false,false,0); VRAudio.jingle('lost','menu');
   const record=score>bestScore;
   if(record){ bestScore=score; try{ localStorage.setItem('vr-best-score',String(score)); }catch(e){} }
   showBest();
   const title=document.getElementById('o-title'); title.className='title dead'; title.textContent='LOST IN THE VOID';
+  const sk=document.getElementById('o-skull'); sk.src=skullArt().toDataURL(); sk.style.display='block';
   document.getElementById('o-tag').textContent=(CAUSES[lastCause]||'Lost on EVA')+' · '+LV.name;
   document.getElementById('o-brief').innerHTML=
     `Your cutter went down and you didn't make it home.<br><br>`+
@@ -4137,6 +4289,12 @@ function draw(){
     g.fillStyle='#cfe3ff'; g.font='9px monospace';
     g.fillText((CAUSES[lastCause]||CAUSES.blast).toUpperCase()+(finalDeath?' · NO ONE IS COMING':' · EJECTING'),VW/2,VH*.34+16);
     g.globalAlpha=1; g.textAlign='left'; }
+  // pilot lost: the skull and crossbones rises over the spot, slowly, before the card comes up
+  if(state==='dying' && finalDeath && deathTimer>34){ const a=Math.min(1,(deathTimer-34)/40), S=skullArt(), k=4, bob=Math.sin(deathTimer*.05)*2;
+    g.save(); g.globalAlpha=a; g.imageSmoothingEnabled=false;
+    const rg=g.createRadialGradient(VW/2,VH*.62+bob,4,VW/2,VH*.62+bob,80); rg.addColorStop(0,'rgba(255,42,58,.35)'); rg.addColorStop(1,'rgba(255,42,58,0)');
+    g.fillStyle=rg; g.fillRect(VW/2-80,VH*.62+bob-80,160,160);
+    g.drawImage(S,Math.round(VW/2-S.width*k/2),Math.round(VH*.62-S.height*k/2+bob),S.width*k,S.height*k); g.restore(); }
   // on EVA: the air left, and which way home is
   if(state==='play' && ship.suit && ship.alive){ const h=evaHome(), s=Math.ceil(ship.o2/60), low=s<=15;
     g.textAlign='center'; g.font='bold 10px monospace';
@@ -4196,6 +4354,7 @@ function draw(){
       g.fillStyle='#ffd0d6'; g.font='9px monospace'; g.fillText(A.sub,VW/2,VH*.36+39);
       g.globalAlpha=1; g.textAlign='left'; } }
   if(cine) drawCineOverlay();
+  if(state==='launch') drawLaunch();
   if(state==='play' && !showMap) drawIndicators(camX,camY);
   if(!cine) drawMap();
   if(fadeIn>0){ g.fillStyle=`rgba(255,255,255,${fadeIn/45})`; g.fillRect(0,0,VW,VH); }   // out of the white of the jump
@@ -4626,6 +4785,7 @@ function drawMap(){
     const r=full?3:2; g.fillRect((mx+e.x*k-(r>>1))|0,(my+e.y*k-(r>>1))|0,r,r); }
   if(derelict){ const r=full?5:3; g.fillStyle=(t>>3)&1?'#4dffa6':'#ffffff'; g.fillRect((mx+derelict.x*k-(r>>1))|0,(my+derelict.y*k-(r>>1))|0,r,r); }
   if(escort){ const r=full?3:2; g.fillStyle='#4dffa6'; g.fillRect((mx+escort.x*k-(r>>1))|0,(my+escort.y*k-(r>>1))|0,r,r); }
+  for(const L of lancers){ const r=full?3:2; g.fillStyle='#ffb347'; g.fillRect((mx+L.x*k-(r>>1))|0,(my+L.y*k-(r>>1))|0,r,r); }
   if(boss){ const r=full?6:5; g.fillStyle=(t>>2)&1?'#ff4d6d':'#ff9ab0';
     g.fillRect((mx+boss.x*k-(r>>1))|0,(my+boss.y*k-(r>>1))|0,r,r); }
   // viewport rectangle — roughly what you can see right now
@@ -4671,7 +4831,7 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
   job:job&&{kind:job.kind,x:job.x,y:job.y,hp:job.hp,fuse:job.fuse,free:job.free}, jobI, fleet:fleet&&fleet.left, alarm:alarm&&alarm.title, shield:ship.shield,
   chain:chain.length, chainRun, failT, retries, debris:debris.length, goodQ:goodQ.length, alarmGood:!!(alarm&&alarm.good), wingT,
   escort:escort&&{x:escort.x,y:escort.y,hp:escort.hp,tg:!!escort.tg}, derelict:derelict&&{x:derelict.x,y:derelict.y,hp:derelict.hp,prog:derelict.prog},
-  postGun:outpost&&outpost.gun, suit:!!ship.suit, o2:ship.o2, finalDeath,
+  postGun:outpost&&outpost.gun, lancers:lancers.map(L=>({x:L.x,y:L.y,hp:L.hp,tg:!!L.tg})), scrambled, mis:ship.mis, suit:!!ship.suit, o2:ship.o2, finalDeath,
   husks:husks.map(h=>({type:h.type,x:h.x,y:h.y,t:h.t,hide:h.hide,frag:h.frag,beacon:!!h.beacon,hulk:h.hulk||null})),
   cores:fireballs.filter(b=>b.grow).map(b=>({x:b.x,y:b.y,max:b.max,life:b.life,maxlife:b.maxlife,grow:b.grow})),
   comms:comms.cur&&comms.cur.text, queue:comms.q.length, cine:cine&&{i:cine.i,n:cine.shots.length,lt:cine.lt,actors:cine.actors.length,cam:cine.cam}});
