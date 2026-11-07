@@ -27,18 +27,27 @@ Win and you're awarded the Star of Theta-9 on the carrier's command deck.
 Touch screens get a touch mode, played in landscape:
 
 - **Left thumb:** touch anywhere on the left half and drag. A small push turns the cutter to aim, and a big push burns the engine that way.
-- **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. Tap **BRAKE** to come to a dead stop, or hold it to slow down. **MAP** opens the sector map.
-- **The view:** a phone shows about as much of the sector as a desktop monitor does, and the camera pulls back further when you're flying fast or the flagship is close. The map, markers and text stay full size.
-- **SKIP:** jumps to any part of the campaign.
-- **Cutscenes:** tap to move the dialogue on.
+- **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. Tap **BRAKE** to come to a dead stop, or hold it to slow down.
+- **Corner map:** tap it for the full sector map, and tap anywhere to put it away.
+- **☰:** the menu (see below).
+- **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight.
+- **Cutscenes:** tap to move the dialogue on, or **SKIP** to jump ahead.
 
 Holding the phone upright pauses the game and asks you to turn it sideways. On iPhone, Share → Add to Home Screen plays it full screen. Sound needs the silent switch off.
 
 Add `?touch` to the address to try touch mode with a mouse.
 
+## The menu
+
+**☰**, or **P** / **Esc**, opens a small menu. In a fight it pauses the game, and it shows your time, score and cutters lost. From it:
+- **Resume** (or tap outside the menu)
+- **Sector map**
+- **Jump to…** any part of the campaign
+- **Music** and **Sound effects**, on or off
+
 ## Jumping around
 
-**B**, or any **SKIP** button, opens the jump menu. From it you can go straight to:
+**B**, the menu's **Jump to…**, or a cutscene's **SKIP** button opens the jump menu. From it you can go straight to:
 - the intro
 - any sector's start, flagship fight, or jump scene
 - any Cradle horde
