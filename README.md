@@ -10,7 +10,7 @@ Or open `void-reavers.html` in a browser.
 
 ## The campaign
 
-There's no drag in space and no top speed. The cutter coasts until you burn the other way, and you can go faster than you can steer.
+The cutter flies like a spaceship: it glides a long way after every burn and slows only gently, so start your stops early. The retro thrusters stop you faster.
 
 In the first sector your cutter's shields are dead, so one hit destroys it. Clear that sector and the yard crews rebuild the shields: from then on every cutter has **three shield cells**. Each cell soaks one hit, and they charge back when you stay out of the fire for a few seconds.
 
@@ -27,7 +27,8 @@ Win and you're awarded the Star of Theta-9 on the carrier's command deck.
 Touch screens get a touch mode, played in landscape:
 
 - **Left thumb:** touch anywhere on the left half and drag. A small push turns the cutter to aim, and a big push burns the engine that way.
-- **Right thumb:** hold **LASER** or **MISSILE** to fire. **BRAKE** fires the retro thrusters, and **MAP** opens the sector map.
+- **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. Tap **BRAKE** to come to a dead stop, or hold it to slow down. **MAP** opens the sector map.
+- **The view:** a phone shows about as much of the sector as a desktop monitor does, and the camera pulls back further when you're flying fast or the flagship is close. The map, markers and text stay full size.
 - **SKIP:** jumps to any part of the campaign.
 - **Cutscenes:** tap to move the dialogue on.
 

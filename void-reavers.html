@@ -81,7 +81,7 @@
   /* ---- touch mode (phones, landscape): a floating stick under the left thumb, fire buttons under the right ---- */
   #touch{position:fixed; inset:0; z-index:8; display:none; pointer-events:none}
   body.touch #touch{display:block}
-  body.cine #touch, body.paused #touch{display:none}
+  body.cine #touch, body.paused #touch, body.launch #touch{display:none}   /* (in the launch bay a tap anywhere skips it) */
   #t-zone{position:absolute; left:0; top:22%; bottom:0; width:48%; pointer-events:auto; touch-action:none}
   .stick-base,.stick-knob{position:absolute; border-radius:50%; pointer-events:none; transform:translate(-50%,-50%)}
   .stick-base{width:128px; height:128px; border:2px solid rgba(67,240,255,.28); background:rgba(11,16,34,.28);
@@ -105,11 +105,24 @@
   #t-missile.cool{opacity:.45}
   #t-brake{width:56px; height:56px; right:calc(36px + env(safe-area-inset-right,0px)); bottom:calc(126px + env(safe-area-inset-bottom,0px))}
   #t-map{width:46px; height:46px; font-size:9px; right:calc(120px + env(safe-area-inset-right,0px)); bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+  #t-brake.lit{background:rgba(255,179,71,.3); border-color:var(--rocket); color:#ffe0b0}   /* a tap-stop under way */
+  #t-map.lit{background:rgba(67,240,255,.26); border-color:var(--laser)}                     /* the full map is open */
+  body.eva #t-fire, body.eva #t-missile, body.eva #t-brake{opacity:.22}                       /* on EVA: no guns, no brakes */
   /* the HUD squeezes up to make room for thumbs */
   body.touch #hud-bottom{display:none}
   body.touch #hud-top{transform:scale(.72); transform-origin:top left}
+  body.touch .warn{font-size:13px}   /* (the shield cells: they matter, so they read even at that scale) */
   body.touch #hud-mission{transform:translateX(-50%) scale(.8); transform-origin:top center; left:50%; right:auto; top:env(safe-area-inset-top,0px)}
-  body.touch #sys-ctl{bottom:auto; top:calc(92px + env(safe-area-inset-top,0px))}
+  /* the system buttons sit under the corner map (its height comes from the game) and are big enough for a thumb */
+  body.touch #sys-ctl{bottom:auto; top:calc(var(--mapb,92px) + 6px); gap:8px}
+  body.touch .aud{font-size:11px; min-height:38px; min-width:44px; padding:0 11px; border-radius:5px}
+  /* the title and end cards: the Launch button rides along the bottom of the screen, so you never scroll to find it */
+  /* (and the card is centred by its margins, so one taller than the screen starts at the top and scrolls, instead of losing its top) */
+  body.touch .overlay{padding-bottom:0; align-items:flex-start}
+  body.touch .card{margin:auto}
+  body.touch .cta{position:sticky; bottom:0; z-index:1; margin:16px -16px 0; padding:2px 16px calc(12px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(rgba(5,6,13,0),rgba(5,6,13,.94) 40%)}
+  body.touch .cta .btn{margin-top:10px}
   body.touch:not(.cine) #comms{left:50%; bottom:calc(8px + env(safe-area-inset-bottom,0px)); width:min(360px,38vw);
     transform:translate(-50%,10px); padding:5px 8px 5px 5px; gap:8px}
   body.touch:not(.cine) #comms.show{transform:translate(-50%,0)}
@@ -161,9 +174,10 @@
   .jnow{display:block; width:100%; margin-bottom:10px; padding:10px; font-size:12px; background:#0f2a22; border-color:rgba(77,255,166,.55); color:#d6ffe9}
   .jnow:hover,.jnow:focus-visible{background:#15402f; border-color:var(--good)}
   .jfoot{margin-top:9px; font-size:10px; color:var(--dim); line-height:1.5}
-  body.touch .jbtn{padding:10px 6px}
+  body.touch .jbtn{padding:10px 6px; min-height:40px}
   @media (max-height:440px){ .jcard{padding:8px 10px 9px} .jhead{margin-bottom:6px} .jnow{padding:8px; margin-bottom:7px}
-    .jbtn, body.touch .jbtn{padding:7px 5px} .jgrid{gap:5px} .jfoot{display:none} }   /* a phone on its side */
+    .jbtn, body.touch .jbtn{padding:5px 5px; min-height:34px} .jgrid{gap:5px} .jfoot{display:none}
+    body.touch #j-close{min-height:30px} }   /* a phone on its side */
   #o-jump{margin:12px 0 0 10px; font-size:11px; padding:9px 14px}
   .best{color:var(--rocket); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin:8px 0 0}
   .best:empty{display:none}
@@ -334,7 +348,7 @@
       and have to fly yourself back to the station for a new cutter. <b>Get hit or run out of air on the way, and the run is over.</b>
       Clear the first sector and the yard crews rebuild the shields: from then on every cutter has <b>three shield cells</b>.
       Each soaks a hit, and they charge back when you stay out of the fire for a few seconds.
-      There's no drag in space: <b>you coast until you burn the other way</b>.
+      The cutter flies like a spaceship: <b>it glides a long way after every burn</b>, so start your stops early.
       <span class="mono">Laser</span> shreds light hulls and is the only thing that breaks <span class="mono">asteroids</span>.
       Don't crash into them. You carry a rack of ten <span class="mono">missiles</span>: fire them in a fast salvo, and they reload
       one by one after a short pause. A missile cracks shields; the laser only wears them down. <span class="mono">Wardens</span> and the flagship shoot missiles down,
@@ -343,7 +357,7 @@
     <div class="bestiary" id="bestiary"></div>
     <div class="keys">
       <b class="kb">W / ↑</b><span class="kb">impulse thrust (you keep drifting)</span>
-      <b class="kb">S / ↓</b><span class="kb">reverse thruster (retro burn: the only way to slow down)</span>
+      <b class="kb">S / ↓</b><span class="kb">reverse thruster (retro burn: the quick way to stop)</span>
       <b class="kb">A D / ← →</b><span class="kb">rotate the cutter</span>
       <b class="kb">Space / J</b><span class="kb">fire selected weapon</span>
       <b class="kb">1 · 2</b><span class="kb">select laser · missile</span>
@@ -352,12 +366,12 @@
       <b class="kb">N · V</b><span class="kb">music · sound effects on/off</span>
       <b class="kb">B</b><span class="kb">jump to any part of the campaign</span>
       <b class="tc">Left thumb</b><span class="tc">touch anywhere on the left and drag: a small push turns the cutter to aim, a big push burns the engine that way</span>
-      <b class="tc">Right thumb</b><span class="tc">hold LASER or MISSILE to fire · BRAKE burns the retro thrusters</span>
+      <b class="tc">Right thumb</b><span class="tc">hold LASER or MISSILE to fire, and slide your thumb between them · tap BRAKE for a dead stop, or hold it to slow down</span>
       <b class="tc">MAP · ❚❚ · SKIP</b><span class="tc">sector map · pause · jump to any part of the campaign</span>
       <b class="tc">Cutscenes</b><span class="tc">tap to move the dialogue on · SKIP to jump ahead</span>
       <b class="tc">Tip</b><span class="tc">on iPhone, Share → Add to Home Screen plays it full screen. Sound needs the silent switch off.</span>
     </div>
-    <button class="btn" id="o-btn">Launch</button><button class="aud" id="o-jump" title="Start at any part of the campaign (B)">JUMP TO… ▸</button>
+    <div class="cta"><button class="btn" id="o-btn">Launch</button><button class="aud" id="o-jump" title="Start at any part of the campaign (B)">JUMP TO… ▸</button></div>
   </div>
 </div>
 
@@ -570,9 +584,15 @@ function explode(x,y,kind,sc=1){
   const k1=osc('sine',p0,t,pd,vca(t,pv,.003,pd,o)).frequency; k1.exponentialRampToValueAtTime(p1*1.5,t+.05+.03*sc); k1.exponentialRampToValueAtTime(p1,t+pd);
   sweep(osc('sine',p0*2,t,.16,vca(t,pv*.4,.002,.1+.03*sc,o)).frequency,p0*2,p1*2,t,.08+.03*sc);
 }
-function laser(){ if(!live()||!gate('laser',40)) return; const t=ac.currentTime, o=out(ME,.15,.06), f0=R(1300,1450);
-  sweep(osc('square',f0,t,.1,filt('lowpass',5000,null,vca(t,1,.002,.09,o))).frequency,f0,f0*.28,t,.09);
-  sweep(osc('sine',f0*2,t,.06,vca(t,.5,.001,.05,o)).frequency,f0*2,f0*.7,t,.05); }
+// the blaster: a sharp snap, a zap that dives through a closing resonant filter, and a thump of recoil under it
+// (each shot is pitched and panned a hair differently, so a long burst doesn't drill one note into your ears)
+function laser(){ if(!live()||!gate('laser',40)) return;
+  const t=ac.currentTime, o=out({v:1,p:R(-.1,.1)},.18,.1), f0=R(1750,2000);
+  const lp=filt('lowpass',7200,6,vca(t,1,.0015,.12,o)); sweep(lp.frequency,7200,650,t,.11);
+  for(const d of [1,1.013]) sweep(osc('sawtooth',f0*d,t,.13,lp).frequency,f0*d,f0*d*.13,t,.12);   // two detuned saws: fat, not thin
+  nz(t,.022,filt('bandpass',5200,1.1,vca(t,.5,.0008,.018,o)));                                  // the snap at the front
+  sweep(osc('sine',230,t,.08,vca(t,.65,.002,.065,o)).frequency,230,62,t,.065);                   // recoil thump
+  sweep(osc('square',460,t,.04,filt('lowpass',1800,null,vca(t,.12,.001,.035,o))).frequency,460,150,t,.035); }   // (so small speakers feel it too)
 function missile(){ if(!live()) return; const t=ac.currentTime, o=out(ME,.4,.3);
   const f=filt('bandpass',400,1.4,vca(t,1,.02,.55,o)); sweep(f.frequency,350,2600,t,.4); nz(t,.6,f);
   sweep(osc('sawtooth',80,t,.3,filt('lowpass',600,null,vca(t,.5,.005,.25,o))).frequency,80,260,t,.25); }
@@ -732,7 +752,7 @@ function setEngine(thr,rev,speed){
   if(!ac||!engine) return; const e=engine;
   if(thr!==e.thr){ e.thr=thr; glide(e.gT.gain,thr?.2:0,thr?.025:.07); glide(e.gH.gain,thr?.09:0,thr?.04:.1); }
   if(rev!==e.rev){ e.rev=rev; glide(e.gR.gain,rev?.05:0,rev?.025:.05); }
-  speed=Math.min(speed,14);   // (there's no top speed any more; the sound stops climbing somewhere sensible)
+  speed=Math.min(speed,14);   // (a blast can fling you past the top speed; the sound stops climbing somewhere sensible)
   const f=360+speed*95;   // the roar brightens as you pick up speed
   if(Math.abs(f-e.f)>12){ e.f=f; const now=ac.currentTime; e.lp.frequency.setTargetAtTime(f,now,.12); e.hum.frequency.setTargetAtTime(42+speed*4,now,.12); }
 }
@@ -1988,14 +2008,9 @@ const VR_SCENES=[
     ['cmd',"And you won't go in alone. Kestrel, Talon and Bastion have each sent you a fighter."],
     ['you',"An honor guard? I'm touched, Commander."],
     ['cmd',"Three fighters on your wing through the hordes. Bring them home if you can."]]},
-  {tag:'Flagship destroyed · The Cradle', title:'THETA-9 SECURED', lines:[
+  {tag:'Flagship destroyed · The Cradle', title:'THETA-9 SECURED', lines:[   // (the flight home: two lines, then the medal)
     ['cmd',"Flagship destroyed! Theta-9 is free! Halcyon, you magnificent maniac. Come home."],
-    ['captain',"The Cerebrant is gone... The clans are finished! Retreat! RETREAT!"],
-    ['cmd',"Three hordes and a flagship, against one cutter. They'll be teaching this at the academy."],
-    ['you',"Not a scratch on her, Commander. Well. Not a big one.",'clean'],
-    ['you',"Tell the quartermaster I only lost a few cutters.",'dirty'],
-    ['cmd',"I'll tell him you saved the frontier. He can do the math."],
-    ['cmd',"Bring her home, Halcyon. The drinks are on Kestrel. Forever, apparently."]]}
+    ['you',"On my way, Commander. Tell Kestrel I'm collecting on those drinks."]]}
 ];
 </script>
 
@@ -2007,21 +2022,74 @@ const ctx = cv.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 const bb = document.createElement('canvas');
-const g = bb.getContext('2d');
+const wg = bb.getContext('2d');
+let g = wg;   // what everything draws on: the world layer (and, on a phone, the overlay layer once the world is done)
 let VW = 480, VH = 270, scale = 1;
 
-// wider backbuffer = more of the sector on screen (zoomed out); phones zoom in a little so the ships aren't specks
-const VIEW_W = (matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search)) ? 714 : 882;   // (5% wider than it was: you see a little farther)
+// touch mode: on for phones and tablets (or add ?touch to the address to try it with a mouse)
+const TOUCH = matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search);
+// wider backbuffer = more of the sector on screen (zoomed out). On a desktop that's the whole story. On a phone it's
+// the size the overlay (map, markers, banners, labels) is drawn at, and the world zooms out from there (see resize)
+const VIEW_W = TOUCH ? 714 : 882;
+// phones draw two layers: the world, zoomed out to about what a desktop monitor shows (and pulling back further when
+// you're flying fast or the flagship is close), and the overlay on top at a fixed size, so text never shrinks
+const ub = document.createElement('canvas'), ug = ub.getContext('2d');
+let UVW = 480, UVH = 270, WVW = 480, WVH = 270, WZ = 1;   // overlay size · world view size · world units per overlay unit
+let ZB = 1, ZCINE = 1, zoom = 0;                           // phones: base zoom, cutscene zoom, the zoom right now
+const ZOOM_SPEED = .18, ZOOM_BOSS = .1;                    // how much further it pulls back at full speed / with the flagship near
+const SAFE = {t:0,r:0,b:0,l:0};                            // the phone's notch and rounded corners, in overlay units
+const safeProbe = document.createElement('div');            // (CSS knows the safe area; the canvas asks it through this)
+safeProbe.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;'+
+  'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
+document.body.appendChild(safeProbe);
 function resize(){
   const w = window.innerWidth, h = window.innerHeight;
   if(!w || !h) return;   // hidden or collapsed view: keep the last size (0/0 would make VH NaN and crash the draw)
-  cv.width = w; cv.height = h;
-  VW = VIEW_W;
-  VH = Math.round(VIEW_W * h / w);
-  bb.width = VW; bb.height = VH;
-  scale = w / VW;
-  ctx.imageSmoothingEnabled = false;
+  if(!TOUCH){   // desktop: one layer, exactly as it's always been
+    cv.width = w; cv.height = h;
+    VW = VIEW_W;
+    VH = Math.round(VIEW_W * h / w);
+    bb.width = VW; bb.height = VH;
+    UVW = WVW = VW; UVH = WVH = VH;
+    scale = w / VW;
+    ctx.imageSmoothingEnabled = false;
+    return;
+  }
+  // a phone or tablet: draw at the screen's real pixel density, so the pixel art stays crisp at any zoom
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr);
+  const ui = Math.min(1.5, Math.max(1.1, w/VIEW_W));   // css px per overlay unit (about what the whole game used to be on a phone)
+  UVW = Math.round(w/ui); UVH = Math.round(h/ui);
+  ub.width = UVW; ub.height = UVH;
+  ZB = Math.min(1000, Math.max(720, w/.92)) / UVW;      // the world at about 0.92 css px a unit (it was 1.2: you see ~30% farther)
+  ZCINE = VIEW_W / UVW;                                 // cutscenes keep the framing they were staged for
+  const zmax = ZB*(1+ZOOM_SPEED+ZOOM_BOSS);
+  bb.width = Math.ceil(UVW*zmax)+2; bb.height = Math.ceil(UVH*zmax)+2;
+  zoom = zoom ? Math.min(zmax, Math.max(ZCINE, zoom)) : ZB;
+  const cs = getComputedStyle(safeProbe), px = v => (parseFloat(v)||0)/ui;
+  SAFE.t = px(cs.paddingTop); SAFE.r = px(cs.paddingRight); SAFE.b = px(cs.paddingBottom); SAFE.l = px(cs.paddingLeft);
+  document.documentElement.style.setProperty('--mapb', Math.round((8+SAFE.t+66+2)*ui)+'px');   // (the corner map's bottom edge)
+  scale = w / UVW;
+  ctx.imageSmoothingEnabled = false; ug.imageSmoothingEnabled = false;
+  setView();
 }
+function setView(){   // (phones) the world view for the zoom right now; the backbuffer is sized for the widest it can get
+  WVW = Math.min(bb.width, Math.round(UVW*zoom)); WVH = Math.min(bb.height, Math.round(UVH*zoom));
+  VW = WVW; VH = WVH; WZ = WVW/UVW;
+}
+// the camera, on a phone: it pulls back as you pick up speed, and a little more with the flagship close, then eases back in.
+// Cutscenes and the launch bay snap to the framing they were staged at; you fly out of each one as the view opens up
+function zoomTick(){
+  if(!TOUCH) return;
+  if(state==='cine' || state==='launch'){ zoom=ZCINE; return; }
+  if(state==='dying') return;   // (hold still while the cutter breaks up)
+  let want=ZB;
+  if((state==='play'||state==='winning') && ship.alive){
+    want*=1+ZOOM_SPEED*clamp((Math.hypot(ship.vx,ship.vy)-2.5)/3.5,0,1);
+    if(boss && !boss.dying && Math.hypot(boss.x-ship.x,boss.y-ship.y)<760) want+=ZB*ZOOM_BOSS; }
+  zoom+=(want-zoom)*(want>zoom?.03:.016);
+}
+const wFont = n => (TOUCH ? Math.round(n*WZ) : n)+'px monospace';   // a label drawn in the world, kept readable when zoomed out
 window.addEventListener('resize', resize);
 resize();
 
@@ -2119,9 +2187,8 @@ const tap=(id,fn)=>document.getElementById(id).addEventListener('click',e=>{ e.c
 tap('btn-pause',()=>setPause(!paused)); tap('btn-music',()=>toggleMusic()); tap('btn-sfx',()=>toggleSfx());
 document.getElementById('pause').addEventListener('click',()=>setPause(false));
 
-// ---- touch mode: on for phones and tablets (or add ?touch to the address to try it with a mouse) ----
-const TOUCH=matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search);
-if(TOUCH) document.body.classList.add('touch');
+// ---- touch mode (TOUCH is decided up by the canvas setup) ----
+if(TOUCH){ document.body.classList.add('touch'); document.querySelector('#pause .tag').textContent='Tap anywhere to resume'; }
 // the stick floats: it centres wherever your left thumb lands. Inside the dashed ring it only turns the cutter
 // (aim without drifting); push past it and the engine burns toward where you're pointing.
 const stick={on:false,id:null,ox:0,oy:0,mag:0,ang:0}, STICK_R=56;
@@ -2151,11 +2218,52 @@ const holdPad=(id,fn)=>{ const el=document.getElementById(id); let pid=null;
   el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
   el.addEventListener('contextmenu',e=>e.preventDefault()); };
 const touchFire={laser:false,rocket:false};
-holdPad('t-fire',   v=>{ touchFire.laser=v; if(v) selectWeapon('laser'); });
-holdPad('t-missile',v=>{ touchFire.rocket=v; selectWeapon(v?'rocket':'laser'); });   // let go and you're back on the laser
 const tMissile=document.getElementById('t-missile');
-holdPad('t-brake',  v=>keys['arrowdown']=v);
+// LASER and MISSILE share the right thumb: slide from one to the other (and back) without lifting it.
+// Let go and you're back on the laser
+const fireGroup=[{el:document.getElementById('t-fire'), fn:v=>{ touchFire.laser=v; if(v) selectWeapon('laser'); }},
+                 {el:tMissile,                         fn:v=>{ touchFire.rocket=v; selectWeapon(v?'rocket':'laser'); }}];
+let firePid=null, fireOn=null;
+function fireSet(P){ if(P===fireOn) return;
+  if(fireOn){ fireOn.el.classList.remove('on'); fireOn.fn(false); }
+  fireOn=P; if(P){ P.el.classList.add('on'); P.fn(true); } }
+const overPad=(el,x,y)=>{ const r=el.getBoundingClientRect(), cx=(r.left+r.right)/2, cy=(r.top+r.bottom)/2, rr=r.width/2+4;
+  return (x-cx)**2+(y-cy)**2<rr*rr; };
+for(const P of fireGroup){ const el=P.el;
+  el.addEventListener('pointerdown',e=>{ e.preventDefault(); firePid=e.pointerId; capture(el,e.pointerId); fireSet(P); });
+  el.addEventListener('pointermove',e=>{ if(e.pointerId!==firePid) return; const Q=fireGroup.find(Q=>overPad(Q.el,e.clientX,e.clientY)); if(Q) fireSet(Q); });
+  const up=e=>{ if(e.pointerId!==firePid) return; firePid=null; fireSet(null); };
+  el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
+  el.addEventListener('contextmenu',e=>e.preventDefault()); }
+// BRAKE: hold it to brake, or just tap it and the retros bring you to a dead stop, whichever way you're drifting and without
+// turning the nose, so your thumb can go straight back to the trigger. Burning again cancels a tap-stop
+let brakeHeld=false, brakeStop=false, brakeAt=0;
+const tBrake=document.getElementById('t-brake'), BRAKE_A=.1;
+const brakeLatch=v=>{ brakeStop=v; tBrake.classList.toggle('lit',v); };
+holdPad('t-brake', v=>{ if(v){ brakeHeld=true; brakeLatch(false); brakeAt=performance.now(); }
+  else { brakeHeld=false; if(performance.now()-brakeAt<260) brakeLatch(true); } });
+function brakeOff(){ brakeHeld=false; if(brakeStop) brakeLatch(false); }
+function touchBrake(){
+  if(!brakeHeld && !brakeStop) return;
+  if(brakeStop && thrustOn){ brakeLatch(false); return; }
+  const sp=Math.hypot(ship.vx,ship.vy);
+  if(sp<.05){ ship.vx=ship.vy=0; if(brakeStop) brakeLatch(false); return; }
+  const k=Math.min(sp,BRAKE_A)/sp; ship.vx-=ship.vx*k; ship.vy-=ship.vy*k; revOn=true;
+  if(t%2===0) brakePuff(); }
+function brakePuff(){ const sp=Math.hypot(ship.vx,ship.vy)||1, ux=ship.vx/sp, uy=ship.vy/sp;   // the retros fire into the drift
+  for(const s of [-1,1]) particles.push({x:ship.x+ux*ship.r-uy*s*3, y:ship.y+uy*ship.r+ux*s*3,
+    vx:ship.vx*.4+ux*rnd(.4,1.2)+rnd(-.3,.3), vy:ship.vy*.4+uy*rnd(.4,1.2)+rnd(-.3,.3), life:rnd(6,12), max:12, col:Math.random()<.5?'#ffd27a':'#ffb347', r:1, grav:0}); }
+const tMap=document.getElementById('t-map');
 holdPad('t-map',    v=>{ if(v) toggleMap(); });
+// what the buttons should look like right now: hidden in the launch bay (so a tap anywhere skips it), dimmed on EVA (no guns)
+let bodyKey='';
+function syncBody(){ const k=state+'|'+!!(ship.suit&&ship.alive)+'|'+showMap; if(k===bodyKey) return; bodyKey=k;
+  const B=document.body.classList; B.toggle('launch',state==='launch'); B.toggle('eva',!!(ship.suit&&ship.alive)); tMap.classList.toggle('lit',showMap); }
+// let go of everything (pausing, jumping, a new run): no stuck stick, trigger or brake when you come back
+function touchReset(){ stick.on=false; stick.id=null; stick.mag=0; touchFire.laser=touchFire.rocket=false; keys['arrowdown']=false;
+  firePid=null; if(fireOn){ fireOn.el.classList.remove('on'); fireOn=null; } brakeOff();
+  for(const el of document.querySelectorAll('#touch .pad.on')) el.classList.remove('on');
+  if(TOUCH) stickRest(); }
 // cutscenes: a tap anywhere moves the dialogue on
 cv.addEventListener('pointerdown',()=>{ if(state==='launch') endLaunch(); else if(TOUCH && state==='cine') commsSkip(); });
 // a phone turned to portrait mid-fight pauses (the rotate screen covers it)
@@ -2164,6 +2272,7 @@ window.addEventListener('resize',()=>{ orientCheck(); if(TOUCH && !stick.on) sti
 if(TOUCH) setTimeout(stickRest,0);
 
 // ---- entities ----
+const SHIP_DRAG=.994, SHIP_MAX=6.2;   // (they used to be .992 and 5.4: a little more glide, a little more top end)
 const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,mis:10,mcool:0,misT:0,cells:0,cellMax:0,cellT:0};   // mis: missiles in the rack · cells: shield cells charged
 let bullets=[], missiles=[], enemies=[], burning=[], particles=[], efire=[], shockwaves=[];
 let state='menu', deaths=0, showMap=false, shake=0, flash=0, t=0, lastCause='blast';
@@ -2444,7 +2553,8 @@ function warpOut(e){   // a reaver jumping away: a pinch of light and it's gone 
 }
 
 // ---- asteroids: only the laser breaks them (big -> medium -> small -> dust); they soak up reaver fire, and kill on contact ----
-const ROCK_R=[0,10,19,33], ROCK_HP=[0,1,3,6], ROCK_PTS=[0,10,20,40], ROCK_DMG=[0,4,10,18];
+const ROCK_R=[0,10,19,33], ROCK_HP=[0,1,1,2],   // (laser hits to break one: the little ones go at once, the biggest takes two)
+ ROCK_PTS=[0,10,20,40], ROCK_DMG=[0,4,10,18];
 const ROCKPAL=[
   {base:'#4d4741',lite:'#81776b',dark:'#27231f',edge:'#121010'},
   {base:'#56382c',lite:'#8c5c45',dark:'#2a1912',edge:'#120906',vein:'#ff8a3d'},   // ember rocks with glowing seams
@@ -2598,7 +2708,7 @@ function openJump(){
   const h=hereLabel(); elJHere.style.display=h?'':'none'; if(h) elJHere.textContent=h;
   const here=whereNow(); for(const b of elJump.querySelectorAll('[data-j]')) b.classList.toggle('here',b.dataset.j===here);
   elJump.classList.remove('hidden');
-  for(const k in keys) keys[k]=false; stick.on=false; stick.mag=0; touchFire.laser=touchFire.rocket=false;
+  for(const k in keys) keys[k]=false; touchReset();
   VRAudio.setEngine(false,false,0); VRAudio.sfx.ui('open');
   (h?elJHere:elJump.querySelector('[data-j]')).focus({preventScroll:true});
 }
@@ -2888,6 +2998,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   for(let k=0;k<12 && rocks.some(R=>Math.hypot(R.x-x,R.y-y)<R.r+30);k++){ x=o.x+rnd(-120,120); y=o.y+rnd(40,140); }
   ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.suit=false; ship.r=7;
   ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;   // a fresh cutter comes with a full rack
+  brakeOff();                                    // (and no tap-stop left over from the last one)
   fitShields();                                  // and, after the Drift, fully charged shields
   wreck=null; pod=null; state='play';
   efire=efire.filter(f=>Math.hypot(f.x-x,f.y-y)>260); emissiles=emissiles.filter(m=>Math.hypot(m.x-x,m.y-y)>360);
@@ -3103,15 +3214,15 @@ const FINALE_CEREMONY=2;   // (where the ceremony starts in the list: the jump m
 function finaleShots(lines){
   const H=clearSpot(outpost.x,outpost.y,500,1000); let carrier, cut;
   return [
-    { dur:380, lines,
+    { dur:240, lines,   // the two lines over the fireworks, then straight into the bay and up to the medal
       init(c){ c.white=1; c.actors=[]; carrier=hulk('carrier',H.x+210,H.y,0); carrier.a=Math.PI; c.actors.push(carrier);
         cut=actor('cutter',H.x-470,H.y+8,0); cut.thrust=true; c.actors.push(cut); c.cam={x:H.x+40,y:H.y};
-        c.title={main:'THETA-9 SECURED',sub:'FLAGSHIP DESTROYED · THE CEREBRANT IS GONE',life:320,t:0}; VRAudio.play('menu',0,1.2); },
-      tick(c,lt){ const k=easeOut(Math.min(1,lt/240)); cut.x=H.x-470+k*400; cut.y=H.y+8-k*8; cut.thrust=lt<200;
+        c.title={main:'THETA-9 SECURED',sub:'FLAGSHIP DESTROYED · THE CEREBRANT IS GONE',life:280,t:0}; VRAudio.play('menu',0,1.2); },
+      tick(c,lt){ const k=easeOut(Math.min(1,lt/220)); cut.x=H.x-470+k*400; cut.y=H.y+8-k*8; cut.thrust=lt<180;
         if(lt%36===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } },
-    { dur:200, toBlack:true,
-      init(c){ caption(c,'MISSION COMPLETE','The ore lanes of Theta-9 are open again.',240); },
-      tick(c,lt){ const k=easeOut(Math.min(1,lt/150)), mouth=carrier.x-116; cut.x=H.x-70+k*(carrier.x-40-(H.x-70)); cut.thrust=lt<40;
+    { dur:100, toBlack:true,
+      init(c){ c.title=null; },
+      tick(c,lt){ const k=easeOut(Math.min(1,lt/80)), mouth=carrier.x-116; cut.x=H.x-70+k*(carrier.x-40-(H.x-70)); cut.thrust=lt<24;
         cut.alpha=cut.x<mouth?1:clamp(1-(cut.x-mouth)/50,0,1);
         if(lt%40===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } },
     ...ceremonyShots()
@@ -3449,7 +3560,7 @@ function setPause(p){
   if((p && state!=='play') || p===paused) return;
   paused=p; VRAudio.setPaused(p); VRAudio.setEngine(false,false,0); VRAudio.sfx.ui(p?'pause':'resume');
   document.body.classList.toggle('paused',p);
-  if(p){ stick.on=false; stick.mag=0; touchFire.laser=touchFire.rocket=false; keys['arrowdown']=false; }
+  if(p) touchReset();
   document.getElementById('pause').classList.toggle('hidden',!p);
 }
 function syncAudioUI(){
@@ -3548,7 +3659,9 @@ function fire(){
     VRAudio.sfx.laser();
   }else{
     ship.mis--; ship.mcool=MIS_GAP; ship.misT=0;
-    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,640,1.3)||missileLock(ship.x,ship.y,ship.a,480,Math.PI)});   // what you aim at, else whatever's near
+    missiles.push({x:ship.x+nx*ship.r,y:ship.y+ny*ship.r,a:ship.a,vx:ship.vx+nx*2.1,vy:ship.vy+ny*2.1,life:280,trail:0,
+      boost:Math.max(0,ship.vx*nx+ship.vy*ny),   // (your own speed along the launch line: it carries that on top of its own)
+      tg:missileLock(ship.x,ship.y,ship.a,760,.45)||missileLock(ship.x,ship.y,ship.a,640,1.3)||missileLock(ship.x,ship.y,ship.a,480,Math.PI)});   // what you aim at, else whatever's near
     VRAudio.sfx.missile();
   }
   lastShot=ship.weapon;
@@ -3559,6 +3672,7 @@ function fire(){
 // ---- update ----
 function update(){
   t++;
+  zoomTick();   // (phones only: the camera's pull-back)
   if(flash>0) flash=Math.max(0,flash-.03);
   if(shake>0) shake*=0.87;
   if(fadeIn>0) fadeIn--;
@@ -3581,15 +3695,18 @@ function update(){
       ship.vx+=Math.cos(ship.a)*0.11; ship.vy+=Math.sin(ship.a)*0.11;
       if(t%2===0) thrustPuff();
     }
-    if(revOn){   // the retros: with no drag out here, they're the only thing that slows you down
+    if(revOn){   // the retros: the quick way to stop
       ship.vx-=Math.cos(ship.a)*0.09; ship.vy-=Math.sin(ship.a)*0.09;
       if(t%2===0) revPuff();
     }
+    if(TOUCH) touchBrake();   // phones: BRAKE stops you dead whichever way you're drifting
     // super-mild planetary gravity when close
     for(const p of planets){ const dx=p.x-ship.x, dy=p.y-ship.y, d=Math.hypot(dx,dy), reach=p.r*6;
       if(d<reach && d>1){ const f=0.05*(1-d/reach)*(p.r/70); ship.vx+=dx/d*f; ship.vy+=dy/d*f; } }
-    // no drag and no speed limit: the cutter coasts at whatever speed it has until a burn changes it.
-    // Burn long enough and you can go faster than you can steer. That's on you, pilot
+    // a touch of drag and a top speed, both a little looser than they used to be: the cutter glides a long way
+    // after a burn, but it stays flyable. (A blast can still fling you past the top speed for a moment.)
+    ship.vx*=SHIP_DRAG; ship.vy*=SHIP_DRAG;
+    { const sp=Math.hypot(ship.vx,ship.vy); if(sp>SHIP_MAX){ const k=Math.max(SHIP_MAX/sp,.95); ship.vx*=k; ship.vy*=k; } }
     ship.ox=ship.x; ship.oy=ship.y;   // (where it was: collisions sweep the whole move, so speed can't tunnel you through a rock)
     ship.x+=ship.vx; ship.y+=ship.vy;
     const wallV=Math.max(ship.x<ship.r||ship.x>WORLD-ship.r?Math.abs(ship.vx):0, ship.y<ship.r||ship.y>WORLD-ship.r?Math.abs(ship.vy):0);
@@ -3659,14 +3776,17 @@ function update(){
     if(!m.tg && m.life%6===0) m.tg=missileLock(m.x,m.y,m.a,600,1.3)||missileLock(m.x,m.y,m.a,420,Math.PI);
     const best=m.tg;
     if(best){
-      const dd=Math.hypot(best.x-m.x,best.y-m.y), lead=Math.min(dd/3.4,40);   // aim where it's going to be
+      const dd=Math.hypot(best.x-m.x,best.y-m.y), lead=Math.min(dd/(3.4+(m.boost||0)),40);   // aim where it's going to be
       const want=Math.atan2(best.y+(best.vy||0)*lead-m.y,best.x+(best.vx||0)*lead-m.x);
       let diff=((want-m.a+Math.PI*3)%TAU)-Math.PI;
       const tr=dd<160?.12:.075; m.a+=clamp(diff,-tr,tr);   // tighter turns once it's close, so it doesn't orbit
     }
     // the motor pushes it along its nose, and the fins bleed off sideways drift, so it goes where it points
-    const MM=3.4; m.vx+=(Math.cos(m.a)*MM-m.vx)*.09; m.vy+=(Math.sin(m.a)*MM-m.vy)*.09;
+    // (it keeps the speed you launched it at on top of its own, so a missile fired at full burn doesn't fall behind you;
+    // that head start fades as the motor takes over)
+    const MM=3.4+(m.boost||0); m.vx+=(Math.cos(m.a)*MM-m.vx)*.09; m.vy+=(Math.sin(m.a)*MM-m.vy)*.09;
     const ms=Math.hypot(m.vx,m.vy); if(ms>MM){m.vx*=MM/ms;m.vy*=MM/ms;}
+    if(m.boost) m.boost*=.995;
     m.x+=m.vx; m.y+=m.vy; m.life--;
     if(++m.trail%2===0) particles.push({x:m.x,y:m.y,vx:rnd(-.2,.2),vy:rnd(-.2,.2),life:16,max:16,col:'#ffb347',r:1.5,grav:0});
   }
@@ -4117,7 +4237,7 @@ function drawBurner(px,py,b){   // scorched hull flickering in its own firelight
   g.save(); g.translate(px,py); g.rotate(b.a);
   g.drawImage(b.t%6<2?S.img:S.burnt,-S.cx,-S.cy);
   g.restore();
-  g.fillStyle='rgba(255,180,120,.9)'; g.font='7px monospace'; g.textAlign='center';
+  g.fillStyle='rgba(255,180,120,.9)'; g.font=wFont(7); g.textAlign='center';
   g.fillText(VR_CAST[b.alien].name.toUpperCase(),px,py+b.r+16); g.textAlign='left';
 }
 function drawHusk(px,py,h){   // a hull in its last frames: scorched, flickering, fading out under the fire that's taking it
@@ -4137,15 +4257,15 @@ function talkerOf(who){   // enemy ships only — captains (burning or not) and 
   const b=burning.find(b=>b.alien===who); if(b) return {x:b.x,y:b.y,r:b.r,col:'#ff9a3d'};
   const e=enemies.find(e=>e.alive&&e.alien===who); return e?{x:e.x,y:e.y,r:e.r,col:'#ff4d6d'}:null;
 }
-function drawTalker(cx,cy){
+function drawTalker(cx,cy,z=1){   // (z: world units per screen unit, for a phone's zoomed-out world)
   const m=comms.cur; if(!m) return;
   const T=talkerOf(m.who); if(!T) return;
-  const typing=m.shown<m.text.length, px=T.x-cx, py=T.y-cy, on=px>-10&&py>-10&&px<VW+10&&py<VH+10;
+  const typing=m.shown<m.text.length, px=(T.x-cx)/z, py=(T.y-cy)/z, tr=T.r/z, on=px>-10&&py>-10&&px<VW+10&&py<VH+10;
   if(on && typing){ g.strokeStyle=T.col; g.lineWidth=1;   // radio rings pulsing off the hull
-    for(let k=0;k<2;k++){ const ph=((t+k*14)%28)/28; g.globalAlpha=(1-ph)*.7; g.beginPath(); g.arc(px,py,T.r+4+ph*16,0,TAU); g.stroke(); }
+    for(let k=0;k<2;k++){ const ph=((t+k*14)%28)/28; g.globalAlpha=(1-ph)*.7; g.beginPath(); g.arc(px,py,tr+4+ph*16,0,TAU); g.stroke(); }
     g.globalAlpha=1; }
   // the bubble sits above them, or pins to the screen edge and points their way
-  const bx=on?px:clamp(px,24,VW-24), by=on?py-T.r-14:clamp(py,26,VH-26);
+  const bx=on?px:clamp(px,24,VW-24), by=on?py-tr-14:clamp(py,26,VH-26);
   bubble(bx,by,T.col,typing,on?null:Math.atan2(py-by,px-bx));
 }
 function bubble(x,y,col,typing,dir){
@@ -4265,7 +4385,7 @@ function boatAI(e){
 }
 // ---- EVA: your cutter is gone and you're in a space suit with one small thruster (no reverse, no guns). Get back to the
 // station (or, with no station, the jump-point beacon) and a new cutter launches. Get hit, or run out of air, and that's it. ----
-const O2_MAX=60*60, EVA_THRUST=.05;   // (no top speed: burn long enough and you'll overshoot home by a mile)
+const O2_MAX=60*60, EVA_THRUST=.05, EVA_MAX=2.4;   // (the suit's top speed: it used to be 2.1)
 let finalDeath=false;
 function segD2(ax,ay,bx,by,px,py){   // squared distance from point p to the segment a→b (a fast mover's whole step, so it can't skip past)
   const dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy; let k=L?((px-ax)*dx+(py-ay)*dy)/L:0; k=k<0?0:k>1?1:k;
@@ -4287,7 +4407,9 @@ function updateEVA(){
     if(t%3===0){ const bk=ship.a+Math.PI; particles.push({x:ship.x+Math.cos(bk)*4,y:ship.y+Math.sin(bk)*4,vx:Math.cos(bk)*rnd(.6,1.2)+rnd(-.15,.15),vy:Math.sin(bk)*rnd(.6,1.2)+rnd(-.15,.15),life:rnd(8,14),max:14,col:'#d6fbff',r:1,grav:0}); } }
   for(const p of planets){ const dx=p.x-ship.x, dy=p.y-ship.y, d=Math.hypot(dx,dy), reach=p.r*6;
     if(d<reach && d>1){ const f=0.035*(1-d/reach)*(p.r/70); ship.vx+=dx/d*f; ship.vy+=dy/d*f; } }
-  // nothing slows you down out here, and nothing tops you out: to stop, turn round and burn
+  // almost nothing slows you down out here, and the suit tops out a little faster than it used to: to stop, turn round and burn
+  ship.vx*=.998; ship.vy*=.998;
+  { const sp=Math.hypot(ship.vx,ship.vy); if(sp>EVA_MAX){ const k=Math.max(EVA_MAX/sp,.95); ship.vx*=k; ship.vy*=k; } }
   ship.ox=ship.x; ship.oy=ship.y;
   ship.x+=ship.vx; ship.y+=ship.vy;
   if(ship.x<6){ship.x=6;ship.vx=Math.abs(ship.vx)*.4;} if(ship.x>WORLD-6){ship.x=WORLD-6;ship.vx=-Math.abs(ship.vx)*.4;}
@@ -4590,6 +4712,7 @@ function endScreen(){   // the debrief after the finale
 function easeOut(x){ return 1-(1-x)*(1-x); }
 
 function draw(){
+  if(TOUCH){ g=wg; setView(); }   // (phones: back on the world layer, at the zoom right now, even if the last frame bailed mid-draw)
   const sh = shake>0.2;
   const sx = sh?rnd(-shake,shake)*.4:0, sy = sh?rnd(-shake,shake)*.4:0;
   // on the title screen the camera drifts slowly across the sector instead of parking in a corner
@@ -4768,11 +4891,17 @@ function draw(){
   }
   drawClouds(foreNeb,cx,cy);   // faint haze drifting across in front of everything
 
+  // ---- on a phone the world layer ends here: everything after it (popups, bubbles, banners, markers, the map) goes on
+  // the overlay layer, which doesn't zoom, so it reads the same however far out the camera is. (A desktop has one layer.)
+  const z=WZ, toU=(wx,wy)=>[Math.round((wx-cx)/z),Math.round((wy-cy)/z)];
+  if(TOUCH){ ctx.drawImage(bb,0,0,WVW,WVH,0,0,cv.width,cv.height);
+    g=ug; VW=UVW; VH=UVH; g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.clearRect(0,0,VW,VH); }
+
   // floating score popups
   g.font='8px monospace'; g.textAlign='center';
-  for(const p of pops){ const[px,py]=toS(p.x,p.y-(70-p.life)*.35); g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.fillText(p.txt,px,py); }
+  for(const p of pops){ const[px,py]=toU(p.x,p.y-(70-p.life)*.35); g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.fillText(p.txt,px,py); }
   g.globalAlpha=1; g.textAlign='left';
-  if(!cine) drawTalker(cx,cy);   // speech bubble over whoever is on the radio
+  if(!cine) drawTalker(cx,cy,z);   // speech bubble over whoever is on the radio
 
   if(flash>0){ g.fillStyle=`rgba(255,140,120,${flash*.55})`; g.fillRect(0,0,VW,VH); }
 
@@ -4849,12 +4978,12 @@ function draw(){
       g.globalAlpha=1; g.textAlign='left'; } }
   if(cine) drawCineOverlay();
   if(state==='launch') drawLaunch();
-  if(state==='play' && !showMap) drawIndicators(camX,camY);
+  if(state==='play' && !showMap) drawIndicators(camX,camY,z);
   if(!cine) drawMap();
   if(fadeIn>0){ g.fillStyle=`rgba(255,255,255,${fadeIn/45})`; g.fillRect(0,0,VW,VH); }   // out of the white of the jump
 
-  ctx.clearRect(0,0,cv.width,cv.height);
-  ctx.drawImage(bb,0,0,VW,VH,0,0,cv.width,cv.height);
+  if(TOUCH){ ctx.drawImage(ub,0,0,UVW,UVH,0,0,cv.width,cv.height); g=wg; VW=WVW; VH=WVH; }   // the overlay over the world
+  else { ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(bb,0,0,VW,VH,0,0,cv.width,cv.height); }
 }
 
 // soft additive light sprite, one cached 64px radial gradient per colour (draw with 'lighter')
@@ -4888,11 +5017,12 @@ function drawClouds(list,cx,cy){   // pre-painted gas clouds at their own parall
 
 // edge chevrons pointing at nearby off-screen threats — and at the last few stragglers, so the hunt never stalls
 const MAPCOL={raider:'#ff4d6d',interceptor:'#ff9a3d',splitter:'#5fd06a',gunship:'#b06dc0',warden:'#2fd3ff',jolly:'#ffb02a'};
-function drawIndicators(cx,cy){
-  const mx=VW/2, my=VH/2, rem=need();
+function drawIndicators(cx,cy,z=1){   // (z: world units per screen unit, for a phone's zoomed-out world)
+  // the frame the chevrons sit in: the whole screen, minus a phone's notch and rounded corners
+  const mx=(VW+SAFE.l-SAFE.r)/2, my=(VH+SAFE.t-SAFE.b)/2, hx=(VW-SAFE.l-SAFE.r)/2, hy=(VH-SAFE.t-SAFE.b)/2, rem=need();
   const mark=(wx,wy,col,sz,al)=>{
-    const sx=wx-cx-mx, sy=wy-cy-my; if(Math.abs(sx)<mx+6 && Math.abs(sy)<my+6) return;   // already on screen
-    const k=Math.min((mx-9)/Math.abs(sx||1e-6),(my-9)/Math.abs(sy||1e-6));
+    const sx=(wx-cx)/z-mx, sy=(wy-cy)/z-my; if(Math.abs(sx)<hx+6 && Math.abs(sy)<hy+6) return;   // already on screen
+    const k=Math.min((hx-9)/Math.abs(sx||1e-6),(hy-9)/Math.abs(sy||1e-6));
     g.save(); g.translate(mx+sx*k,my+sy*k); g.rotate(Math.atan2(sy,sx)); g.globalAlpha=al; g.fillStyle=col;
     g.beginPath(); g.moveTo(sz,0); g.lineTo(-sz*.7,-sz*.75); g.lineTo(-sz*.25,0); g.lineTo(-sz*.7,sz*.75); g.closePath(); g.fill(); g.restore(); };
   for(const e of enemies){ if(!e.alive) continue; const d=Math.hypot(e.x-ship.x,e.y-ship.y);
@@ -4945,7 +5075,7 @@ function drawJob(px,py,j){   // the far objective itself: a reaver beacon, a hau
 }
 function jobBar(x,y,f,col){ const w=40, x0=Math.round(x-w/2), y0=Math.round(y);
   g.fillStyle='rgba(5,8,18,.8)'; g.fillRect(x0-1,y0-1,w+2,5); g.fillStyle=col; g.fillRect(x0,y0,Math.max(1,Math.round(w*clamp(f,0,1))),3); }
-function jobLabel(x,y,txt,col){ g.font='7px monospace'; g.textAlign='center'; g.fillStyle=col; g.fillText(txt,x,y); g.textAlign='left'; }
+function jobLabel(x,y,txt,col){ g.font=wFont(7); g.textAlign='center'; g.fillStyle=col; g.fillText(txt,x,y); g.textAlign='left'; }
 function drawStation(px,py,o){   // ore station: solar wings on a truss, a turning habitat ring, a lit hub
   const dead=!o.alive;
   g.save(); g.translate(px,py);
@@ -4980,7 +5110,7 @@ function drawStation(px,py,o){   // ore station: solar wings on a truss, a turni
   if(!dead && o.hp<o.maxhp){ const w=44, x=Math.round(px-w/2), y=py-42;
     g.fillStyle='rgba(5,8,18,.8)'; g.fillRect(x-1,y-1,w+2,5);
     g.fillStyle=o.hp>60?'#4dffa6':o.hp>30?'#ffb347':'#ff4d6d'; g.fillRect(x,y,Math.max(1,Math.round(w*o.hp/o.maxhp)),3); }
-  g.font='7px monospace'; g.textAlign='center'; g.fillStyle=dead?'rgba(255,77,109,.8)':'rgba(207,227,255,.65)';
+  g.font=wFont(7); g.textAlign='center'; g.fillStyle=dead?'rgba(255,77,109,.8)':'rgba(207,227,255,.65)';
   g.fillText(dead?LV.post.toUpperCase()+' · LOST':LV.post.toUpperCase(),px,py+38); g.textAlign='left';
 }
 
@@ -5226,7 +5356,7 @@ function drawPirate(px,py,e){
     const rr=e.r+7, k=4; g.strokeStyle=(t>>4)&1?'rgba(255,77,109,.95)':'rgba(255,77,109,.55)'; g.lineWidth=1; g.beginPath();
     for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){ const x=Math.round(px+sx*rr)+.5, y=Math.round(py+sy*rr)+.5;
       g.moveTo(x,y-sy*k); g.lineTo(x,y); g.lineTo(x-sx*k,y); }
-    g.stroke(); g.fillStyle='rgba(255,170,182,.9)'; g.font='7px monospace'; g.textAlign='center';
+    g.stroke(); g.fillStyle='rgba(255,170,182,.9)'; g.font=wFont(7); g.textAlign='center';
     g.fillText(VR_CAST[e.alien].name.toUpperCase(),px,py+rr+9); g.textAlign='left'; }
 }
 
@@ -5253,8 +5383,8 @@ function drawMap(){
   const full=showMap;
   const size=full?Math.min(VW,VH)-30:66;
   const pad=full?15:8;
-  const mx=full?(VW-size)/2:VW-size-pad;
-  const my=full?(VH-size)/2:pad;
+  const mx=full?(VW-size)/2:VW-size-pad-SAFE.r;   // (clear of a phone's notch and rounded corner)
+  const my=full?(VH-size)/2:pad+SAFE.t;
   const k=size/WORLD;
   g.fillStyle=full?'rgba(5,8,18,.92)':'rgba(5,8,18,.72)';
   g.fillRect(mx-2,my-2,size+4,size+4);
@@ -5285,7 +5415,7 @@ function drawMap(){
   // viewport rectangle — roughly what you can see right now
   const rx=Math.round(mx+camX*k)+.5, ry=Math.round(my+camY*k)+.5;
   g.strokeStyle='rgba(120,230,255,.75)'; g.lineWidth=1;
-  g.strokeRect(rx,ry,Math.max(3,VW*k),Math.max(3,VH*k));
+  g.strokeRect(rx,ry,Math.max(3,WVW*k),Math.max(3,WVH*k));   // (the world view: on a phone, wider than the overlay it's drawn on)
   const sx=mx+ship.x*k, sy=my+ship.y*k;
   g.fillStyle='#43f0ff'; g.fillRect((sx-1)|0,(sy-1)|0,3,3);
   if(full){ g.fillStyle='#cfe3ff'; g.font='10px monospace'; g.textAlign='center';
@@ -5324,6 +5454,7 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
   burning:burning.map(b=>({x:b.x,y:b.y,t:b.t,alien:b.alien})), talker:comms.cur&&comms.cur.who,
   job:job&&{kind:job.kind,x:job.x,y:job.y,hp:job.hp,fuse:job.fuse,free:job.free}, jobI, fleet:fleet&&fleet.left, alarm:alarm&&alarm.title,
   cells:ship.cells, cellMax:ship.cellMax, cellT:ship.cellT, noteT, notes:notes.length, toldShields, view:[VW,VH],
+  overlay:[UVW,UVH], zoom:+WZ.toFixed(3), safe:{...SAFE}, missiles:missiles.map(m=>({x:m.x,y:m.y,vx:m.vx,vy:m.vy,boost:m.boost})),
   wingmen:wingmen.map(W=>({x:W.x,y:W.y,hp:W.hp,slot:W.slot,tg:!!W.tg})), horde:horde&&{i:horde.i,left:horde.left,rest:horde.rest},
   chain:chain.length, chainRun, failT, retries, debris:debris.length, goodQ:goodQ.length, alarmGood:!!(alarm&&alarm.good), wingT,
   escort:escort&&{x:escort.x,y:escort.y,hp:escort.hp,tg:!!escort.tg}, derelict:derelict&&{x:derelict.x,y:derelict.y,hp:derelict.hp,prog:derelict.prog},
@@ -5339,6 +5470,7 @@ function loop(now){
   acc+=Math.min(now-last,100); last=now;
   while(acc>=STEP){ acc-=STEP; if(!paused && !jumpOpen) update(); }   // (the jump menu freezes everything, cutscenes too)
   draw();
+  if(TOUCH) syncBody();
 }
 updateHUD(); showBest(); syncAudioUI();
 VRAudio.play('menu');   // starts on the first click / key press (browser autoplay rules)
