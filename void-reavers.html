@@ -144,6 +144,27 @@
   #pause{position:fixed; inset:0; z-index:15; display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:rgba(5,6,13,.55); cursor:pointer}
   #pause.hidden{display:none}
+  /* the jump menu: B, or any SKIP button, picks exactly which part of the campaign to go to */
+  #jump{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:rgba(2,4,10,.74); backdrop-filter:blur(2px)}
+  #jump.hidden{display:none}
+  .jcard{background:rgba(8,12,27,.96); border:1px solid rgba(67,240,255,.3); border-left:3px solid var(--laser); border-radius:6px;
+    padding:12px 14px 14px; width:min(640px,calc(100vw - 24px)); max-height:calc(100vh - 20px); overflow:auto; box-sizing:border-box}
+  .jhead{display:flex; align-items:center; gap:10px; margin-bottom:9px; color:var(--laser); letter-spacing:.2em; font-size:12px}
+  .jhint{flex:1; color:var(--dim); font-size:10px; letter-spacing:.08em}
+  .jgrid{display:grid; grid-template-columns:auto repeat(4,minmax(0,1fr)); gap:6px; align-items:center}
+  .jlab{font-size:10px; letter-spacing:.12em; color:var(--ink); text-transform:uppercase; white-space:nowrap; padding-right:6px}
+  .jbtn{font-family:inherit; font-size:11px; letter-spacing:.06em; padding:8px 6px; background:#0b1430; color:#eef5ff; border:1px solid #23345e;
+    border-radius:4px; cursor:pointer; min-width:0; overflow-wrap:anywhere; line-height:1.25}
+  @media (max-width:560px){ .jgrid{grid-template-columns:repeat(4,minmax(0,1fr))} .jlab{grid-column:1/-1; padding-top:4px} .jgrid i{display:none} }
+  .jbtn:hover,.jbtn:focus-visible{border-color:var(--laser); background:#10204a; outline:none}
+  .jbtn.here{outline:1px solid rgba(255,179,71,.6)}
+  .jnow{display:block; width:100%; margin-bottom:10px; padding:10px; font-size:12px; background:#0f2a22; border-color:rgba(77,255,166,.55); color:#d6ffe9}
+  .jnow:hover,.jnow:focus-visible{background:#15402f; border-color:var(--good)}
+  .jfoot{margin-top:9px; font-size:10px; color:var(--dim); line-height:1.5}
+  body.touch .jbtn{padding:10px 6px}
+  @media (max-height:440px){ .jcard{padding:8px 10px 9px} .jhead{margin-bottom:6px} .jnow{padding:8px; margin-bottom:7px}
+    .jbtn, body.touch .jbtn{padding:7px 5px} .jgrid{gap:5px} .jfoot{display:none} }   /* a phone on its side */
+  #o-jump{margin:12px 0 0 10px; font-size:11px; padding:9px 14px}
   .best{color:var(--rocket); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin:8px 0 0}
   .best:empty{display:none}
 
@@ -256,7 +277,7 @@
 </div>
 
 <div id="hud-bottom" class="hud">
-  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd> pause · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> skip ahead (test) · <kbd>F</kbd> massive wave (test)</span>
+  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd> pause · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part · <kbd>F</kbd> massive wave (test)</span>
 </div>
 
 <div id="touch">
@@ -269,6 +290,7 @@
 <div id="rotate"><div class="ph"></div><div>Turn your phone sideways</div><div style="color:var(--dim);font-size:10px">Void Reavers plays in landscape</div></div>
 
 <div id="sys-ctl">
+  <button class="aud" id="btn-jump" title="Jump to any part of the campaign (B)">SKIP ▸</button>
   <button class="aud" id="btn-pause" title="Pause (P)">❚❚</button>
   <button class="aud" id="btn-music" title="Music on/off (N)">♪ MUSIC</button>
   <button class="aud" id="btn-sfx" title="Sound effects on/off (V)">SFX</button>
@@ -277,6 +299,22 @@
 <div id="pause" class="hidden">
   <h2 class="title">PAUSED</h2>
   <p class="tag">P · Esc · or tap to resume</p>
+</div>
+
+<div id="jump" class="hidden" role="dialog" aria-label="Jump to any part of the campaign">
+  <div class="jcard">
+    <div class="jhead"><b>JUMP TO</b><span class="jhint">B again · the green button &nbsp;·&nbsp; Esc · close</span><button class="aud" id="j-close" title="Close (Esc)">✕</button></div>
+    <button class="jbtn jnow" id="j-here">▸ FINISH THIS PART</button>
+    <div class="jgrid">
+      <span class="jlab">Opening</span><button class="jbtn" data-j="intro">Intro scene</button><i></i><i></i><i></i>
+      <span class="jlab">1 · The Drift</span><button class="jbtn" data-j="s1">Start</button><button class="jbtn" data-j="b1">Flagship</button><button class="jbtn" data-j="c1">Jump scene</button><i></i>
+      <span class="jlab">2 · Ember Reach</span><button class="jbtn" data-j="s2">Start</button><button class="jbtn" data-j="b2">Flagship</button><button class="jbtn" data-j="c2">Jump scene</button><i></i>
+      <span class="jlab">3 · The Maw</span><button class="jbtn" data-j="s3">Start</button><button class="jbtn" data-j="b3">Flagship</button><button class="jbtn" data-j="c3">Jump scene</button><i></i>
+      <span class="jlab">4 · The Cradle</span><button class="jbtn" data-j="h1">Horde 1</button><button class="jbtn" data-j="h2">Horde 2</button><button class="jbtn" data-j="h3">Horde 3</button><button class="jbtn" data-j="b4">Flagship</button>
+      <span class="jlab">Ending</span><button class="jbtn" data-j="e1">Flight home</button><button class="jbtn" data-j="e2">Medal ceremony</button><i></i><i></i>
+    </div>
+    <div class="jfoot">Jumping starts a fresh run from that point: score and cutters lost go back to zero, and the flagship carries the damage it would have by then.</div>
+  </div>
 </div>
 
 <div id="overlay" class="overlay">
@@ -292,8 +330,11 @@
       <span class="mono">station</span> (it scores while it lives, and if it falls you fly the sector again), and drive the flagship off.
       Then follow it into <b>the Cradle</b>: no station, just <b>hordes</b>, and the flagship's last stand.<br><br>
       Your station has a small <b>defence laser</b>. Watch for a <b>disabled fighter</b> drifting in the sector: park alongside her and she'll fly as your <b>escort</b> until she's shot down.<br><br>
-      Your cutter has no shields: <b>one hit downs it</b>. You eject in a space suit with a single thruster and no brakes,
+      Your cutter starts with its shields dead: <b>one hit downs it</b>. You eject in a space suit with a single thruster and no brakes,
       and have to fly yourself back to the station for a new cutter. <b>Get hit or run out of air on the way, and the run is over.</b>
+      Clear the first sector and the yard crews rebuild the shields: from then on every cutter has <b>three shield cells</b>.
+      Each soaks a hit, and they charge back when you stay out of the fire for a few seconds.
+      There's no drag in space: <b>you coast until you burn the other way</b>.
       <span class="mono">Laser</span> shreds light hulls and is the only thing that breaks <span class="mono">asteroids</span>.
       Don't crash into them. You carry a rack of ten <span class="mono">missiles</span>: fire them in a fast salvo, and they reload
       one by one after a short pause. A missile cracks shields; the laser only wears them down. <span class="mono">Wardens</span> and the flagship shoot missiles down,
@@ -302,20 +343,21 @@
     <div class="bestiary" id="bestiary"></div>
     <div class="keys">
       <b class="kb">W / ↑</b><span class="kb">impulse thrust (you keep drifting)</span>
-      <b class="kb">S / ↓</b><span class="kb">reverse thruster (retro burn)</span>
+      <b class="kb">S / ↓</b><span class="kb">reverse thruster (retro burn: the only way to slow down)</span>
       <b class="kb">A D / ← →</b><span class="kb">rotate the cutter</span>
       <b class="kb">Space / J</b><span class="kb">fire selected weapon</span>
       <b class="kb">1 · 2</b><span class="kb">select laser · missile</span>
       <b class="kb">M</b><span class="kb">full sector map</span>
       <b class="kb">P / Esc</b><span class="kb">pause</span>
       <b class="kb">N · V</b><span class="kb">music · sound effects on/off</span>
+      <b class="kb">B</b><span class="kb">jump to any part of the campaign</span>
       <b class="tc">Left thumb</b><span class="tc">touch anywhere on the left and drag: a small push turns the cutter to aim, a big push burns the engine that way</span>
       <b class="tc">Right thumb</b><span class="tc">hold LASER or MISSILE to fire · BRAKE burns the retro thrusters</span>
-      <b class="tc">MAP · ❚❚</b><span class="tc">sector map · pause</span>
+      <b class="tc">MAP · ❚❚ · SKIP</b><span class="tc">sector map · pause · jump to any part of the campaign</span>
       <b class="tc">Cutscenes</b><span class="tc">tap to move the dialogue on · SKIP to jump ahead</span>
       <b class="tc">Tip</b><span class="tc">on iPhone, Share → Add to Home Screen plays it full screen. Sound needs the silent switch off.</span>
     </div>
-    <button class="btn" id="o-btn">Launch</button>
+    <button class="btn" id="o-btn">Launch</button><button class="aud" id="o-jump" title="Start at any part of the campaign (B)">JUMP TO… ▸</button>
   </div>
 </div>
 
@@ -541,6 +583,15 @@ function swap(w){ if(!live()) return; const t=ac.currentTime, o=out(ME,.1,0);
   nz(t,.03,filt('bandpass',3000,3,vca(t,.5,.001,.03,o))); }
 function deflect(x,y){ if(!live()||!gate('defl',55)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.18,.25);
   for(const [f,a,d] of [[1870,1,.28],[2960,.6,.18],[4410,.3,.1]]) osc('sine',f*R(.97,1.03),t,d,vca(t,a,.001,d,o)); }
+function shieldHit(){ if(!live()||!gate('shd',60)) return; const t=ac.currentTime, o=out(ME,.3,.3);   // the bubble rings as it soaks a hit
+  sweep(osc('sine',620,t,.36,vca(t,1,.002,.33,o)).frequency,620,980,t,.12);
+  osc('triangle',1240,t,.22,vca(t,.35,.002,.2,o));
+  nz(t,.12,filt('bandpass',2400,2,vca(t,.6,.001,.1,o))); }
+function shieldUp(){ if(!live()) return; const t=ac.currentTime, o=out(ME,.08,.15);   // a cell charged back up: a soft whoop
+  sweep(osc('sine',700,t,.2,vca(t,1,.01,.18,o)).frequency,700,1400,t,.16); }
+function medal(){ if(!live()) return; const t=ac.currentTime, o=out(ME,.16,.5);   // the star goes on: a rising peal of bells
+  [1318.5,1661.2,1975.5,2637].forEach((f,k)=>{ const s=t+k*.11;
+    osc('sine',f,s,1.4,vca(s,.9-k*.12,.003,1.3,o)); osc('sine',f*2.76,s,.45,vca(s,.16,.002,.4,o)); }); }
 function hit(x,y){ if(!live()||!gate('hit',35)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.26,.1);
   nz(t,.07,filt('bandpass',1600,1.5,vca(t,1,.001,.07,o)));
   sweep(osc('square',260,t,.08,vca(t,.4,.001,.07,o)).frequency,260,90,t,.07); }
@@ -681,6 +732,7 @@ function setEngine(thr,rev,speed){
   if(!ac||!engine) return; const e=engine;
   if(thr!==e.thr){ e.thr=thr; glide(e.gT.gain,thr?.2:0,thr?.025:.07); glide(e.gH.gain,thr?.09:0,thr?.04:.1); }
   if(rev!==e.rev){ e.rev=rev; glide(e.gR.gain,rev?.05:0,rev?.025:.05); }
+  speed=Math.min(speed,14);   // (there's no top speed any more; the sound stops climbing somewhere sensible)
   const f=360+speed*95;   // the roar brightens as you pick up speed
   if(Math.abs(f-e.f)>12){ e.f=f; const now=ac.currentTime; e.lp.frequency.setTargetAtTime(f,now,.12); e.hum.frequency.setTargetAtTime(42+speed*4,now,.12); }
 }
@@ -693,7 +745,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 // the game calls in here from its update loop — an audio hiccup must never throw and freeze the game
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
-           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank};
+           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -748,6 +800,7 @@ const VR_CAST={
   post: {name:'Station',       face:'chief', side:'post', v:{f:145,w:'square',fs:1,lp:2000,br:.08}},
   cerebrant:{name:'The Cerebrant', face:'cerebrant', side:'foe', v:{f:150,w:'square',fs:1.08,ring:55,vib:45,lp:2200}},
   wing: {name:'Kite · Escort', face:'chief', side:'ally', v:{f:168,w:'sawtooth',fs:1.04,lp:2300,br:.12}},   // a fighter you rescued, flying on your wing
+  flight:{name:'Honor Flight', face:'chief', side:'ally', v:{f:184,w:'sawtooth',fs:1.07,lp:2400,br:.12}},   // the Cradle's three escorts
   hauler:{name:'Hauler', face:'chief', side:'post', v:{f:132,w:'square',fs:.96,lp:1800,br:.12}},   // whichever ore hauler is in trouble
   // reaver clan captains: each pack is led by one, and they all have something to say
   shard:   {name:'Shardlord Vex',      face:'shard',    v:{f:290,w:'triangle',fs:1.35,ring:150,lp:3000},
@@ -783,7 +836,7 @@ const VR_CAST={
   smog:    {name:'The Smog Prophet',   face:'smog',     v:{f:104,w:'sawtooth',fs:.9,br:.7,lp:1300},
     taunt:['Breathe deep. It is your last breath.','The smog takes all things in time.'], death:['The smog... clears... hhhkk!']}
 };
-const VR_CAPTAINS=Object.keys(VR_CAST).filter(k=>!['cmd','you','post','cerebrant','hauler'].includes(k));
+const VR_CAPTAINS=Object.keys(VR_CAST).filter(k=>!VR_CAST[k].side);   // the clan captains (everyone with a side is a friend, or the Cerebrant)
 
 // ---- the radio script: pools of lines per situation ({s} = sector number word, {post} = the station's name) ----
 const VR_LINES=(()=>{ const L=s=>s.trim().split('\n').map(x=>x.trim()).filter(Boolean); return {
@@ -827,8 +880,20 @@ Copy. Keeping one eye on the rocks.
 Halcyon copies. Engines green, guns greener.
 On my way. Tell the station to keep the lights on.
 Heard you, Command. Nobody gets past me.
-Copy that. No shields, no problem.
+Copy that. No shields, no problem.{bare}
+Copy. Shields green, guns hot.{shd}
 Understood. Starting the sweep.
+`),
+shieldsBack:L(`
+Shields are up, Halcyon. Three cells. Each one takes a hit, and they charge back when you stay out of the fire.
+Your shields are online, pilot. Three cells. Stop getting shot for a few seconds and they come back.
+Shield generator's green. Three hits' worth, and it recharges. Don't spend them all at once.
+`),
+shieldsDown:L(`
+Shields are down, Halcyon! Get clear and let them charge!
+That was your last cell! Break off and let the shields come back.
+Shields gone! One more hit and you're on EVA. Get out of there!
+No shields left, pilot. Find some quiet sky.
 `),
 wave:L(`
 You've got more enemies in sector {s}. Watch out.
@@ -955,7 +1020,8 @@ I smell fear through your hull.
 You are one ship. We are a storm.
 I will mount your engines on my wall.
 Turn back, human, while you still have a back to turn.
-Your shields are gone. We know.
+Your shields are gone. We know.{bare}
+Shields will not save you, little cutter.{shd}
 The clans do not forgive. The clans do not forget.
 We came for ore. We will leave with scrap.
 Run, little patrol. It makes the hunt sweeter.
@@ -1519,7 +1585,7 @@ Heading home. Somebody put the kettle on.
 Copy that. Halcyon, coming home.
 Told you I'd handle it.
 Theta-9's clear. Best day ever.
-Not bad for a cutter with no shields.
+Not bad for a cutter that started out with no shields.
 Coming home. Tell the quartermaster I only lost a few.
 `),
 chatter:L(`
@@ -1533,6 +1599,8 @@ Command's tracking you on the big board. You're doing fine.
 Keep an eye on your drift. Momentum kills out here.
 The clans paint their kills on their hulls. Don't end up as a stripe.
 Your reverse thrusters are your friends, pilot.
+Nothing out here slows you down but your own retros. Plan your stops.
+Your shields charge back if you stay out of the fire. Duck behind a rock and buy them time.{shd}
 Asteroids block their fire too. Use them as cover.
 Missiles home in on the nearest target. Make it count.
 Supply says you're burning through cutters. I said you were worth it.
@@ -1556,12 +1624,14 @@ I flew this sector twenty years ago. It was worse. Barely.
 `),
 youChatter:L(`
 Quiet out here. Too quiet.
-Note to self: get the shields fixed.
+Note to self: get the shields fixed.{bare}
+Shields humming. I could get used to this.{shd}
 Command, any chance of a raise after this?
 I'm starting to like these rocks.
 Who names these sectors, anyway?
 Engines purring. Lasers singing.
-Still no shields, huh? Great.
+Still no shields, huh? Great.{bare}
+Real shields. It's like flying a different ship.{shd}
 I've got a good feeling about this. Mostly.
 Remind me why I signed up for this?
 Scanning. Nothing yet.
@@ -1573,7 +1643,7 @@ Another day, another pirate.
 Coffee's cold. Mood's fine.
 Okay, who's next?
 Feels like they're watching me.
-My kingdom for a shield generator.
+My kingdom for a shield generator.{bare}
 Keeping my head on a swivel.
 `),
 postChatter:L(`
@@ -1760,7 +1830,7 @@ Command's pushed a repair crate out to sector {s}. Beat the reavers to it!
 Repair crate, sector {s}! Grab it and the station gets patched.
 We've dropped a repair crate in sector {s}. The reavers are racing you for it.
 Pod away! Sector {s}. Hull plating for the station, first come, first served.
-A shield cell just landed in sector {s}. Don't let them take it.
+A repair crate just landed in sector {s}. Don't let them take it.
 `),
 derelict:L(`
 Halcyon, there's one of ours adrift in sector {s}. Fighter, systems dark. Fly alongside and jump-start her!
@@ -1789,6 +1859,24 @@ I'm hit bad... punching out! Good luck, Halcyon!
 Losing her! Ejecting!
 That's it for me. Give them hell!
 `),
+flightJoin:L(`
+Honor flight forming up on you, Halcyon. Kestrel, Talon and Bastion. Lead the way.
+Three fighters on your wing, Halcyon. The stations wanted you to have company out here.
+Kestrel, Talon and Bastion, checking in. Point us at the hordes.
+`),
+flightDown:L(`
+{who} is down! Punched out clean. Keep fighting!
+Lost {who}! They're swarming us, Halcyon!
+{who}'s hit! Ejecting! The rest of us are still with you.
+`),
+flightGone:L(`
+That's your whole escort down, Halcyon. You're on your own until the horde breaks.
+Last of your escort is out of it. Hold on, pilot. Replacements launch when this horde breaks.
+`),
+flightBack:L(`
+Fresh fighters launching, Halcyon. Your flight's back to three.
+Replacements on your wing. Let's finish this.
+`),
 derelictLost:L(`
 They got the drifter. Damn it.
 We've lost the disabled fighter. No beacon, no pilot.
@@ -1804,12 +1892,6 @@ They grabbed the crate! That reaver bolted our plating on. It's shielded now. Us
 Too slow! A reaver took the crate and armoured up with it. Missiles will crack it.
 They got there first. Watch for the shielded one.
 Lost the drop. One of them is wearing our hull plating now.
-`),
-shieldPop:L(`
-There goes your shield cell! No margin left, pilot.
-The cell took that hit for you. You're bare again.
-Shield's gone! The next hit is real, Halcyon.
-That cell just saved your life. Don't need it twice.
 `),
 chain:L(`
 Chain reaction! Beautiful!
@@ -1883,7 +1965,10 @@ const VR_SCENES=[
     ['cmd',"Don't let the jar fool you. That brain runs every reaver clan in Theta-9."],
     ['cerebrant',"Enjoy your little victory, pilot. Ember Reach will be your pyre."],
     ['you',"Keep running. I'll catch up."],
-    ['cmd',"It's jumping for Talon Relay. If that relay goes dark, the whole frontier goes deaf. Go."]]},
+    ['cmd',"It's jumping for Talon Relay. If that relay goes dark, the whole frontier goes deaf."],
+    ['cmd',"One more thing. The yard crews finally rebuilt your shield generator. Every cutter in the hangar has one now."],
+    ['you',"Real shields? Commander, I could kiss you."],
+    ['cmd',"Three cells. Each one soaks a hit, and they charge back if you stay out of the fire. Now go."]]},
   {tag:'Sector clear · Ember Reach', title:'INTO THE MAW', lines:[
     ['post',"Talon Relay is still transmitting! Every colony in the sector heard what you did out there.",'saved'],
     ['cmd',"Talon Relay is gone. The colonies are blind out here now. We end this.",'lost'],
@@ -1899,7 +1984,10 @@ const VR_SCENES=[
     ['cmd',"There's no station out there. Nothing to guard but your own hide."],
     ['cerebrant',"Then come into the Cradle, little pilot. Every reaver I have left is waiting for you. All at once."],
     ['you',"All at once? Saves me some flying."],
-    ['cmd',"They'll come in hordes. Outlast them, and the Cerebrant has nowhere left to run."]]},
+    ['cmd',"They'll come in hordes. Outlast them, and the Cerebrant has nowhere left to run."],
+    ['cmd',"And you won't go in alone. Kestrel, Talon and Bastion have each sent you a fighter."],
+    ['you',"An honor guard? I'm touched, Commander."],
+    ['cmd',"Three fighters on your wing through the hordes. Bring them home if you can."]]},
   {tag:'Flagship destroyed · The Cradle', title:'THETA-9 SECURED', lines:[
     ['cmd',"Flagship destroyed! Theta-9 is free! Halcyon, you magnificent maniac. Come home."],
     ['captain',"The Cerebrant is gone... The clans are finished! Retreat! RETREAT!"],
@@ -1923,7 +2011,7 @@ const g = bb.getContext('2d');
 let VW = 480, VH = 270, scale = 1;
 
 // wider backbuffer = more of the sector on screen (zoomed out); phones zoom in a little so the ships aren't specks
-const VIEW_W = (matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search)) ? 680 : 840;
+const VIEW_W = (matchMedia('(pointer:coarse)').matches || /[?&]touch\b/.test(location.search)) ? 714 : 882;   // (5% wider than it was: you see a little farther)
 function resize(){
   const w = window.innerWidth, h = window.innerHeight;
   if(!w || !h) return;   // hidden or collapsed view: keep the last size (0/0 would make VH NaN and crash the draw)
@@ -2001,9 +2089,11 @@ const keys = {};
 window.addEventListener('keydown', e=>{
   VRAudio.unlock();
   const k=e.key.toLowerCase();
+  if(jumpOpen){ if(!e.repeat){ if(k==='escape'){ e.preventDefault(); closeJump(); } else if(k==='b') jumpHere(); } return; }   // (Enter/Space press the focused button)
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   keys[k]=true;
   if(e.repeat) return;   // held keys auto-repeat: don't let a held fire button skip the end screen
+  if(k==='b'){ openJump(); return; }   // B, anywhere: jump to any part (B again finishes the part you're in)
   if(state==='launch'){ if(k===' '||k==='enter'||k==='escape') endLaunch(); return; }   // skip the launch bay
   if(state==='cine'){   // cutscenes: Space moves the dialogue on, Enter or Esc skips the scene
     if(k===' ') commsSkip(); else if(k==='enter'||k==='escape') skipCine(); else if(k==='n') toggleMusic(); else if(k==='v') toggleSfx();
@@ -2016,10 +2106,6 @@ window.addEventListener('keydown', e=>{
   if(k==='2') selectWeapon('rocket');
   if(k==='m') toggleMap();
   if(k==='f' && state==='play' && !levelDone && !fleet) fleetArrives(job&&job.kind==='beacon'?job:null);   // test shortcut: the massive wave, now
-  if(k==='b' && state==='play'){   // test shortcut: finish the sector's packs, or knock the flagship down to its last hit
-    if(!levelDone){ for(const e of enemies) e.alive=false; levelKills=Math.max(levelKills,quota); }
-    else if(boss && boss.warp<=0 && !boss.flee && !boss.dying) boss.hp=Math.min(boss.hp,boss.fleeAt+1);
-  }
   if((k==='enter'||k===' ') && (state==='menu'||state==='win'||state==='over')) startRun();
   else if((k==='enter'||k===' ') && state==='failed') retrySector();
 });
@@ -2078,7 +2164,7 @@ window.addEventListener('resize',()=>{ orientCheck(); if(TOUCH && !stick.on) sti
 if(TOUCH) setTimeout(stickRest,0);
 
 // ---- entities ----
-const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,mis:10,mcool:0,misT:0};   // mis: missiles in the rack
+const ship = {x:0,y:0,vx:0,vy:0,a:-Math.PI/2,r:7,weapon:'laser',cool:0,invuln:0,alive:true,mis:10,mcool:0,misT:0,cells:0,cellMax:0,cellT:0};   // mis: missiles in the rack · cells: shield cells charged
 let bullets=[], missiles=[], enemies=[], burning=[], particles=[], efire=[], shockwaves=[];
 let state='menu', deaths=0, showMap=false, shake=0, flash=0, t=0, lastCause='blast';
 let wreck=null, pod=null, deathTimer=0, thrustOn=false, revOn=false;
@@ -2333,8 +2419,9 @@ function updateHorde(){
   if(H.i>=n){ if(!fleet && alive()===0 && levelKills<quota) quota=levelKills; return; }   // (never stall on a ship that got away)
   if(!fleet && alive()===0){   // horde wiped out: breathe, then the next
     H.rest=420; const bonus=1000*H.i; addScore(bonus,ship.x,ship.y-24,'#4dffa6');
-    goodBanner('HORDE '+H.i+' DESTROYED','+'+bonus.toLocaleString('en-US')+' · THE NEXT ONE IS SPOOLING UP',200);
-    comms.q=comms.q.filter(m=>m.pri>=2); say('cmd','hordeClear',null,2); }
+    const back=launchFlight(false);   // the carrier tops your escort flight back up to three, and patches the survivors
+    goodBanner('HORDE '+H.i+' DESTROYED','+'+bonus.toLocaleString('en-US')+(back?' · '+back+' FRESH FIGHTER'+(back>1?'S':'')+' FOR YOUR WING':'')+' · THE NEXT ONE IS SPOOLING UP',200);
+    comms.q=comms.q.filter(m=>m.pri>=2); say('cmd','hordeClear',null,2); if(back) say('flight','flightBack',null,1); }
 }
 function startHorde(){
   const H=horde, n=LV.horde.length, k=LV.horde[H.i++]; H.left=k; H.t=50;
@@ -2487,6 +2574,78 @@ function retrySector(){   // back to how things stood when the sector began (cut
   document.getElementById('overlay').classList.add('hidden'); commsReset();
   setupLevel(level); beginLevel(); fadeIn=45; VRAudio.play('play'); VRAudio.sfx.launch();
 }
+
+// ---- the jump menu: B, or any SKIP button, opens it. Pick exactly which part of the campaign to go to, or press the green
+// button (or B again) to finish the part you're in: skip the scene, clear the sector's packs, or knock the flagship to its last hit ----
+let jumpOpen=false;
+const elJump=document.getElementById('jump'), elJHere=document.getElementById('j-here');
+const BOSS_AT=[46,LEVELS[0].fleeAt,LEVELS[1].fleeAt,LEVELS[2].fleeAt];   // the flagship's hull as it turns up in each sector, on a run that drove it off every time
+function hereLabel(){
+  if(state==='cine') return '▸ SKIP THIS SCENE';
+  if(state==='launch') return '▸ SKIP THE LAUNCH';
+  if(state!=='play') return null;
+  if(!levelDone) return LV.horde?'▸ FINISH THE HORDES · BRING ON THE FLAGSHIP':'▸ CLEAR THE SECTOR · BRING ON THE FLAGSHIP';
+  if(boss && !boss.flee && !boss.dying) return '▸ FLAGSHIP TO ITS LAST HIT';
+  return null;
+}
+function whereNow(){   // which button is "you are here"
+  if(state==='menu' || cine) return '';
+  if(LV.horde) return boss||bossPending||levelDone?'b4':'h'+clamp(horde?horde.i:1,1,3);
+  return (boss||bossPending||levelDone?'b':'s')+(level+1);
+}
+function openJump(){
+  if(jumpOpen) return; jumpOpen=true;
+  const h=hereLabel(); elJHere.style.display=h?'':'none'; if(h) elJHere.textContent=h;
+  const here=whereNow(); for(const b of elJump.querySelectorAll('[data-j]')) b.classList.toggle('here',b.dataset.j===here);
+  elJump.classList.remove('hidden');
+  for(const k in keys) keys[k]=false; stick.on=false; stick.mag=0; touchFire.laser=touchFire.rocket=false;
+  VRAudio.setEngine(false,false,0); VRAudio.sfx.ui('open');
+  (h?elJHere:elJump.querySelector('[data-j]')).focus({preventScroll:true});
+}
+function closeJump(){ if(!jumpOpen) return; jumpOpen=false; elJump.classList.add('hidden'); }
+function jumpHere(){   // the green button
+  closeJump();
+  if(state==='cine') skipCine();
+  else if(state==='launch') endLaunch();
+  else if(state==='play'){
+    if(!levelDone){ for(const e of enemies) e.alive=false; levelKills=Math.max(levelKills,quota); fleet=null;
+      if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; } }
+    else if(boss && !boss.flee && !boss.dying){ boss.hp=Math.min(boss.hp,boss.fleeAt+1); boss.ghost=Math.min(boss.ghost,boss.hp); } }   // (even while it's still warping in)
+}
+function resetForJump(){   // clear whatever was going on, and start a fresh run's books
+  if(cine){ cine=null; document.body.classList.remove('cine'); }
+  if(paused){ paused=false; VRAudio.setPaused(false); document.body.classList.remove('paused'); document.getElementById('pause').classList.add('hidden'); }
+  document.getElementById('overlay').classList.add('hidden'); document.getElementById('o-skull').style.display='none';
+  commsReset(); alarm=null; goodQ=[]; showMap=false; deathTimer=0; wreck=null; pod=null; finalDeath=false;
+  score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; hinted={}; escort=null; derelict=null; notes=[]; noteT=0;
+}
+function jumpTo(id){
+  closeJump(); resetForJump();
+  if(id==='intro'){ startRun(); return; }
+  const kind=id[0], n=+id.slice(1), L=kind==='h'?3:kind==='e'?3:n-1;
+  bossHP=BOSS_AT[Math.min(L,3)];
+  if(kind==='e'){   // the ending: the flight home (and the ceremony), or straight to the ceremony
+    setupLevel(3); bossDead=true; clearT=runT; tally={sb:1500*LV.horde.length,cb:1500*4,lost:false,horde:true};
+    const shots=finaleShots(sceneLines(3)); VRAudio.play('menu',0,1);
+    playCine(n===2?shots.slice(FINALE_CEREMONY):shots,()=>{ state='win'; endScreen(); });
+    return; }
+  if(kind==='c'){   // the jump scene out of sector n, then on into the next one as normal
+    setupLevel(L); toldShields=L>=1; tally={sb:0,cb:0,lost:false,horde:false}; VRAudio.play('menu',0,1);
+    const next=L+1; playCine(chaseShots(L),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('play'); VRAudio.sfx.launch(); });
+    return; }
+  setupLevel(L);
+  toldShields=!(kind==='s' && L===1);   // the shields card shows when you jump to the start of Ember Reach, where they come back
+  beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch();
+  if(kind==='h'){   // a Cradle horde: the ones before it are already broken
+    lvlBanner=0; notes=[]; noteT=0; horde.i=n-1; horde.left=0; horde.rest=50;
+    levelKills=LV.horde.slice(0,n-1).reduce((a,b)=>a+b,0); }
+  if(kind==='b'){   // the flagship: the sector's packs (or the hordes) are done, and it's on its way
+    lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
+    if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; }
+    commsReset(); sectorWon(); bossPending=70; }
+}
+elJump.addEventListener('click',e=>{ const b=e.target.closest('[data-j]'); if(b){ b.blur(); jumpTo(b.dataset.j); } else if(e.target===elJump) closeJump(); });
+tap('j-here',()=>jumpHere()); tap('j-close',()=>closeJump()); tap('btn-jump',()=>openJump()); tap('o-jump',()=>openJump());
 function updatePost(){
   const o=outpost; if(o.none) return; o.a+=.004; if(o.hit>0) o.hit--; o.hitT++;
   if(!o.alive){ if(t%6===0) particles.push({x:o.x+rnd(-22,22),y:o.y+rnd(-14,14),vx:rnd(-.3,.3),vy:rnd(-.5,-.1),life:rnd(30,60),max:60,
@@ -2564,11 +2723,28 @@ function updateWing(){
   if(scrambleT>0 && --scrambleT===0) launchLancers();
   for(let i=lancers.length-1;i>=0;i--) if(!flyFighter(lancers[i],outpost,'lancer')){ lancers.splice(i,1);
     say('post',lancers.length?'lancerDown':'lancersGone',null,1); }
+  // the Cradle's honor flight
+  for(let i=wingmen.length-1;i>=0;i--) if(!flyFighter(wingmen[i],ship,'wingman')){ const W=wingmen.splice(i,1)[0];
+    if(wingmen.length) say('flight','flightDown',{who:W.call},2); else say('cmd','flightGone',null,2); }
+}
+// ---- the Cradle's honor flight: Kestrel, Talon and Bastion each send a fighter to fly on your wing through the hordes.
+// They fight the reavers (the flagship is still yours). Lose some, and the carrier tops the flight back up when the horde breaks ----
+let wingmen=[];
+const FLIGHT=['Kestrel','Talon','Bastion'], FLIGHT_SLOTS=[{a:Math.PI*.72,d:56},{a:-Math.PI*.72,d:56},{a:Math.PI,d:78}];   // left, right, behind
+function launchFlight(arrive){   // fill any empty slots (arrive: they jump in beside you; else they burn in from behind). Returns how many launched
+  let n=0;
+  for(let i=0;i<3;i++){ if(wingmen.some(W=>W.slot===i)) continue; n++;
+    const S=FLIGHT_SLOTS[i], fa=ship.a+S.a, back=arrive?0:560;
+    const x=clamp(ship.x+Math.cos(fa)*S.d-Math.cos(ship.a)*back,40,WORLD-40), y=clamp(ship.y+Math.sin(fa)*S.d-Math.sin(ship.a)*back,40,WORLD-40);
+    wingmen.push({x,y,vx:ship.vx,vy:ship.vy,a:ship.a,hp:WING_HP,cool:40+i*9,hit:0,side:i===1?-1:1,tg:null,thrust:true,slot:i,tick:(i*3+1)%10,call:FLIGHT[i]});
+    if(arrive) shockwaves.push({x,y,delay:i*6,r0:4,max:44,life:0,maxlife:24,col:'#ffd27a'}); }
+  for(const W of wingmen) W.hp=WING_HP;   // the survivors get patched up too
+  return n;
 }
 // one allied fighter's brain: pick the nearest reaver near whatever it guards (you, or the station), strafe it at ~150 px,
 // and otherwise hold formation. Returns false the frame it's shot down.
 function flyFighter(E,guard,kind){
-  const lancer=kind==='lancer', reach=lancer?560:420, leashMax=lancer?900:700;
+  const lancer=kind==='lancer', flight=kind==='wingman', reach=lancer?560:flight?520:420, leashMax=lancer?900:flight?820:700;
   if(E.hit>0) E.hit--; if(E.cool>0) E.cool--;
   if(t%10===E.tick){ E.tg=null; let bd=reach*reach;
     for(const e of enemies){ if(!e.alive || e.warp>0) continue;
@@ -2580,7 +2756,9 @@ function flyFighter(E,guard,kind){
     const ang=Math.atan2(oy,ox)+E.side*.9; gx=e.x+Math.cos(ang)*150; gy=e.y+Math.sin(ang)*150; top=lancer?3.8:4.2;
     if(t%200===0 && Math.random()<.4) E.side*=-1; }
   else if(lancer){ const fa=t*.012+E.slot*TAU/3; gx=guard.x+Math.cos(fa)*110; gy=guard.y+Math.sin(fa)*110; top=leash>300?5:2.2; }   // a combat patrol around the station
-  else { const fa=ship.a+Math.PI*.75*E.side; gx=ship.x+Math.cos(fa)*48; gy=ship.y+Math.sin(fa)*48; top=leash>300?6:Math.max(1.2,Math.hypot(ship.vx,ship.vy)+1.4); }
+  else {   // on your wing: the Kite tucks in on one side; the honor flight holds left, right and behind
+    const S=flight?FLIGHT_SLOTS[E.slot]:{a:Math.PI*.75*E.side,d:48}, fa=ship.a+S.a, sp=Math.hypot(ship.vx,ship.vy);
+    gx=ship.x+Math.cos(fa)*S.d; gy=ship.y+Math.sin(fa)*S.d; top=leash>300?Math.max(6,sp+1.5):Math.max(1.2,sp+1.4); }   // (and they keep up, however fast you go)
   const dx=gx-E.x, dy=gy-E.y, dd=Math.hypot(dx,dy)||1, want=Math.min(top,dd*.06);
   E.vx+=(dx/dd*want-E.vx)*.08; E.vy+=(dy/dd*want-E.vy)*.08;
   for(const R of rocks){ const rx=E.x-R.x, ry=E.y-R.y, rr=R.r+22, d2=rx*rx+ry*ry;
@@ -2593,11 +2771,11 @@ function flyFighter(E,guard,kind){
   if(E.tg && E.cool<=0 && state==='play'){ const e=E.tg, d=Math.hypot(e.x-E.x,e.y-E.y),
       off=Math.abs(((Math.atan2(e.y-E.y,e.x-E.x)-E.a+Math.PI*3)%TAU)-Math.PI);
     if(d<340 && off<.25){ const a=E.a+rnd(-.04,.04);
-      bullets.push({x:E.x+Math.cos(a)*9,y:E.y+Math.sin(a)*9,vx:E.vx+Math.cos(a)*7.8,vy:E.vy+Math.sin(a)*7.8,life:56,wing:true});
+      bullets.push({x:E.x+Math.cos(a)*9,y:E.y+Math.sin(a)*9,vx:E.vx+Math.cos(a)*7.8,vy:E.vy+Math.sin(a)*7.8,life:56,wing:kind});
       VRAudio.sfx.zap(E.x,E.y,false); E.cool=ri(18,26); } }
   // it can be hurt: enemy fire, missiles and rams all chip the hull
   const hurt=(n,x,y)=>{ E.hp-=n; E.hit=8; sparks(x,y); VRAudio.sfx.clank(x,y);
-    if(!lancer && E.hp>0 && cool('wingHit',500)) say('wing','wingHit'); };
+    if(!lancer && E.hp>0 && cool('wingHit',500)) say(flight?'flight':'wing','wingHit'); };
   for(const f of efire){ if(f.life>0 && (f.x-E.x)**2+(f.y-E.y)**2<12*12){ f.life=0; hurt(1,f.x,f.y); } }
   for(const m of emissiles){ if(m.life>0 && (m.x-E.x)**2+(m.y-E.y)**2<14*14){ m.life=0; boom(m.x,m.y,'small'); hurt(2,m.x,m.y); } }
   for(const e of enemies){ if(e.alive && e.warp<=0 && (e.x-E.x)**2+(e.y-E.y)**2<(e.r+8)**2){ hurt(e.boat?0:1,E.x,E.y); kill(e); } }
@@ -2644,11 +2822,12 @@ function drawWing(toS){
   const on=(x,y)=>{ const p=toS(x,y); return p[0]>-60&&p[1]>-60&&p[0]<VW+60&&p[1]<VH+60?p:null; };
   if(escort){ const p=on(escort.x,escort.y); if(p) drawFighter(p[0],p[1],escort,'hue-rotate(-50deg) saturate(1.3)',WING_HP,'#4dffa6'); }
   for(const L of lancers){ const p=on(L.x,L.y); if(p) drawFighter(p[0],p[1],L,'hue-rotate(160deg) saturate(1.5)',LANCER_HP,'#ffb347'); }   // the station's Lancers: amber
+  for(const W of wingmen){ const p=on(W.x,W.y); if(p) drawFighter(p[0],p[1],W,'hue-rotate(-130deg) saturate(1.4)',WING_HP,'#ffd27a'); }   // the honor flight: gold
 }
 
 // ---- sector flow: build it, play it, win it, chase the flagship out of it ----
 function startRun(){
-  score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; bossHP=46; hinted={}; escort=null;
+  score=0; kills=0; deaths=0; postsSaved=0; retries=0; runT=0; clearT=0; bossHP=46; hinted={}; escort=null; toldShields=false; notes=[]; noteT=0;
   document.getElementById('o-skull').style.display='none';
   cine=null; document.body.classList.remove('cine'); commsReset();
   setupLevel(0);
@@ -2665,6 +2844,7 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   if(LV.horde){ outpost.alive=false; outpost.hp=0; outpost.none=true; }   // the Cradle: no station, the spot is just your jump point
   ship.x=spawnPt.x; ship.y=spawnPt.y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2;
   ship.cool=0; ship.invuln=90; ship.alive=true; ship.suit=false; ship.r=7; finalDeath=false; ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;
+  fitShields();   // (none in the Drift; three cells from Ember Reach on)
   bullets=[]; missiles=[]; particles=[]; efire=[]; shockwaves=[]; fireballs=[]; debris=[]; delayedBooms=[]; husks=[];
   boss=null; bossDead=false; bossFled=false; emissiles=[]; pdFlashes=[]; warpLines=[]; bossBanner=0;
   muzzles=[]; lights=[]; pops=[]; heat=0; lockT=0; lastShot=''; wreck=null; pod=null;
@@ -2672,7 +2852,8 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   enemies=[]; burning=[]; placeRocks(LV.rocks); spawnRoamers(LV.start);
   levelKills=0; levelT=0; levelDone=false; doneT=0; bossPending=0; saidHalf=false; saidFew=false; tally=null;
   job=null; jobI=0; jobWait=0; alarm=null; goodQ=[]; fleet=null; chain=[]; chainRun=0;
-  horde=LV.horde?{i:0,left:0,t:0,rest:300}:null;
+  horde=LV.horde?{i:0,left:0,t:0,rest:540}:null;   // (a breather first, while your escort flight forms up)
+  wingmen=[];
   derelict=null; wingT=ri(1500,2700);   // a disabled fighter turns up somewhere in the sector after a while
   lancers=[]; scrambled=false; scrambleT=0;   // the station's fighters: one scramble per sector
   if(escort) Object.assign(escort,{x:ship.x-46,y:ship.y+34,vx:0,vy:0,a:-Math.PI/2,cool:60});   // your escort jumps in with you
@@ -2682,6 +2863,15 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
 }
 function beginLevel(){
   state='play'; lvlBanner=260; ship.invuln=90;
+  // news that gets its own full-screen card, once the sector's title card has cleared
+  notes=[];
+  if(ship.cellMax && !toldShields){ toldShields=true;   // the first sector with shields
+    notes.push(()=>{ goodBanner('SHIELDS RESTORED','THREE CELLS · EACH ONE SOAKS A HIT · THEY CHARGE BACK WHEN YOU STAY OUT OF THE FIRE',240);
+      say('cmd','shieldsBack',null,2); }); }
+  if(LV.horde){ launchFlight(true);   // the Cradle: your honor flight jumps in with you
+    notes.push(()=>{ goodBanner('ESCORT FLIGHT JOINED','KESTREL · TALON · BASTION · THREE FIGHTERS ON YOUR WING THROUGH THE HORDES',220);
+      say('flight','flightJoin',null,2); }); }
+  noteT=notes.length?290:0;
   say('cmd','brief'+(level+1)); say('cmd','brief'+(level+1)); if(Math.random()<.75) say('you','youBrief');
 }
 function sectorWon(){   // quota met: the packs scatter, and the flagship comes to see who's been killing its clans
@@ -2698,6 +2888,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   for(let k=0;k<12 && rocks.some(R=>Math.hypot(R.x-x,R.y-y)<R.r+30);k++){ x=o.x+rnd(-120,120); y=o.y+rnd(40,140); }
   ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.suit=false; ship.r=7;
   ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;   // a fresh cutter comes with a full rack
+  fitShields();                                  // and, after the Drift, fully charged shields
   wreck=null; pod=null; state='play';
   efire=efire.filter(f=>Math.hypot(f.x-x,f.y-y)>260); emissiles=emissiles.filter(m=>Math.hypot(m.x-x,m.y-y)>360);
   // the launch fires a repulsor pulse, so reavers camping the launch point get shoved clear and lose their aim
@@ -2731,7 +2922,8 @@ const comms={q:[],cur:null,gap:0,idle:0,cd:{},bags:{}};
 function commsReset(){ comms.q=[]; comms.cur=null; comms.gap=0; comms.idle=0; comms.cd={}; elComms.className=''; VRAudio.radio(false); }
 function cool(k,f){ if(t<(comms.cd[k]||-1e9)) return false; comms.cd[k]=t+f; return true; }   // rate limit per kind of call
 function pickLine(key,vars){   // a shuffle-bag per pool, so lines don't repeat until the pool runs dry
-  const pool=VR_LINES[key], fill=s=>s.replace(/\{(\w+)\}/g,(m,k)=>vars&&vars[k]!=null?vars[k]:m); let s=key;
+  // ({bare} marks a line that only fits while the cutter has no shields, {shd} one that only fits once it has them)
+  const pool=VR_LINES[key], fill=s=>s.replace(/\{(\w+)\}/g,(m,k)=>k==='bare'?(ship.cellMax?m:''):k==='shd'?(ship.cellMax?'':m):vars&&vars[k]!=null?vars[k]:m); let s=key;
   // (a line with a blank that can't be filled, like the station in the Cradle, goes back and another is drawn)
   if(pool) for(let k=0;k<pool.length;k++){ let bag=comms.bags[key];
     if(!bag||!bag.length){ bag=comms.bags[key]=pool.map((_,i)=>i); for(let i=bag.length-1;i>0;i--){ const j=ri(0,i); [bag[i],bag[j]]=[bag[j],bag[i]]; } }
@@ -2824,7 +3016,7 @@ function nextShot(){
 }
 function endCine(){ const c=cine; if(!c) return; cine=null; document.body.classList.remove('cine'); commsReset(); c.done(); }
 function skipCine(){ if(cine) endCine(); }
-document.getElementById('cine-skip').addEventListener('click',e=>{ e.currentTarget.blur(); skipCine(); });
+document.getElementById('cine-skip').addEventListener('click',e=>{ e.currentTarget.blur(); openJump(); });   // (skip this scene, or jump anywhere)
 function cineTick(){
   const c=cine, s=c.shots[c.i]; c.lt++;
   if(s.tick) s.tick(c,c.lt);
@@ -2906,7 +3098,8 @@ function chaseShots(i){
         c.cam={x:spawnPt.x,y:spawnPt.y-50}; VRAudio.sfx.arrive(cut.x,cut.y-300); } }
   ];
 }
-// the finale: home to the Resolute through the fireworks, and into the bay
+// the finale: home to the Resolute through the fireworks, into the bay, and up to the command deck for a medal
+const FINALE_CEREMONY=2;   // (where the ceremony starts in the list: the jump menu can go straight there)
 function finaleShots(lines){
   const H=clearSpot(outpost.x,outpost.y,500,1000); let carrier, cut;
   return [
@@ -2920,8 +3113,227 @@ function finaleShots(lines){
       init(c){ caption(c,'MISSION COMPLETE','The ore lanes of Theta-9 are open again.',240); },
       tick(c,lt){ const k=easeOut(Math.min(1,lt/150)), mouth=carrier.x-116; cut.x=H.x-70+k*(carrier.x-40-(H.x-70)); cut.thrust=lt<40;
         cut.alpha=cut.x<mouth?1:clamp(1-(cut.x-mouth)/50,0,1);
-        if(lt%40===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } }
+        if(lt%40===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } },
+    ...ceremonyShots()
   ];
+}
+// ---- the medal ceremony: the Resolute's command deck. A window full of nebula and a ringed world, two officers at
+// attention, and Commander Varga pinning the Star of Theta-9 on Halcyon. Painted at 400x225 and scaled up to fill the screen ----
+function ceremonyShots(){
+  const clean=deaths===0;
+  return [
+    { dur:280, lines:[['cmd',"Pilot Halcyon. Front and center."],
+        ['cmd',"For Kestrel Station, Talon Relay and Bastion Gate. For every ore hauler that made it home."],
+        ['cmd',"Frontier Command awards you the Star of Theta-9. You're the first pilot ever to wear it."]],
+      init(c){ c.black=1; c.actors=[]; c.title=null; cerT=0; caption(c,'CARRIER RESOLUTE','Command deck · the morning after',300); VRAudio.play('menu',0,1.5); },
+      tick(){ cerT++; },
+      draw(c,lt){ drawCeremony(0,lt); } },
+    { dur:240, lines:[['you',"Thank you, Commander. I don't know what to say."],['cmd',"Then don't say anything. Just wear it."]],
+      init(c){ c.cap=null; },
+      tick(c,lt){ cerT++; if(lt===100) VRAudio.sfx.medal(); },
+      draw(c,lt){ drawCeremony(1,lt); } },
+    { dur:300, toBlack:true, lines:[clean?['you',"Any chance it comes with a raise?"]:['you',"Does it come with a new cutter? I broke a few."],
+        ['cmd',"It comes with the whole hangar, Halcyon. Get some sleep. Theta-9 is quiet tonight because of you."]],
+      tick(){ cerT++; },
+      draw(c,lt){ drawCeremony(2,lt);
+        const a=Math.min(1,lt/40), y=Math.round(VH*.11)+34;   // the honour, over the window
+        g.globalAlpha=a*.45; g.fillStyle='#000'; g.fillRect(0,y-26,VW,40);
+        g.globalAlpha=a; g.textAlign='center'; g.fillStyle='#ffd27a'; g.font='bold 22px monospace'; g.fillText('STAR OF THETA-9',VW/2,y);
+        g.fillStyle='#fff1b0'; g.font='9px monospace'; g.fillText('AWARDED TO THE PILOT OF THE HALCYON',VW/2,y+13);
+        g.globalAlpha=1; g.textAlign='left'; } }
+  ];
+}
+const CER_W=400, CER_H=225;
+let cerArt=null, cerT=0;
+function cerCanvas(){ const c=document.createElement('canvas'); c.width=CER_W; c.height=CER_H; return c; }
+function poly(p,a){ p.beginPath(); p.moveTo(a[0],a[1]); for(let i=2;i<a.length;i+=2) p.lineTo(a[i],a[i+1]); p.closePath(); return p; }
+const CER_PANES=[[40,12,128,10,126,148,46,148],[138,6,262,6,262,148,138,148],[272,10,360,12,354,148,274,148]];   // the three tall window panes
+function buildCeremony(){
+  const sky=cerCanvas(), room=cerCanvas(), fx=cerCanvas();
+  paintCerSky(sky.getContext('2d')); paintCerRoom(room.getContext('2d'));
+  const tw=[]; for(let i=0;i<40;i++){ const P=CER_PANES[i%3]; tw.push({x:ri(P[0]+4,P[2]-4),y:ri(14,140),f:rnd(.03,.09),p:rnd(0,TAU)}); }   // stars that twinkle
+  cerArt={sky,room,fx,fq:fx.getContext('2d'),tw};
+}
+function paintCerSky(p){   // what's out the window: gas lit from within, a far moon, and a ringed world
+  const W=CER_W, H=CER_H;
+  let gr=p.createLinearGradient(0,0,0,H); gr.addColorStop(0,'#04061a'); gr.addColorStop(.5,'#0b0c2a'); gr.addColorStop(1,'#150a26');
+  p.fillStyle=gr; p.fillRect(0,0,W,H);
+  p.globalCompositeOperation='lighter';
+  const cl=[cloudSprite(['#5a26c8','#2a4ad0','#a03ad0']),cloudSprite(['#7a30d8','#30208a','#c050d8']),cloudSprite(['#2058d0','#4a30c0','#8a40d8'])];
+  for(const [x,y,w,h,a,i] of [[-60,-40,250,200,.7,0],[150,-60,280,210,.55,1],[40,30,220,170,.45,2],[250,40,230,180,.5,0],[-50,60,220,170,.4,1],[120,-20,180,140,.35,2]]){
+    p.globalAlpha=a; p.drawImage(cl[i],x,y,w,h); }
+  p.globalAlpha=1; p.globalCompositeOperation='source-over';
+  for(let i=0;i<460;i++){ const x=Math.random()*W|0, y=Math.random()*160|0, b=Math.random();
+    p.fillStyle=b>.97?'#ffffff':b>.86?'#d6e6ff':b>.6?'#8fa2d8':'#46528a'; p.fillRect(x,y,1,1);
+    if(b>.988){ p.globalAlpha=.45; p.fillRect(x-1,y,3,1); p.fillRect(x,y-1,1,3); p.globalAlpha=1; } }
+  p.fillStyle='#9aa0b8'; p.beginPath(); p.arc(92,48,5,0,TAU); p.fill(); p.fillStyle='#262a40'; p.beginPath(); p.arc(94.5,49,4.6,0,TAU); p.fill();   // a far moon
+  const X=242, Y=72, Rp=50;
+  const ring=(a0,a1)=>{ p.save(); p.translate(X,Y); p.rotate(-.22);
+    for(const [rx,ry,col,w] of [[118,21,'rgba(150,128,96,.35)',3],[109,19.5,'rgba(236,220,186,.6)',2],[100,18,'rgba(206,176,126,.55)',2],[92,16.5,'rgba(255,244,214,.3)',1]]){
+      p.strokeStyle=col; p.lineWidth=w; p.beginPath(); p.ellipse(0,0,rx,ry,0,a0,a1); p.stroke(); }
+    p.restore(); };
+  ring(Math.PI,TAU);   // the far side of the rings, behind the planet
+  p.save(); p.beginPath(); p.arc(X,Y,Rp,0,TAU); p.clip();
+  gr=p.createRadialGradient(X-20,Y-22,4,X,Y,Rp*1.15); gr.addColorStop(0,'#a8c8f4'); gr.addColorStop(.4,'#4a72c0'); gr.addColorStop(.78,'#1c2f68'); gr.addColorStop(1,'#0a1232');
+  p.fillStyle=gr; p.fillRect(X-Rp,Y-Rp,Rp*2,Rp*2);
+  for(let i=0;i<18;i++){ p.globalAlpha=.10+Math.random()*.14; p.fillStyle=Math.random()<.55?'#e0ecff':'#14204a';   // cloud bands
+    p.beginPath(); p.ellipse(X+rnd(-30,30),Y-Rp+Math.random()*Rp*2,rnd(18,56),rnd(1.5,4.5),rnd(-.25,.05),0,TAU); p.fill(); }
+  p.globalAlpha=1;
+  gr=p.createLinearGradient(X-Rp*.6,Y-Rp*.6,X+Rp,Y+Rp); gr.addColorStop(.35,'rgba(4,6,22,0)'); gr.addColorStop(1,'rgba(4,6,22,.9)');   // the night side
+  p.fillStyle=gr; p.fillRect(X-Rp,Y-Rp,Rp*2,Rp*2); p.restore();
+  p.strokeStyle='rgba(200,226,255,.75)'; p.lineWidth=1; p.beginPath(); p.arc(X,Y,Rp-.5,Math.PI*.92,Math.PI*1.62); p.stroke();   // rim light
+  ring(0,Math.PI);   // the near side, across its face
+}
+function paintCerRoom(p){   // the deck itself, with the window panes cut out of it: struts, sill, polished floor, consoles
+  const W=CER_W, H=CER_H, R=(x,y,w,h,c)=>{ p.fillStyle=c; p.fillRect(x,y,w,h); };
+  R(0,0,W,H,'#0a0d17');
+  for(let x=4;x<40;x+=9){ R(x,0,1,148,'#151b2b'); R(W-1-x,0,1,148,'#151b2b'); }   // wall panels
+  for(let y=16;y<148;y+=22){ R(0,y,40,1,'#131826'); R(W-40,y,40,1,'#131826'); }
+  for(const y of [40,96]){ R(10,y,2,8,'#ffb347'); R(W-12,y,2,8,'#ffb347'); R(24,y+20,3,2,'#43f0ff'); R(W-27,y+20,3,2,'#43f0ff'); }
+  R(0,0,W,5,'#070910'); for(let x=24;x<W;x+=44) R(x,2,12,1,'#9ff6ff');   // ceiling lamps
+  p.globalCompositeOperation='destination-out'; for(const q of CER_PANES) poly(p,q).fill(); p.globalCompositeOperation='source-over';
+  p.strokeStyle='#3c4864'; p.lineWidth=1; for(const q of CER_PANES) poly(p,q).stroke();
+  for(const x of [132,267]){ R(x-1,10,3,138,'#121828'); p.globalAlpha=.85; R(x,24,1,110,'#ffb347'); p.globalAlpha=1; }   // struts, amber running lights
+  R(0,148,W,10,'#141a2a'); R(0,148,W,1,'#46526e'); p.globalAlpha=.7; R(24,155,W-48,1,'#ffb347'); p.globalAlpha=1;   // the sill
+  let gr=p.createLinearGradient(0,158,0,H); gr.addColorStop(0,'#111628'); gr.addColorStop(1,'#04060c'); p.fillStyle=gr; p.fillRect(0,158,W,H-158);
+  p.strokeStyle='rgba(40,52,84,.6)'; for(let i=-8;i<=8;i++){ p.beginPath(); p.moveTo(200+i*16,158); p.lineTo(200+i*64,H); p.stroke(); }
+  for(const y of [164,172,184,200,220]) R(0,y,W,1,'rgba(30,40,66,.7)');
+  p.globalCompositeOperation='lighter';   // the window's light pooled on the polished floor
+  gr=p.createRadialGradient(200,176,4,200,176,150); gr.addColorStop(0,'rgba(120,90,220,.24)'); gr.addColorStop(1,'rgba(120,90,220,0)'); p.fillStyle=gr; p.fillRect(0,158,W,H-158);
+  p.globalCompositeOperation='source-over';
+  p.strokeStyle='rgba(255,179,71,.5)'; p.beginPath(); p.moveTo(122,158); p.lineTo(40,H); p.moveTo(278,158); p.lineTo(360,H); p.stroke();   // floor strips
+  for(const s of [1,-1]){ const x0=s>0?0:W;   // a console either side, buttons lit
+    poly(p,[x0,166, x0+s*74,166, x0+s*88,204, x0,204]); p.fillStyle='#1a2236'; p.fill();
+    poly(p,[x0,204, x0+s*88,204, x0+s*88,H, x0,H]); p.fillStyle='#0e1320'; p.fill();
+    R(Math.min(x0,x0+s*74),166,74,1,'#3c4864');
+    for(let i=0;i<14;i++) R(x0+s*(8+(i%7)*9)-(s<0?3:0),172+(i/7|0)*10,3,2,['#43f0ff','#ffb347','#4dffa6','#43f0ff'][i%4]); }
+}
+function cerHolo(q,x,y,w,h,T,kind){   // a flickering hologram panel over a console
+  const fl=clamp(.78+.22*Math.sin(T*.13+x)-(Math.random()<.03?.45:0),0,1);
+  q.fillStyle='#43f0ff'; q.strokeStyle='#43f0ff'; q.lineWidth=1;
+  q.globalAlpha=.07*fl; poly(q,[x+w/2-5,y+h, x+w/2+5,y+h, x+w/2+1,y+h+24, x+w/2-1,y+h+24]).fill();   // projector beam
+  q.globalAlpha=.15*fl; q.fillRect(x,y,w,h);
+  q.globalAlpha=.75*fl; q.strokeRect(x+.5,y+.5,w-1,h-1);
+  q.globalAlpha=.9*fl; q.fillStyle='#9ff6ff'; q.strokeStyle='#9ff6ff';
+  if(kind===0){ const cx=x+13, cy=y+h/2, a=T*.06;   // a sweep scope and readouts
+    q.beginPath(); q.arc(cx,cy,9,0,TAU); q.stroke(); q.beginPath(); q.moveTo(cx,cy); q.lineTo(cx+Math.cos(a)*9,cy+Math.sin(a)*9); q.stroke();
+    for(let i=0;i<6;i++) q.fillRect(x+27,y+6+i*4,6+((i*7+(T>>5))%5)*4,1); }
+  else { q.strokeRect(x+5.5,y+8.5,16,9); q.fillRect(x+21,y+12,4,1); q.fillRect(x+9,y+11,6,3);   // the Halcyon's outline, and bars
+    for(let i=0;i<6;i++) q.fillRect(x+30,y+6+i*4,5+((i*5+(T>>4))%6)*3,1); }
+  q.globalAlpha=1;
+}
+function cerOfficer(q,x,y,hair,sal){   // x = centre, y = feet: an officer in a long dress coat, at attention or saluting
+  const R=(a,b,w,h,c)=>{ q.fillStyle=c; q.fillRect(a,b,w,h); };
+  R(x-5,y-8,4,8,'#0c0f18'); R(x+1,y-8,4,8,'#0c0f18');   // boots
+  R(x-7,y-48,14,42,'#1a2034'); R(x-8,y-20,16,14,'#1a2034'); R(x-7,y-48,3,40,'#232b45');   // coat, flared hem, lit edge
+  R(x,y-46,1,38,'#0f1322'); for(let i=0;i<5;i++) R(x+2,y-44+i*6,1,1,'#d6a94a');   // front, buttons
+  R(x-7,y-30,14,1,'#c9a227'); R(x-8,y-48,4,2,'#d6a94a'); R(x+4,y-48,4,2,'#d6a94a');   // belt, epaulettes
+  R(x-3,y-56,6,7,'#e2b293'); R(x-3,y-57,6,3,hair); R(x-3,y-55,1,3,hair); R(x+2,y-55,1,2,hair);   // head and hair
+  R(x-1,y-53,1,1,'#2a2230'); R(x+1,y-53,1,1,'#2a2230'); R(x-2,y-49,4,1,'#1a2034');
+  R(x-9,y-46,2,18,'#161c2e'); R(x-9,y-28,2,2,'#e2b293');
+  if(!sal){ R(x+7,y-46,2,18,'#161c2e'); R(x+7,y-28,2,2,'#e2b293'); }
+  else { q.strokeStyle='#161c2e'; q.lineWidth=2; q.lineCap='butt'; q.beginPath(); q.moveTo(x+8,y-46); q.lineTo(x+11,y-52); q.lineTo(x+4,y-56); q.stroke(); R(x+2,y-57,2,2,'#e2b293'); }
+}
+function cerPilot(q,x,y,sal){   // x = centre, y = feet: Halcyon in flight armour, black and copper, the visor glowing
+  const R=(a,b,w,h,c)=>{ q.fillStyle=c; q.fillRect(a,b,w,h); };
+  const BK='#1d2027', BS='#121419', BH='#3a3f4a', CU='#b85a22', CH='#f08a40', CS='#6e3212';
+  R(x-12,y-42,10,34,BK); R(x+2,y-42,10,34,BK); R(x-12,y-42,2,34,BH); R(x+10,y-42,2,34,BS);   // legs
+  R(x-13,y-9,12,9,BS); R(x+1,y-9,12,9,BS); R(x-13,y-9,12,1,BH); R(x+1,y-9,12,1,BH);   // boots
+  R(x-12,y-28,10,6,CU); R(x-12,y-28,10,1,CH); R(x+2,y-28,10,6,CU); R(x+2,y-28,10,1,CH);   // knee plates
+  R(x-13,y-46,26,5,'#2a2e38'); R(x-2,y-46,4,5,'#8a8f99'); R(x-11,y-45,5,4,'#16191f'); R(x+6,y-45,5,4,'#16191f');   // belt and pouches
+  R(x-16,y-80,32,14,BK); R(x-14,y-66,28,10,BK); R(x-12,y-56,24,10,BK);   // chest to waist
+  R(x-16,y-80,3,14,BH); R(x+13,y-80,3,14,BS); R(x,y-78,1,30,BS);
+  for(const yy of [y-62,y-56,y-50]) R(x-11,yy,22,1,BS);   // ab plates
+  for(let i=0;i<10;i++){ R(x-14+i,y-77+(i>>1),2,2,CU); R(x+12-i,y-77+(i>>1),2,2,CU); }   // copper chevron
+  R(x-14,y-78,28,1,CH);
+  for(const s of [-1,1]){ const px=s<0?x-25:x+13;   // pauldrons
+    R(px,y-82,12,12,CU); R(px+1,y-83,10,1,CU); R(px,y-82,12,2,CH); R(px,y-72,12,2,CS); R(px+(s<0?0:10),y-82,2,12,s<0?CH:CS); }
+  R(x-24,y-70,8,18,BK); R(x-24,y-52,8,10,CU); R(x-24,y-52,8,1,CH); R(x-23,y-42,7,6,BS);   // left arm, bracer, glove
+  if(!sal){ R(x+16,y-70,8,18,BK); R(x+16,y-52,8,10,CU); R(x+16,y-52,8,1,CH); R(x+17,y-42,7,6,BS); }
+  R(x-5,y-86,10,5,BS);   // neck
+  R(x-9,y-104,18,18,'#262a34'); R(x-10,y-100,20,12,'#262a34'); R(x-7,y-106,14,2,'#262a34');   // helmet
+  R(x-8,y-105,8,2,'#4a5060'); R(x-10,y-100,2,8,'#4a5060'); R(x+8,y-100,2,10,'#15181e');
+  R(x-8,y-98,16,6,'#2a6cff'); R(x-7,y-92,14,1,'#2a6cff'); R(x-5,y-91,10,1,'#1c4ad0');   // visor
+  R(x-8,y-98,16,1,'#8fd0ff'); R(x-6,y-97,3,1,'#dff2ff');
+  R(x-9,y-88,18,2,BK);   // chin guard
+  if(sal){ q.lineCap='butt'; q.strokeStyle=BK; q.lineWidth=7; q.beginPath(); q.moveTo(x+20,y-76); q.lineTo(x+27,y-90); q.stroke();   // a salute back
+    q.strokeStyle=CU; q.lineWidth=6; q.beginPath(); q.moveTo(x+27,y-90); q.lineTo(x+11,y-100); q.stroke(); R(x+6,y-104,7,6,BS); }
+}
+function cerCommander(q,x,y,T){   // x = centre, y = feet: Commander Varga in a long dress cloak, silver hair down her back, facing him
+  const R=(a,b,w,h,c)=>{ q.fillStyle=c; q.fillRect(a,b,w,h); };
+  const NV='#1c2a5c', NS='#111a3d', NH='#2d4280', GD='#d6a94a', HR='#c9ced8', HH='#eef1f6', HS='#8e95a6', SK='#e9bb9b', SS='#c48d73';
+  const sw=Math.sin(T*.03);
+  q.fillStyle=HR; poly(q,[x-6,y-102, x+6,y-102, x+4,y-80, x-2,y-62, x-12+sw,y-50, x-16+sw,y-58, x-14,y-80]).fill();   // hair down her back
+  q.fillStyle=HS; poly(q,[x-12,y-90, x-14,y-78, x-16+sw,y-58, x-12+sw,y-52, x-10,y-70]).fill();
+  for(let i=0;i<5;i++) R(Math.round(x-12+i*2+(i&1?sw:0)),y-88+i*6,1,10,HH);
+  q.fillStyle=NV; poly(q,[x-10,y-74, x+12,y-74, x+16,y-40, x+22,y, x-22,y, x-14,y-40]).fill();   // the cloak, flaring to the floor
+  q.fillStyle=NS; poly(q,[x-10,y-74, x-2,y-74, x-6,y-30, x-10,y, x-22,y, x-14,y-40]).fill();
+  q.fillStyle=NH; for(const f of [4,9]) poly(q,[x+f,y-60, x+f+1,y-60, x+f+4,y-2, x+f+2,y-2]).fill();   // folds
+  q.fillStyle=GD; poly(q,[x+12,y-74, x+14,y-74, x+23,y, x+21,y]).fill(); R(x-22,y-3,45,2,GD);   // gold trim
+  R(x-11,y-78,24,6,NV); R(x-11,y-78,24,1,NH); R(x+2,y-82,10,5,NV); R(x+2,y-82,10,1,GD); R(x+11,y-82,1,5,GD);   // shoulders, high collar
+  R(x+8,y-70,4,4,GD); R(x+9,y-69,2,2,'#5aa0ff');   // brooch
+  R(x+1,y-96,11,14,SK); R(x+1,y-96,3,14,SS); R(x+12,y-91,1,3,SK);   // face, the shadowed side, nose
+  R(x+8,y-91,2,1,'#2a2230'); R(x+7,y-93,4,1,HS); R(x+8,y-86,3,1,'#a85a5a');   // eye, brow, mouth
+  R(x+4,y-94,1,1,'#b06058'); R(x+5,y-93,1,1,'#b06058'); R(x+6,y-92,1,1,'#b06058');   // the old scar
+  R(x-1,y-102,13,6,HR); R(x+1,y-103,9,1,HH); R(x-2,y-98,4,22,HR); R(x+10,y-100,3,4,HR); R(x-1,y-100,2,2,HH); R(x,y-78,3,10,HR);   // hair
+}
+function cerArm(q,sx,sy,hx,hy){   // her sleeve, shoulder to hand, gold at the cuff
+  const dx=hx-sx, dy=hy-sy, d=Math.hypot(dx,dy)||1, ux=dx/d, uy=dy/d;
+  q.lineCap='round'; q.strokeStyle='#1c2a5c'; q.lineWidth=6; q.beginPath(); q.moveTo(sx,sy); q.lineTo(hx-ux*3,hy-uy*3); q.stroke();
+  q.lineCap='butt'; q.strokeStyle='#d6a94a'; q.lineWidth=6; q.beginPath(); q.moveTo(hx-ux*5,hy-uy*5); q.lineTo(hx-ux*3,hy-uy*3); q.stroke();
+  q.fillStyle='#e9bb9b'; q.fillRect(Math.round(hx-2),Math.round(hy-2),4,4);
+}
+function cerMedal(q,mx,my){   // the Star of Theta-9: an eight-point gold star
+  mx=Math.round(mx); my=Math.round(my); const R=(a,b,w,h,c)=>{ q.fillStyle=c; q.fillRect(a,b,w,h); };
+  R(mx-3,my-3,7,7,'#e0a83a'); R(mx,my-6,1,13,'#ffd27a'); R(mx-6,my,13,1,'#ffd27a');
+  for(let i=1;i<=4;i++){ R(mx-i,my-i,1,1,'#ffd27a'); R(mx+i,my-i,1,1,'#ffd27a'); R(mx-i,my+i,1,1,'#ffd27a'); R(mx+i,my+i,1,1,'#ffd27a'); }
+  R(mx-2,my-2,5,5,'#ffd27a'); R(mx-1,my-1,3,3,'#fff1b0'); R(mx,my,1,1,'#ffffff'); R(mx+1,my+1,2,2,'#c8902a');
+}
+function cerRibbon(q,ax,ay,bx,by,mx,my){   // its blue ribbon: two strands down to the star
+  q.lineCap='butt'; q.strokeStyle='#2c4aa8'; q.lineWidth=2;
+  q.beginPath(); q.moveTo(ax,ay); q.lineTo(mx-1,my-5); q.moveTo(bx,by); q.lineTo(mx+1,my-5); q.stroke();
+  q.strokeStyle='#5a7ae0'; q.lineWidth=1; q.beginPath(); q.moveTo(ax,ay); q.lineTo(mx-1,my-5); q.stroke();
+}
+function drawCeremony(stage,lt){   // stage 0: she presents it · 1: she puts it on him, they salute · 2: the honour stands
+  if(!cerArt) buildCeremony();
+  const A=cerArt, q=A.fq, T=cerT, VX=176, PX=236, FY=212;
+  q.setTransform(1,0,0,1,0,0); q.clearRect(0,0,CER_W,CER_H); q.globalAlpha=1; q.globalCompositeOperation='source-over';
+  for(const s of A.tw){ q.globalAlpha=.3+.7*Math.max(0,Math.sin(T*s.f+s.p)); q.fillStyle='#ffffff'; q.fillRect(s.x,s.y,1,1); }
+  q.globalAlpha=1;
+  cerHolo(q,6,110,58,36,T,0); cerHolo(q,336,108,58,36,T,1);
+  const ease=k=>k<.5?2*k*k:1-(-2*k+2)**2/2, mix=(a,b,k)=>({x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k});
+  const HOLD={x:197,y:146}, OVER={x:PX-2,y:FY-92}, CHEST={x:PX,y:FY-70}, SHOULDER={x:PX-19,y:FY-79};
+  let hand=HOLD, on=false, sal=0, hsal=0;
+  if(stage===0) hand={x:HOLD.x,y:HOLD.y+Math.sin(T*.05)*.7};
+  else if(stage===1){
+    if(lt<60) hand=mix(HOLD,OVER,ease(lt/60));
+    else if(lt<100) hand=mix(OVER,CHEST,ease((lt-60)/40));
+    else { on=true; hand=mix(CHEST,SHOULDER,ease(clamp((lt-112)/36,0,1))); }
+    sal=lt>=135?1:0; hsal=lt>=175?1:0; }
+  else { on=true; hand=SHOULDER; sal=lt<40?1:0; hsal=lt<60?1:0; }
+  cerOfficer(q,88,178,'#a0a4b0',sal); cerOfficer(q,312,178,'#4a3a32',sal);
+  cerCommander(q,VX,FY,T);
+  cerPilot(q,PX,FY,hsal);
+  let M;
+  if(on){ M=CHEST; q.fillStyle='#2c4aa8'; q.fillRect(PX-6,FY-87,12,2); cerRibbon(q,PX-5,FY-86,PX+5,FY-86,M.x,M.y); }   // round his neck
+  else { M={x:hand.x,y:hand.y+9}; cerRibbon(q,hand.x-2,hand.y,hand.x+2,hand.y,M.x,M.y); }   // hanging from her hand
+  cerMedal(q,M.x,M.y);
+  cerArm(q,VX+10,FY-74,hand.x,hand.y);
+  // onto the screen: the sky, the deck, everyone, then the light (a slow push in as it goes)
+  const z=1+Math.min(.07,T*.0002), s=Math.max(VW/CER_W,VH/CER_H)*z, ox=VW/2-CER_W/2*s, oy=VH/2-CER_H/2*s, W=CER_W*s, H=CER_H*s;
+  g.save(); g.imageSmoothingEnabled=false;
+  g.drawImage(A.sky,ox,oy,W,H); g.drawImage(A.room,ox,oy,W,H); g.drawImage(A.fx,ox,oy,W,H);
+  g.globalCompositeOperation='lighter';
+  const lit=stage===0?0:stage===1?clamp((lt-100)/40,0,1):1;
+  const beam=(x0,x1,x2,x3,a)=>{ const gr=g.createLinearGradient(0,oy+8*s,0,oy+FY*s); gr.addColorStop(0,`rgba(150,170,255,${a})`); gr.addColorStop(1,'rgba(150,170,255,0)');
+    g.fillStyle=gr; g.beginPath(); g.moveTo(ox+x0*s,oy+8*s); g.lineTo(ox+x1*s,oy+8*s); g.lineTo(ox+x2*s,oy+FY*s); g.lineTo(ox+x3*s,oy+FY*s); g.closePath(); g.fill(); };
+  beam(168,194,224,158,.07+.06*lit); beam(204,226,264,206,.06+.06*lit);   // starlight through the window, onto the two of them
+  glow(ox+PX*s,oy+(FY-95)*s,9*s,'#3a7dff',.4+.08*Math.sin(T*.07));   // the visor
+  const gk=stage===1&&lt>=100?clamp(1-(lt-100)/50,0,1):0;   // the star catches the light as it lands
+  glow(ox+M.x*s,oy+M.y*s,(4+gk*16)*s,'#ffd27a',.3+gk*.7);
+  if(gk>0){ const cx=ox+M.x*s, cy=oy+M.y*s, L=(5+gk*22)*s; g.globalAlpha=gk; g.strokeStyle='#fff6d0'; g.lineWidth=Math.max(1,s*.5);
+    g.beginPath(); g.moveTo(cx-L,cy); g.lineTo(cx+L,cy); g.moveTo(cx,cy-L); g.lineTo(cx,cy+L); g.stroke(); }
+  g.restore();
 }
 function hyperStreaks(){ const a=[];
   for(let i=0;i<200;i++) a.push({a:rnd(0,TAU),r:rnd(2,520),sp:rnd(1.2,3.4),lw:rnd(1,2),col:Math.random()<.25?'#9ff6ff':Math.random()<.4?'#bcd8ff':'#ffffff'});
@@ -3169,16 +3581,16 @@ function update(){
       ship.vx+=Math.cos(ship.a)*0.11; ship.vy+=Math.sin(ship.a)*0.11;
       if(t%2===0) thrustPuff();
     }
-    if(revOn){
-      ship.vx-=Math.cos(ship.a)*0.07; ship.vy-=Math.sin(ship.a)*0.07;
+    if(revOn){   // the retros: with no drag out here, they're the only thing that slows you down
+      ship.vx-=Math.cos(ship.a)*0.09; ship.vy-=Math.sin(ship.a)*0.09;
       if(t%2===0) revPuff();
     }
     // super-mild planetary gravity when close
     for(const p of planets){ const dx=p.x-ship.x, dy=p.y-ship.y, d=Math.hypot(dx,dy), reach=p.r*6;
       if(d<reach && d>1){ const f=0.05*(1-d/reach)*(p.r/70); ship.vx+=dx/d*f; ship.vy+=dy/d*f; } }
-    ship.vx*=0.992; ship.vy*=0.992;
-    const sp=Math.hypot(ship.vx,ship.vy), MAX=5.4;
-    if(sp>MAX){ ship.vx*=MAX/sp; ship.vy*=MAX/sp; }
+    // no drag and no speed limit: the cutter coasts at whatever speed it has until a burn changes it.
+    // Burn long enough and you can go faster than you can steer. That's on you, pilot
+    ship.ox=ship.x; ship.oy=ship.y;   // (where it was: collisions sweep the whole move, so speed can't tunnel you through a rock)
     ship.x+=ship.vx; ship.y+=ship.vy;
     const wallV=Math.max(ship.x<ship.r||ship.x>WORLD-ship.r?Math.abs(ship.vx):0, ship.y<ship.r||ship.y>WORLD-ship.r?Math.abs(ship.vy):0);
     if(ship.x<ship.r){ship.x=ship.r;ship.vx=Math.abs(ship.vx)*.4;}
@@ -3193,6 +3605,7 @@ function update(){
     if(ship.mis<MIS_MAX && ++ship.misT>=MIS_WAIT && (ship.misT-MIS_WAIT)%MIS_EACH===0){ ship.mis++;
       if(ship.mis===MIS_MAX) VRAudio.sfx.ready(); }   // a chime when the rack is full again
     if(ship.invuln>0) ship.invuln--;
+    shieldTick();
     if(firing) fire();
     }
     runT++;
@@ -3202,6 +3615,7 @@ function update(){
   VRAudio.listen(camX+VW/2, camY+VH/2);
   hudTick();
   if(lvlBanner>0) lvlBanner--;
+  if(noteT>0 && state==='play' && --noteT===0){ const n=notes; notes=[]; for(const f of n) f(); }   // (a second card queues behind the first)
   if(alarm && ++alarm.t>=alarm.life) alarm=null;
   if(goodQ.length && (!alarm || (!alarm.good && alarm.t>=120) || (alarm.good && alarm.t>=60))){ alarm=goodQ.shift(); VRAudio.sfx.ready(); }
   if(failT>0 && --failT===0) sectorLost();
@@ -3394,11 +3808,11 @@ function update(){
 
   if(boss) updateBoss();
 
-  // laser vs enemy
+  // laser vs enemy (swept along the bolt's last step: fired from a cutter going flat out, a bolt moves fast)
   for(const b of bullets){
     for(const e of enemies){
       if(!e.alive)continue;
-      if((b.x-e.x)**2+(b.y-e.y)**2<(e.r+2)**2){
+      if(segD2(b.x-b.vx,b.y-b.vy,b.x,b.y,e.x,e.y)<(e.r+2)**2){
         b.life=0;
         if(e.shield){ for(let i=0;i<5;i++)particles.push({x:b.x,y:b.y,vx:rnd(-1.5,1.5),vy:rnd(-1.5,1.5),life:12,max:12,col:'#9ff6ff',r:1,grav:0});
           e.shieldHit=10; e.shieldA=Math.atan2(b.y-e.y,b.x-e.x);
@@ -3406,7 +3820,7 @@ function update(){
           e.shieldHp=(e.shieldHp==null?SHIELD_HP:e.shieldHp)-1;
           if(e.shieldHp<=0) breakShield(e); else VRAudio.sfx.deflect(b.x,b.y); }
         else { e.hp--; e.flash=6; sparks(e.x,e.y);
-          if(e.hp<=0){ kill(e); if(b.wing && Math.random()<.5 && cool('wingKill',600)) say('wing','wingKill'); } else VRAudio.sfx.hit(e.x,e.y); }
+          if(e.hp<=0){ kill(e); if((b.wing==='kite'||b.wing==='wingman') && Math.random()<.5 && cool('wingKill',600)) say(b.wing==='kite'?'wing':'flight','wingKill'); } else VRAudio.sfx.hit(e.x,e.y); }
         break;
       }
     }
@@ -3448,15 +3862,20 @@ function update(){
         if(R.hp<=0) breakRock(k); else VRAudio.sfx.chip(b.x,b.y);
         break; } } }
 
-  // enemy fire, rams and rocks vs ship (one hit)
+  // enemy fire, rams and rocks vs ship: each hit costs a shield cell if one's charged, otherwise the cutter
+  // (a soak gives a second's grace, so one volley or one crash can't take two cells)
   if(ship.alive && ship.invuln<=0 && state==='play'){
-    for(const f of efire){ if(f.life<=0) continue; if((f.x-ship.x)**2+(f.y-ship.y)**2<(ship.r+2)**2){ f.life=0; killShip('shot',f.src); break; } }
-    if(ship.alive) for(const m of emissiles){ if(m.life<=0)continue;
-      if((m.x-ship.x)**2+(m.y-ship.y)**2<(ship.r+3)**2){ m.life=0; killShip('shot'); break; } }
-    if(ship.alive) for(const e of enemies){ if(!e.alive)continue;
-      if((e.x-ship.x)**2+(e.y-ship.y)**2<(e.r+ship.r)**2){ if(e.boat){ kill(e); continue; } killShip('ram',e); kill(e); break; } }   // a ram wrecks both ships (a shield cell saves yours); a jolly boat just gets flattened
-    if(ship.alive) for(const R of rocks){
-      if((R.x-ship.x)**2+(R.y-ship.y)**2<(R.r*.85+ship.r*.8)**2){ killShip('rock'); break; } }
+    // (each test sweeps the cutter's whole move this frame, so flying flat out can't skip you past a rock or a bolt)
+    const ox=ship.ox??ship.x, oy=ship.oy??ship.y, near=(x,y,r)=>segD2(ox,oy,ship.x,ship.y,x,y)<r*r;
+    for(const f of efire){ if(f.life<=0) continue; if(near(f.x,f.y,ship.r+2)){ f.life=0; if(!hitShip('shot',f.src)) sparks(f.x,f.y); break; } }
+    if(ship.alive && ship.invuln<=0) for(const m of emissiles){ if(m.life<=0)continue;
+      if(near(m.x,m.y,ship.r+3)){ m.life=0; if(!hitShip('shot')) boom(m.x,m.y,'small'); break; } }
+    if(ship.alive && ship.invuln<=0) for(const e of enemies){ if(!e.alive)continue;
+      if(near(e.x,e.y,e.r+ship.r)){ if(e.boat){ kill(e); continue; }   // a jolly boat just gets flattened
+        if(!hitShip('ram',e)) bounceOff(e.x,e.y,e.r+ship.r+1,.6);   // a ram wrecks the reaver either way; yours too, unless a cell soaks it
+        kill(e); break; } }
+    if(ship.alive && ship.invuln<=0) for(const R of rocks){
+      if(near(R.x,R.y,R.r*.85+ship.r*.8)){ if(!hitShip('rock')){ bounceOff(R.x,R.y,R.r*.85+ship.r*.8+2,.5); R.flash=5; } break; } }
   }
 
   updateFX();
@@ -3603,7 +4022,8 @@ function updateBoss(){
     if(m){ m.life=0; pdFlashes.push({ax:b.x,ay:b.y,bx:m.x,by:m.y,life:7,max:7,col:'#ff4d6d'}); sparks(m.x,m.y); b.pdCool=12;
       VRAudio.sfx.zap(m.x,m.y,true); } }
   // ram
-  if(ship.alive && ship.invuln<=0 && state==='play' && (ship.x-b.x)**2+(ship.y-b.y)**2<(b.r*0.7+ship.r)**2) killShip('ram');
+  if(ship.alive && ship.invuln<=0 && state==='play' && (ship.x-b.x)**2+(ship.y-b.y)**2<(b.r*0.7+ship.r)**2){
+    if(!hitShip('ram')) bounceOff(b.x,b.y,b.r*.7+ship.r+3,2.2); }   // a shield cell bounces you off its hull
 }
 function destroyBoss(){
   // the flagship's last moments: it breaks up for a couple of seconds while the Cerebrant screams, then the final blast
@@ -3690,7 +4110,7 @@ function blowBurner(b){
   else demise(b);
   catchBlast(b.x,b.y,b.r);
   if(b.split) splitOff(b);
-  if(ship.alive && ship.invuln<=0 && state==='play' && (ship.x-b.x)**2+(ship.y-b.y)**2<BLAST.big**2) killShip('blast');
+  if(ship.alive && ship.invuln<=0 && state==='play' && (ship.x-b.x)**2+(ship.y-b.y)**2<BLAST.big**2) hitShip('blast');
 }
 function drawBurner(px,py,b){   // scorched hull flickering in its own firelight, still wearing its captain's name
   const S=SHIPS[b.type];
@@ -3771,7 +4191,7 @@ function kill(e){
   if(!saidFew && need()===3){ saidFew=true; say('cmd','few'); }
   // lethal blast radius — if the cutter is hugging the kill, it dies too (a captain's wreck saves its blast for when it goes)
   if(!last && ship.alive && ship.invuln<=0 && state==='play'){
-    if((ship.x-e.x)**2+(ship.y-e.y)**2 < BLAST.big**2) killShip('blast');
+    if((ship.x-e.x)**2+(ship.y-e.y)**2 < BLAST.big**2) hitShip('blast');
   }
   updateHUD();
 }
@@ -3845,8 +4265,11 @@ function boatAI(e){
 }
 // ---- EVA: your cutter is gone and you're in a space suit with one small thruster (no reverse, no guns). Get back to the
 // station (or, with no station, the jump-point beacon) and a new cutter launches. Get hit, or run out of air, and that's it. ----
-const O2_MAX=60*60, EVA_THRUST=.05, EVA_MAX=2.1;
+const O2_MAX=60*60, EVA_THRUST=.05;   // (no top speed: burn long enough and you'll overshoot home by a mile)
 let finalDeath=false;
+function segD2(ax,ay,bx,by,px,py){   // squared distance from point p to the segment a→b (a fast mover's whole step, so it can't skip past)
+  const dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy; let k=L?((px-ax)*dx+(py-ay)*dy)/L:0; k=k<0?0:k>1?1:k;
+  const qx=ax+dx*k-px, qy=ay+dy*k-py; return qx*qx+qy*qy; }
 function evaHome(){ return outpost && outpost.alive ? {x:outpost.x,y:outpost.y,r:outpost.r+22,name:LV.post} : {x:spawnPt.x,y:spawnPt.y,r:34,name:'the jump-point beacon'}; }
 function startEVA(){
   const p=pod||{x:ship.x,y:ship.y,vx:0,vy:0};
@@ -3864,8 +4287,8 @@ function updateEVA(){
     if(t%3===0){ const bk=ship.a+Math.PI; particles.push({x:ship.x+Math.cos(bk)*4,y:ship.y+Math.sin(bk)*4,vx:Math.cos(bk)*rnd(.6,1.2)+rnd(-.15,.15),vy:Math.sin(bk)*rnd(.6,1.2)+rnd(-.15,.15),life:rnd(8,14),max:14,col:'#d6fbff',r:1,grav:0}); } }
   for(const p of planets){ const dx=p.x-ship.x, dy=p.y-ship.y, d=Math.hypot(dx,dy), reach=p.r*6;
     if(d<reach && d>1){ const f=0.035*(1-d/reach)*(p.r/70); ship.vx+=dx/d*f; ship.vy+=dy/d*f; } }
-  ship.vx*=.998; ship.vy*=.998;   // almost nothing slows you down out here
-  const sp=Math.hypot(ship.vx,ship.vy); if(sp>EVA_MAX){ ship.vx*=EVA_MAX/sp; ship.vy*=EVA_MAX/sp; }
+  // nothing slows you down out here, and nothing tops you out: to stop, turn round and burn
+  ship.ox=ship.x; ship.oy=ship.y;
   ship.x+=ship.vx; ship.y+=ship.vy;
   if(ship.x<6){ship.x=6;ship.vx=Math.abs(ship.vx)*.4;} if(ship.x>WORLD-6){ship.x=WORLD-6;ship.vx=-Math.abs(ship.vx)*.4;}
   if(ship.y<6){ship.y=6;ship.vy=Math.abs(ship.vy)*.4;} if(ship.y>WORLD-6){ship.y=WORLD-6;ship.vy=-Math.abs(ship.vy)*.4;}
@@ -3877,7 +4300,7 @@ function updateEVA(){
   if(ship.o2<=0){ ship.invuln=0; killShip('air'); return; }
   // home: touch the station (or the beacon) and a fresh cutter launches around you
   const h=evaHome();
-  if(Math.hypot(ship.x-h.x,ship.y-h.y)<h.r){
+  if(segD2(ship.ox,ship.oy,ship.x,ship.y,h.x,h.y)<h.r*h.r){   // (swept: even flying in flat out, you grab on as you pass)
     ship.suit=false; addScore(250,ship.x,ship.y-14,'#4dffa6');
     startLaunch(); }
 }
@@ -3945,7 +4368,7 @@ function drawLaunch(){
     g.fillStyle=col; g.font='8px monospace'; g.textAlign='left'; lines.forEach((s,i)=>g.fillText(s,x+5,y+12+i*10)); };
   scr(VW*.23,VW*.16,'#4dffa6',['BAY 2 · RAIL',T<62?'CLAMPS LOCKED':T<74?'CATAPULT ARMED':'LAUNCH',T<74?'■'.repeat(1+(T>>3)%8):'▶▶▶']);
   scr(VW*.42,VW*.16,'#43f0ff',['CUTTER '+String(deaths+1).padStart(2,'0'),'LASER  ONLINE','MISSILES ×'+MIS_MAX]);
-  scr(VW*.61,VW*.16,'#ffb347',['NO SHIELDS','PILOT  OK',(T>>4)&1?'GOOD HUNTING':'']);
+  scr(VW*.61,VW*.16,'#ffb347',[ship.cellMax?'SHIELDS ×'+ship.cellMax:'NO SHIELDS','PILOT  OK',(T>>4)&1?'GOOD HUNTING':'']);
   // gunsight
   g.strokeStyle='rgba(67,240,255,.55)'; g.lineWidth=1; g.beginPath(); g.arc(cx,cy,10,0,TAU); g.moveTo(cx-18,cy); g.lineTo(cx-6,cy); g.moveTo(cx+6,cy); g.lineTo(cx+18,cy); g.moveTo(cx,cy-18); g.lineTo(cx,cy-6); g.stroke();
   // shake as the catapult fires
@@ -4025,6 +4448,48 @@ function drawAstronaut(px,py){
   g.fillStyle='rgba(5,8,18,.7)'; g.fillRect(px-11,py+9,22,3);
   g.fillStyle=low?((t>>3)&1?'#ff4d6d':'#ffd0d6'):'#9ff6ff'; g.fillRect(px-10,py+10,Math.round(20*f),1);
 }
+// ---- the cutter's shields: dead all through the Drift. Clear it and the yard crews rebuild the generator, so from Ember Reach on
+// every cutter carries three cells. Each soaks one hit; keep out of the fire a few seconds and they charge back, one by one ----
+const CELL_MAX=3, CELL_WAIT=240, CELL_EACH=150, CELL_GRACE=60;   // cells, quiet frames before they charge, frames per cell, grace after a soak
+let shieldFx=null, toldShields=false, notes=[], noteT=0;   // notes: full-screen cards waiting for the title card to clear
+function fitShields(){ ship.cellMax=level>=1?CELL_MAX:0; ship.cells=ship.cellMax; ship.cellT=0; shieldFx=null; }
+function hitShip(cause,by){   // anything that would wreck the cutter comes through here: a charged cell soaks it if there's one. true = she's gone
+  if(!ship.alive) return true;
+  if(ship.suit || !(ship.cells>0)){ killShip(cause,by); return true; }
+  ship.cells--; ship.cellT=0; ship.invuln=CELL_GRACE; shieldFx={t:0,max:26,hit:true};
+  const up=ship.cells>0, col=up?'#9ff6ff':'#ff4d6d';
+  shockwaves.push({x:ship.x,y:ship.y,delay:0,r0:10,max:38,life:0,maxlife:18,col});
+  for(let i=0;i<16;i++){ const a=rnd(0,TAU), sp=rnd(1,2.6);
+    particles.push({x:ship.x+Math.cos(a)*12,y:ship.y+Math.sin(a)*12,vx:ship.vx*.6+Math.cos(a)*sp,vy:ship.vy*.6+Math.sin(a)*sp,
+      life:rnd(10,20),max:20,col:Math.random()<.5?col:'#ffffff',r:1,grav:0}); }
+  shake=Math.min(shake+5,26); VRAudio.sfx.shieldHit();
+  pops.push({x:ship.x,y:ship.y-18,txt:up?'SHIELD '+ship.cells+'/'+ship.cellMax:'SHIELDS DOWN',col,life:60});
+  if(!up && cool('shDown',900)) say('cmd','shieldsDown',null,2);
+  return false;
+}
+function shieldTick(){   // (cutter flying) the cells charge back after a quiet spell
+  if(shieldFx && ++shieldFx.t>=shieldFx.max) shieldFx=null;
+  if(ship.cells<ship.cellMax && ++ship.cellT>=CELL_WAIT && (ship.cellT-CELL_WAIT)%CELL_EACH===0){
+    ship.cells++; shieldFx={t:0,max:22,hit:false}; VRAudio.sfx.shieldUp();
+    if(ship.cells===ship.cellMax) pops.push({x:ship.x,y:ship.y-18,txt:'SHIELDS FULL',col:'#9ff6ff',life:50}); }
+}
+function bounceOff(cx,cy,rad,kick){   // after a soak: the cutter comes back out of whatever it hit, rebounding off it
+  const dx=ship.x-cx, dy=ship.y-cy, d=Math.hypot(dx,dy)||1, nx=dx/d, ny=dy/d;
+  ship.x=clamp(cx+nx*rad,ship.r,WORLD-ship.r); ship.y=clamp(cy+ny*rad,ship.r,WORLD-ship.r);
+  const vn=ship.vx*nx+ship.vy*ny; if(vn<0){ ship.vx-=1.5*vn*nx; ship.vy-=1.5*vn*ny; }
+  ship.vx+=nx*kick; ship.vy+=ny*kick;
+}
+function drawShieldRing(px,py){   // a faint bubble split into its cells; it flares when one soaks a hit or charges back
+  const fx=shieldFx, k=fx?1-fx.t/fx.max:0, R=12;
+  if(fx && fx.hit){ const r=R+(1-k)*7;
+    g.globalAlpha=k*.85; g.strokeStyle=ship.cells?'#9ff6ff':'#ff4d6d'; g.lineWidth=2; g.beginPath(); g.arc(px,py,r,0,TAU); g.stroke();
+    g.globalAlpha=k*.2; g.fillStyle=ship.cells?'#9ff6ff':'#ff4d6d'; g.beginPath(); g.arc(px,py,r,0,TAU); g.fill(); g.lineWidth=1; }
+  if(ship.cells>0){ const n=ship.cellMax, seg=TAU/n, gap=.42, rot=t*.012;
+    g.strokeStyle='#9ff6ff'; g.lineWidth=1;
+    for(let i=0;i<ship.cells;i++){ g.globalAlpha=Math.min(1,.26+.08*Math.sin(t*.1+i*2)+(fx&&!fx.hit&&i===ship.cells-1?k*.7:0));
+      g.beginPath(); g.arc(px,py,R,rot+i*seg+gap/2,rot+(i+1)*seg-gap/2); g.stroke(); } }
+  g.globalAlpha=1;
+}
 function killShip(cause,by){
   if(!ship.alive)return;
   if(ship.suit){ pilotLost(cause,by); return; }   // on EVA there's no backup: this is the end of the run
@@ -4077,9 +4542,12 @@ function hudTick(){
     elM.fill.style.transform=`scaleX(${clamp(fill,0,1).toFixed(3)})`; elM.ghost.style.transform=`scaleX(${clamp(ghost,0,1).toFixed(3)})`;
     elM.mark.style.left=(mark*100).toFixed(1)+'%'; elM.mark.style.display=mark>0?'block':'none'; elM.box.classList.toggle('boss',!!boss); }
   // the weapon panel's status line only shows up on EVA (no cutter, no guns); the far objective gets its own row under the station
-  const evaNow=!!(ship.suit&&ship.alive);
-  if(evaNow!==lastShield){ lastShield=evaNow;
-    elWarn.textContent=evaNow?'⚠ ON EVA · NO WEAPONS · FLY HOME':''; elWarn.style.display=evaNow?'':'none'; }
+  // (it's also where the shield cells show, once the cutter has them)
+  const evaNow=!!(ship.suit&&ship.alive), shNow=!evaNow&&ship.alive&&ship.cellMax>0, wk=evaNow?'eva':shNow?'s'+ship.cells:'';
+  if(wk!==lastShield){ lastShield=wk;
+    const full=ship.cells>=ship.cellMax, pips='▮'.repeat(ship.cells)+'▯'.repeat(Math.max(0,ship.cellMax-ship.cells));
+    elWarn.textContent=evaNow?'⚠ ON EVA · NO WEAPONS · FLY HOME':!shNow?'':ship.cells?'◈ SHIELDS '+pips+(full?'':' · CHARGING'):'⚠ SHIELDS DOWN '+pips+' · CHARGING';
+    elWarn.style.display=wk?'':'none'; elWarn.classList.toggle('shielded',shNow&&ship.cells>0); }
   let ot='', ov='', oc='';
   if(job){ const j=job;
     if(j.kind==='beacon'){ ot='Destroy the beacon · sector '+j.s; ov=fmtTime(Math.ceil(j.fuse/60)); oc='beacon'+(j.fuse<1200?' urgent':''); }
@@ -4293,7 +4761,7 @@ function draw(){
 
   if(ship.alive && (state==='play'||state==='winning')){ const[px,py]=toS(ship.x,ship.y);
     if(!(ship.invuln>0 && (t>>2)&1)) drawShip(px,py);
-    if(ship.shield>0){ g.strokeStyle=`rgba(159,246,255,${.55+.3*Math.sin(t*.15)})`; g.lineWidth=1; g.beginPath(); g.arc(px,py,13,0,TAU); g.stroke(); } }   // the shield cell
+    if(ship.cellMax && !ship.suit) drawShieldRing(px,py); }
   if(state==='dying'){
     if(wreck){ const[px,py]=toS(wreck.x,wreck.y); g.globalAlpha=wreck.fade?wreck.fade/6:1; drawWreck(px,py,wreck); g.globalAlpha=1; }
     if(pod){ const[px,py]=toS(pod.x,pod.y); drawPod(px,py,pod); }
@@ -4854,7 +5322,9 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
   boss:boss&&{x:boss.x,y:boss.y,vx:boss.vx,vy:boss.vy,hp:boss.hp,r:boss.r,warp:boss.warp,flee:boss.flee,fleeAt:boss.fleeAt},
   post:outpost&&{x:outpost.x,y:outpost.y,r:outpost.r,hp:outpost.hp,alive:outpost.alive},
   burning:burning.map(b=>({x:b.x,y:b.y,t:b.t,alien:b.alien})), talker:comms.cur&&comms.cur.who,
-  job:job&&{kind:job.kind,x:job.x,y:job.y,hp:job.hp,fuse:job.fuse,free:job.free}, jobI, fleet:fleet&&fleet.left, alarm:alarm&&alarm.title, shield:ship.shield,
+  job:job&&{kind:job.kind,x:job.x,y:job.y,hp:job.hp,fuse:job.fuse,free:job.free}, jobI, fleet:fleet&&fleet.left, alarm:alarm&&alarm.title,
+  cells:ship.cells, cellMax:ship.cellMax, cellT:ship.cellT, noteT, notes:notes.length, toldShields, view:[VW,VH],
+  wingmen:wingmen.map(W=>({x:W.x,y:W.y,hp:W.hp,slot:W.slot,tg:!!W.tg})), horde:horde&&{i:horde.i,left:horde.left,rest:horde.rest},
   chain:chain.length, chainRun, failT, retries, debris:debris.length, goodQ:goodQ.length, alarmGood:!!(alarm&&alarm.good), wingT,
   escort:escort&&{x:escort.x,y:escort.y,hp:escort.hp,tg:!!escort.tg}, derelict:derelict&&{x:derelict.x,y:derelict.y,hp:derelict.hp,prog:derelict.prog},
   postGun:outpost&&outpost.gun, lancers:lancers.map(L=>({x:L.x,y:L.y,hp:L.hp,tg:!!L.tg})), scrambled, mis:ship.mis, suit:!!ship.suit, o2:ship.o2, finalDeath,
@@ -4867,7 +5337,7 @@ let last=performance.now(), acc=0; const STEP=1000/60;
 function loop(now){
   requestAnimationFrame(loop);   // queue the next frame first, so one bad frame can never freeze the game for good
   acc+=Math.min(now-last,100); last=now;
-  while(acc>=STEP){ acc-=STEP; if(!paused) update(); }
+  while(acc>=STEP){ acc-=STEP; if(!paused && !jumpOpen) update(); }   // (the jump menu freezes everything, cutscenes too)
   draw();
 }
 updateHUD(); showBest(); syncAudioUI();
