@@ -30,10 +30,10 @@ Touch screens get a touch mode, played in landscape:
 - **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. Tap **BRAKE** to come to a dead stop, or hold it to slow down.
 - **Corner map:** tap it for the full sector map, and tap anywhere to put it away.
 - **☰:** the menu (see below).
-- **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight.
+- **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight. On a short screen, like Safari's under its toolbar and tab bar, the buttons and the cutscene radio get smaller still.
 - **Cutscenes:** tap to move the dialogue on, or **SKIP** to jump ahead.
 
-Holding the phone upright pauses the game and asks you to turn it sideways. On iPhone, Share → Add to Home Screen plays it full screen. Sound needs the silent switch off.
+Holding the phone upright pauses the game and asks you to turn it sideways. On iPhone, Share → Add to Home Screen plays it full screen, without Safari's toolbar and tab bar; in Safari, the title card says so under the title. The game keeps the page from zooming, but if it ever does get zoomed in, the game pauses and asks you to pinch back out. Sound needs the silent switch off.
 
 Add `?touch` to the address to try touch mode with a mouse.
 
