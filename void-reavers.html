@@ -49,10 +49,12 @@
     padding:0 calc(240px + env(safe-area-inset-right,0px)) 10px max(14px,env(safe-area-inset-left,0px)); color:var(--dim); font-size:10px; line-height:1.6}
   kbd{background:#101830; border:1px solid #2a3a63; border-bottom-width:2px; border-radius:3px; padding:0 5px; color:var(--ink); font-size:10px}
 
-  .overlay{position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center;
+  /* the title and end cards: centred by the card's own margins, so one taller than the window starts at its top and scrolls
+     (centring it with align-items would push its top off the screen, where no scrolling can reach it) */
+  .overlay{position:fixed; inset:0; z-index:20; display:flex; align-items:flex-start; justify-content:center;
     padding:24px max(16px,env(safe-area-inset-left,0px)) 24px max(16px,env(safe-area-inset-right,0px));
     background:radial-gradient(ellipse at center,rgba(5,6,13,.68),rgba(5,6,13,.96)); backdrop-filter:blur(2px); overflow:auto}
-  .card{max-width:600px; width:100%; text-align:center}
+  .card{max-width:600px; width:100%; text-align:center; margin:auto}
   .title{font-weight:700; letter-spacing:.22em; line-height:1;
     font-size:clamp(32px,9vw,68px); margin:0; color:#fff;
     text-shadow:0 0 18px var(--laser),0 0 40px rgba(67,240,255,.4); text-wrap:balance}
@@ -77,6 +79,12 @@
   .btn:hover{background:#7ff6ff}
   .btn:focus-visible{outline:3px solid #fff; outline-offset:3px}
   .overlay.hidden{display:none}
+  /* a card taller than the window (the title card, on most desktop screens): the Launch row rides along the bottom of the window
+     while the rest scrolls under it (touch screens always pin it, below) */
+  .overlay.tall{padding-bottom:0}
+  .overlay.tall .cta{position:sticky; bottom:0; z-index:1; margin:6px -16px 0; padding:4px 16px 18px;
+    background:linear-gradient(rgba(5,6,13,0),rgba(5,6,13,.94) 22px)}
+  .overlay.tall .cta .btn{margin-top:16px}
 
   /* ---- touch mode (phones, landscape): a floating stick under the left thumb, fire buttons under the right ---- */
   #touch{position:fixed; inset:0; z-index:8; display:none; pointer-events:none}
@@ -132,9 +140,7 @@
   body.touch #btn-menu{font-size:15px; line-height:1; min-width:36px; min-height:30px; padding:0 8px; border-radius:5px}
   body.touch .aud{min-height:30px}
   /* the title and end cards: the Launch button rides along the bottom of the screen, so you never scroll to find it */
-  /* (and the card is centred by its margins, so one taller than the screen starts at the top and scrolls, instead of losing its top) */
-  body.touch .overlay{padding-bottom:0; align-items:flex-start}
-  body.touch .card{margin:auto}
+  body.touch .overlay{padding-bottom:0}
   body.touch .cta{position:sticky; bottom:0; z-index:1; margin:16px -16px 0; padding:2px 16px calc(12px + env(safe-area-inset-bottom,0px));
     background:linear-gradient(rgba(5,6,13,0),rgba(5,6,13,.94) 40%)}
   body.touch .cta .btn{margin-top:10px}
@@ -2197,6 +2203,7 @@ window.addEventListener('keydown', e=>{
       else if(k==='n'){ toggleMusic(); } else if(k==='v'){ toggleSfx(); } }
     return; }
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+  if((k==='arrowup'||k==='arrowdown') && !elOv.classList.contains('hidden')) elOv.scrollBy(0,k==='arrowup'?-90:90);   // (↑ ↓ scroll the title and end cards)
   keys[k]=true;
   if(e.repeat) return;   // held keys auto-repeat: don't let a held fire button skip the end screen
   if(k==='b'){ openJump(); return; }   // B, anywhere: jump to any part (B again finishes the part you're in)
@@ -5532,7 +5539,19 @@ function loop(now){
   draw();
   if(TOUCH) syncBody();
 }
-updateHUD(); showBest(); syncAudioUI();
+// the title and end cards: one taller than the window starts at its top, and on desktop pins its Launch row along the bottom ('tall')
+const elOv=document.getElementById('overlay'), elCard=elOv.querySelector('.card');
+let cardUp=false;
+function fitCard(){
+  const up=!elOv.classList.contains('hidden'); if(up && !cardUp) elOv.scrollTop=0; cardUp=up;   // (each new card starts at its top)
+  if(TOUCH || !up) return;   // (touch screens pin the Launch row always)
+  const st=elOv.scrollTop; elOv.classList.remove('tall');
+  const cs=getComputedStyle(elOv), padY=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  if(elCard.offsetHeight+padY>elOv.clientHeight+1) elOv.classList.add('tall');
+  elOv.scrollTop=st; }
+if(window.ResizeObserver) new ResizeObserver(fitCard).observe(elCard);   // (showing a card, or new text in it)
+window.addEventListener('resize',fitCard);
+updateHUD(); showBest(); syncAudioUI(); fitCard();
 VRAudio.play('menu');   // starts on the first click / key press (browser autoplay rules)
 requestAnimationFrame(loop);
 })();
