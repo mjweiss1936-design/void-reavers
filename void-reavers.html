@@ -119,18 +119,12 @@
   #t-brake{width:40px; height:40px; font-size:8px; right:calc(24px + env(safe-area-inset-right,0px)); bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   #t-brake.lit{background:rgba(255,179,71,.3); border-color:var(--rocket); color:#ffe0b0}   /* a tap-stop under way */
   body.eva #t-fire, body.eva #t-missile, body.eva #t-brake{opacity:.22}                       /* on EVA: no guns, no brakes */
-  /* on foot (the deck fights): the weapon panel shows your armour and the arc meter instead; no BRAKE, no corner map */
+  /* aboard ship (the deck fights): the weapon panel shows your health and the crew instead; no MISSILE, BRAKE or corner map */
   body.deck .wsel, body.deck #reload, body.deck #hud-top .stat:first-child > .label, body.deck #t-brake, body.deck #t-mapzone{display:none}
-  /* ...and the radio keeps off the deck: up in the top-right corner on a desktop, a slim strip over the bottom hull on a phone */
-  body.deck:not(.touch):not(.cine) #comms{top:calc(10px + env(safe-area-inset-top,0px)); bottom:auto; left:auto; right:max(14px,env(safe-area-inset-right,0px));
-    width:min(440px,calc(50vw - 200px))}
-  body.deck:not(.touch):not(.cine) #comms .cface{width:56px; height:56px}
-  body.deck:not(.touch):not(.cine) .ctext{font-size:13px; min-height:2.6em}
-  /* a phone on foot: the HUD down to one row along the top, and ARC stacked over STRIKE, so the deck gets the screen */
+  /* a phone aboard: the HUD down to one row along the top, and the radio a slim strip along the bottom */
   body.touch.deck #hud-top{flex-direction:row; align-items:flex-start}
   body.touch.deck #hud-mission .post-row, body.touch.deck #hud-mission .obj-row{display:none}
-  body.touch.deck #t-missile{right:calc(19px + env(safe-area-inset-right,0px)); bottom:calc(86px + env(safe-area-inset-bottom,0px))}
-  @media (max-height:340px){ body.touch.deck #t-missile{right:calc(16px + env(safe-area-inset-right,0px)); bottom:calc(74px + env(safe-area-inset-bottom,0px))} }
+  body.deck #t-missile{display:none}
   body.touch.deck:not(.cine) #comms{width:min(520px,72vw); padding:2px 8px 3px; bottom:calc(3px + env(safe-area-inset-bottom,0px))}
   body.touch.deck:not(.cine) #comms .cface{display:none}
   body.touch.deck:not(.cine) .cbody{display:flex; gap:6px; align-items:baseline}
@@ -421,14 +415,11 @@
     <div class="jgrid">
       <span class="jlab">Opening</span><button class="jbtn" data-j="intro">Intro scene</button><i></i><i></i><i></i>
       <span class="jlab">1 · The Drift</span><button class="jbtn" data-j="s1">Start</button><button class="jbtn" data-j="b1">Flagship</button><button class="jbtn" data-j="c1">Jump scene</button><i></i>
-      <span class="jlab">2 · Ember Reach</span><button class="jbtn" data-j="s2">Start</button><button class="jbtn" data-j="b2">Flagship</button><button class="jbtn" data-j="c2">Jump scene</button><i></i>
-      <span class="jlab">3 · The Maw</span><button class="jbtn" data-j="s3">Start</button><button class="jbtn" data-j="b3">Flagship</button><button class="jbtn" data-j="c3">Jump scene</button><i></i>
-      <span class="jlab">4 · The Cradle</span><button class="jbtn" data-j="h1">Horde 1</button><button class="jbtn" data-j="h2">Horde 2</button><button class="jbtn" data-j="h3">Horde 3</button><button class="jbtn" data-j="b4">Flagship</button>
-      <span class="jlab">Theta-9 won</span><button class="jbtn" data-j="e1">Flight home</button><button class="jbtn" data-j="e2">Medal ceremony</button><button class="jbtn" data-j="t1">Uninvited</button><i></i>
-      <span class="jlab">5 · Boarders</span><button class="jbtn" data-j="d1">Hold the deck</button><button class="jbtn" data-j="c4">Jump to Earth</button><i></i><i></i>
-      <span class="jlab">6 · Earth</span><button class="jbtn" data-j="g1">Horde 1</button><button class="jbtn" data-j="g2">Horde 2</button><button class="jbtn" data-j="g3">Horde 3</button><button class="jbtn" data-j="b5">Flagship</button>
-      <span class="jlab">7 · Boarding</span><button class="jbtn" data-j="f1">Board it</button><button class="jbtn" data-j="d2">Seize it</button><button class="jbtn" data-j="c5">Jump scene</button><i></i>
-      <span class="jlab">8 · Broodhome</span><button class="jbtn" data-j="s6">Start</button><button class="jbtn" data-j="b6">The Matriarch</button><button class="jbtn" data-j="e3">Ending</button><i></i>
+      <span class="jlab">2 · Ember Reach</span><button class="jbtn" data-j="s2">Start</button><button class="jbtn" data-j="b2">Flagship</button><button class="jbtn" data-j="e2">Medal ceremony</button><button class="jbtn" data-j="t1">Uninvited</button>
+      <span class="jlab">The Resolute</span><button class="jbtn" data-j="d1">Hold the ship</button><button class="jbtn" data-j="c4">Jump to Earth</button><i></i><i></i>
+      <span class="jlab">3 · Earth</span><button class="jbtn" data-j="g1">Horde 1</button><button class="jbtn" data-j="g2">Horde 2</button><button class="jbtn" data-j="g3">Horde 3</button><button class="jbtn" data-j="gb">Flagship</button>
+      <span class="jlab">Boarding</span><button class="jbtn" data-j="f1">Board it</button><button class="jbtn" data-j="d2">Seize it</button><button class="jbtn" data-j="c5">Jump scene</button><i></i>
+      <span class="jlab">4 · Broodhome</span><button class="jbtn" data-j="s6">Start</button><button class="jbtn" data-j="b6">The Matriarch</button><button class="jbtn" data-j="e3">Ending</button><i></i>
     </div>
     <div class="jfoot">Jumping starts a fresh run from that point: score and cutters lost go back to zero, and the flagship carries the damage it would have by then.</div>
   </div>
@@ -443,9 +434,9 @@
     <div class="brief" id="o-brief">
       You fly the patrol cutter <span class="mono">SRV Halcyon</span>. The reaver clans, alien pirates led by a
       brain in a jar called <span class="mono">the Cerebrant</span>, are raiding the stations of Theta-9. Chase its
-      <span class="mono">flagship</span> across <b>three sectors</b>. In each one, clear the packs, guard the
-      <span class="mono">station</span> (it scores while it lives, and if it falls you fly the sector again), and drive the flagship off.
-      Then follow it into <b>the Cradle</b>: no station, just <b>hordes</b>, and the flagship's last stand.<br><br>
+      <span class="mono">flagship</span> across <b>two sectors</b>. In each one, clear the packs and guard the
+      <span class="mono">station</span> (it scores while it lives, and if it falls you fly the sector again). Drive the flagship
+      off in the Drift, then <b>destroy it</b> in Ember Reach.<br><br>
       Your station has a small <b>defence laser</b>. Watch for a <b>disabled fighter</b> drifting in the sector: park alongside her and she'll fly as your <b>escort</b> until she's shot down.<br><br>
       Your cutter starts with its shields dead: <b>one hit downs it</b>. You eject in a space suit with a single thruster and no brakes,
       and have to fly yourself back to the station for a new cutter. <b>Get hit or run out of air on the way, and the run is over.</b>
@@ -790,6 +781,9 @@ function arrive(x,y){ if(!live()||!gate('arrive',250)) return; const P=place(x,y
   const g=ac.createGain(); g.gain.setValueAtTime(.001,t); g.gain.exponentialRampToValueAtTime(1,t+d); g.gain.exponentialRampToValueAtTime(.001,t+d+.3); g.connect(o);
   const f=filt('bandpass',260,2,g); sweep(f.frequency,240,2800,t,d); nz(t,d+.35,f);
   sweep(osc('sine',84,t+d,.5,vca(t+d,.7,.003,.45,o)).frequency,84,32,t+d,.4); }
+function splat(x,y){ if(!live()||!gate('splat',35)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.32,.12);   // a boarder popping: a wet bloop and a splash
+  sweep(osc('sine',R(250,330),t,.17,vca(t,1,.002,.15,o)).frequency,300,70,t,.13);
+  nz(t,.1,filt('bandpass',R(800,1300),1.3,vca(t,.8,.001,.09,o))); }
 function clank(x,y){ if(!live()||!gate('clank',80)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.2,.2);   // station hull struck
   for(const [f,a,d] of [[300,1,.26],[761,.5,.16],[1230,.3,.1]]) osc('triangle',f*R(.97,1.03),t,d,vca(t,a,.002,d,o));
   nz(t,.04,filt('bandpass',1800,2,vca(t,.5,.001,.04,o))); }
@@ -875,7 +869,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 // the game calls in here from its update loop — an audio hiccup must never throw and freeze the game
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
-           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal};
+           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -931,7 +925,7 @@ const VR_CAST={
   cerebrant:{name:'The Cerebrant', face:'cerebrant', side:'foe', v:{f:150,w:'square',fs:1.08,ring:55,vib:45,lp:2200}},
   matriarch:{name:'The Matriarch', face:'matriarch', side:'foe', v:{f:132,w:'sawtooth',fs:1.2,ring:38,vib:28,br:.3,lp:2400}},   // the mother of every clan (portrait painted in code)
   wing: {name:'Kite · Escort', face:'chief', side:'ally', v:{f:168,w:'sawtooth',fs:1.04,lp:2300,br:.12}},   // a fighter you rescued, flying on your wing
-  flight:{name:'Honor Flight', face:'chief', side:'ally', v:{f:184,w:'sawtooth',fs:1.07,lp:2400,br:.12}},   // the Cradle's three escorts
+  flight:{name:'Home Guard', face:'chief', side:'ally', v:{f:184,w:'sawtooth',fs:1.07,lp:2400,br:.12}},   // Earth's three escort fighters
   hauler:{name:'Hauler', face:'chief', side:'post', v:{f:132,w:'square',fs:.96,lp:1800,br:.12}},   // whichever ore hauler is in trouble
   // reaver clan captains: each pack is led by one, and they all have something to say
   shard:   {name:'Shardlord Vex',      face:'shard',    v:{f:290,w:'triangle',fs:1.35,ring:150,lp:3000},
@@ -986,21 +980,6 @@ Ember Reach runs hot, pilot. More raiders, more rock. Stay sharp.
 That relay carries every distress call in the sector. Guard it like your own ship.
 The clans are massing here. Expect them in bigger packs.
 Watch the red rocks, Halcyon. They hit just as hard as the gray ones.
-`),
-brief3:L(`
-The Maw, Halcyon. The Cerebrant's home ground, and its clans are thick here.
-Bastion Gate is the last door between the reavers and the inner colonies. Hold it.
-Every clan left in Theta-9 is here. Thin them out and the flagship will come to you.
-The Cerebrant's flagship is limping, pilot. Keep cutting.
-The Maw eats patrol cutters. Be the one it can't swallow.
-Clear the Maw and guard the gate. The Cerebrant is running out of places to hide.
-`),
-brief4:L(`
-This is the Cradle, Halcyon. No station, no backup. Just you and every reaver the Cerebrant has left.
-They'll come in hordes. Keep moving, keep firing, and don't let them box you in.
-Three hordes, then the flagship. Outlast them and the Cerebrant has nowhere left to hide.
-No station to guard out here, pilot. That means you can run. Use it.
-Use the rocks for cover. Their fire breaks on stone just like yours.
 `),
 youBrief:L(`
 Copy, Command. Halcyon is on station.
@@ -1991,9 +1970,9 @@ Losing her! Ejecting!
 That's it for me. Give them hell!
 `),
 flightJoin:L(`
-Honor flight forming up on you, Halcyon. Kestrel, Talon and Bastion. Lead the way.
-Three fighters on your wing, Halcyon. The stations wanted you to have company out here.
-Kestrel, Talon and Bastion, checking in. Point us at the hordes.
+Home Guard forming up on you, Halcyon. Valkyrie, Comet and Atlas. Lead the way.
+Three fighters on your wing, Halcyon. Earth wanted you to have company up here.
+Valkyrie, Comet and Atlas, checking in. Point us at the hordes.
 `),
 flightDown:L(`
 {who} is down! Punched out clean. Keep fighting!
@@ -2066,14 +2045,14 @@ There is no station to hide behind here!
 We have been waiting for you, little ship.
 `),
 // ---- Part Two: the Matriarch, Earth, the deck fights, Broodhome ----
-brief5:L(`
+brief3:L(`
 This is Earth Orbital Command. Every gun we have is pointed up, Halcyon. Help us hold Skyhook.
 Skyhook is the top of the space elevator. If it falls, the cable comes down on a city. Keep it standing.
 The brood fleet is coming in hordes. Thin them out before they reach the station.
 Welcome home, Halcyon. Sorry about the welcome.
 Half the planet is watching this on the news, pilot. No pressure.
 `),
-brief6:L(`
+brief4:L(`
 That's Broodhome, Halcyon. Every clan in the sky was hatched down there.
 Your new ship hits like a hammer and soaks a lot. It also turns like a moon. Plan ahead.
 Six shield cells, a three-gun broadside and its own point defence. Use all of it.
@@ -2139,10 +2118,21 @@ They're cutting in through the hull. Keep them off the bridge, the reactor and t
 All hands, repel boarders! Halcyon, you're on the core deck. Nothing touches the reactor.
 `),
 deckTipA:L(`
-{strike} swings your shock baton. Get them before they get you, pilot.
+{fire} fires your rifle, and it finds the nearest boarder for you.{mouse}
 `),
 deckTipB:L(`
-Run over the power cells to charge your arc. When it's full, hit {arc} and they'll scatter. Touch them then and they drop.
+Twenty marines are with you, Halcyon. They go where you go, so take them where the fight is.
+You've got twenty marines at your back. Keep them together, and keep as many of them alive as you can.
+`),
+botDown:L(`
+Marine down!
+We lost another marine!
+They got one of ours!
+Man down! Keep moving!
+`),
+crewLow:L(`
+We're down to {n} marines, Halcyon!
+Only {n} marines still standing!
 `),
 deckWave:L(`
 More pods latching on! {n} boarders coming through!
@@ -2183,17 +2173,6 @@ I'm up. I'm up. Where are they?
 Patched up. Back in it.
 That's going to bruise. Okay, round two.
 `),
-deckArc:L(`
-Arc's hot! Come here!
-Lights out!
-Who wants a hug?
-`),
-deckBig:L(`
-That's an overcharge cell, Halcyon. Your arc's full. Use it.
-`),
-deckArcReady:L(`
-Your arc is charged, pilot. Hit {arc} when they crowd you.
-`),
 deckWin:L(`
 That's the last of them! The Resolute holds!
 Deck's clear! Every boarder down! You did it, Halcyon!
@@ -2208,11 +2187,11 @@ Your ship is mine, little pilot. As it was always going to be.
 Listen. That is the sound of your carrier dying.
 `),
 aStart:L(`
-You're in. Three nerve nodes are holding the helm shut, Halcyon. Stand on each one until it's yours.
-Find the nerve nodes, pilot. Stand on them and hold your ground, and the helm opens.
+You're in. Three nerve nodes are holding the helm shut, Halcyon. Burn them out.
+Find the nerve nodes, pilot, and shoot them to pieces. The helm opens when they're gone.
 `),
 aNode:L(`
-Node's yours! That leaves {n}.
+Node's down! That leaves {n}.
 That's a node down, and {n} more before the helm opens.
 The ship felt that one. Only {n} left.
 `),
@@ -2271,26 +2250,7 @@ const VR_SCENES=[
     ['cmd',"One more thing. The yard crews finally rebuilt your shield generator. Every cutter in the hangar has one now."],
     ['you',"Real shields? Commander, I could kiss you."],
     ['cmd',"Three cells. Each one soaks a hit, and they charge back if you stay out of the fire. Now go."]]},
-  {tag:'Sector clear · Ember Reach', title:'INTO THE MAW', lines:[
-    ['post',"Talon Relay is still transmitting! Every colony in the sector heard what you did out there.",'saved'],
-    ['cmd',"Talon Relay is gone. The colonies are blind out here now. We end this.",'lost'],
-    ['cmd',"The Cerebrant is fleeing to the Maw. Its home ground. Every clan it has left will be waiting."],
-    ['you',"Then that's where this ends."],
-    ['cerebrant',"You have cost me two sectors and my patience. At the Maw, I stop calculating and start crushing."],
-    ['you',"Did you rehearse that in the jar?"],
-    ['cmd',"Bastion Gate is the last door to the inner colonies, Halcyon. Hold it, and bring that flagship down."]]},
-  {tag:'Sector clear · The Maw', title:'INTO THE CRADLE', lines:[
-    ['post',"Bastion Gate to Halcyon: the gate holds. The inner colonies never saw a single reaver.",'saved'],
-    ['cmd',"We lost Bastion Gate, but the colonies got out behind it. You bought them that time, pilot.",'lost'],
-    ['cmd',"The flagship is running for the Cradle. That's where the clans are born, Halcyon."],
-    ['cmd',"There's no station out there. Nothing to guard but your own hide."],
-    ['cerebrant',"Then come into the Cradle, little pilot. Every reaver I have left is waiting for you. All at once."],
-    ['you',"All at once? Saves me some flying."],
-    ['cmd',"They'll come in hordes. Outlast them, and the Cerebrant has nowhere left to run."],
-    ['cmd',"And you won't go in alone. Kestrel, Talon and Bastion have each sent you a fighter."],
-    ['you',"An honor guard? I'm touched, Commander."],
-    ['cmd',"Three fighters on your wing through the hordes. Bring them home if you can."]]},
-  {tag:'Flagship destroyed · The Cradle', title:'THETA-9 SECURED', lines:[   // (the flight home: two lines, then the medal)
+  {tag:'Flagship destroyed · Ember Reach', title:'THETA-9 SECURED', lines:[   // (the flight home: two lines, then the medal)
     ['cmd',"Flagship destroyed! Theta-9 is free! Halcyon, you magnificent maniac. Come home."],
     ['you',"On my way, Commander. Tell Kestrel I'm collecting on those drinks."]]}
 ];
@@ -2408,8 +2368,8 @@ function buildBackdrop(L){
     {a:'#6bb59a',b:'#275046',rim:'#cafff0'}, {a:'#b85d7a',b:'#5a223a',rim:'#ffc6dc'},
     {a:'#9a8bc4',b:'#3b3263',rim:'#e4dcff'}, {a:'#c9b062',b:'#6b5420',rim:'#fff1b0'}
   ];
-  const np=L.world?0:ri(7,9);   // (Earth and Broodhome fill a corner of the sky instead; Earth keeps its moon)
-  if(L.world==='earth') planets.push({x:WORLD*.72,y:WORLD*.28,r:62,col:{a:'#b9b9c2',b:'#55555f',rim:'#f2f2fa'},ring:false,ringTilt:.3,la:0});
+  const np=L.world?0:ri(7,9);   // (Earth Orbit has the Sun's own planets instead; Broodhome fills a corner of the sky)
+  if(L.world==='earth') for(const P of SOL) planets.push({x:WORLD*P.x,y:WORLD*P.y,r:P.r,name:P.name,real:P.kind,rings:P.rings,ringTilt:P.tilt,la:P.la,sprite:planetSprite(P.kind,P.r)});
   if(L.world==='brood') planets.push({x:WORLD*.3,y:WORLD*.7,r:48,col:{a:'#6bb59a',b:'#275046',rim:'#cafff0'},ring:true,ringTilt:.35,la:.4});
   for(let i=0;i<np;i++){
     const P=pal[ri(0,pal.length-1)];
@@ -2432,16 +2392,15 @@ window.addEventListener('keydown', e=>{
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if((k==='arrowup'||k==='arrowdown') && !elOv.classList.contains('hidden')) elOv.scrollBy(0,k==='arrowup'?-90:90);   // (↑ ↓ scroll the title and end cards)
   keys[k]=true;
-  if(DK && DKEY[k]!=null){ DK.keyDir=DK.keyDir.filter(x=>x!==k); DK.keyDir.push(k); }   // (on foot, the newest direction held wins)
   if(e.repeat) return;   // held keys auto-repeat: don't let a held fire button skip the end screen
   if(k==='b'){ openJump(); return; }   // B, anywhere: jump to any part (B again finishes the part you're in)
   if(state==='launch'){ if(k===' '||k==='enter'||k==='escape') endLaunch(); return; }   // skip the launch bay
   if(state==='cine'){   // cutscenes: Space moves the dialogue on, Enter or Esc skips the scene
     if(k===' ') commsSkip(); else if(k==='enter'||k==='escape') skipCine(); else if(k==='n') toggleMusic(); else if(k==='v') toggleSfx();
     return; }
-  if(state==='deck'){   // on foot: P / Esc the menu, E (or 2, or Shift) the arc overload
+  if(state==='deck'){   // aboard: P / Esc the menu, N and V the sound (moving and firing are read off the held keys)
     if(k==='p'||k==='escape'){ openMini(); return; }
-    if(k==='n') toggleMusic(); else if(k==='v') toggleSfx(); else if(!paused && (k==='e'||k==='2'||k==='shift')) DK.arcReq=true;
+    if(k==='n') toggleMusic(); else if(k==='v') toggleSfx();
     return; }
   if((k==='enter'||k===' ') && state==='deckfail'){ retryDeck(); return; }
   if(k==='p'||k==='escape'){ openMini(); return; }   // (in a fight, the menu is the pause screen)
@@ -2601,18 +2560,10 @@ const LEVELS=[
    mix:['raider','raider','raider','interceptor','interceptor','splitter','gunship','warden'],
    neb:['#1f6f8a','#5b2a7a','#24508f'], far:[['#5b2a7a','#1a1038'],['#1f5f7a','#09202c']],
    jobs:[[.2,'drop'],[.42,'beacon'],[.68,'rescue']], fuse:2700, fleet:45},
-  {name:'Ember Reach', post:'Talon Relay',     quota:40, start:10, cap:13, gap:[460,620], pack:[3,5], raid:.35, rocks:20, rogue:[2300,3400], fleeAt:20, rock:1,
+  {name:'Ember Reach', post:'Talon Relay',     quota:40, start:10, cap:13, gap:[460,620], pack:[3,5], raid:.35, rocks:20, rogue:[2300,3400], fleeAt:0, rock:1,
    mix:['raider','raider','interceptor','interceptor','splitter','gunship','gunship','warden'],
    neb:['#8a3a1a','#7a1f3a','#a8601f'], far:[['#7a2a3a','#2a0d16'],['#7a4a1a','#2a1608']],
    jobs:[[.15,'rescue'],[.4,'beacon'],[.65,'drop']], fuse:2700, fleet:50},
-  {name:'The Maw',     post:'Bastion Gate',    quota:50, start:12, cap:15, gap:[400,540], pack:[4,6], raid:.4,  rocks:24, rogue:[2000,3000], fleeAt:12, rock:2,
-   mix:['raider','raider','interceptor','interceptor','splitter','splitter','gunship','gunship','warden','warden'],
-   neb:['#6a1030','#3a1a6a','#7a2a5a'], far:[['#5b2a7a','#1a1038'],['#7a2a3a','#2a0d16']],
-   jobs:[[.12,'drop'],[.3,'beacon'],[.55,'rescue'],[.75,'beacon']], fuse:2700, fleet:55},
-  {name:'The Cradle',  post:null, horde:[30,40,50], quota:120, start:0, cap:99, gap:[400,540], pack:[4,6], raid:0, rocks:14, rogue:[9e9,9e9], fleeAt:0, rock:2,
-   mix:['raider','raider','raider','interceptor','interceptor','interceptor','splitter','splitter','gunship','gunship','warden'],
-   neb:['#5a0f1f','#2a0f4a','#6a1a3a'], far:[['#4a0f2a','#14060c'],['#2a0d3a','#0c0414']],
-   jobs:[], fuse:2700, fleet:45},
   // Part Two. Earth: hordes again, but with a station to guard (guard), and the flagship to cripple (boardAt) and board, not kill.
   // Broodhome: you fly the captured flagship (big), and the Matriarch's ark comes out after the hordes. world = the planet in the sky
   {name:'Earth Orbit', post:'Skyhook Station', guard:true, world:'earth', horde:[30,40,50], quota:120, start:0, cap:99, gap:[400,540], pack:[4,6], raid:.5, rocks:8, rogue:[9e9,9e9], fleeAt:0, boardAt:14, rock:0,
@@ -3009,7 +2960,7 @@ function retrySector(){   // back to how things stood when the sector began (cut
 // button (or B again) to finish the part you're in: skip the scene, clear the sector's packs, or knock the flagship to its last hit ----
 let jumpOpen=false;
 const elJump=document.getElementById('jump'), elJHere=document.getElementById('j-here');
-const BOSS_AT=[46,LEVELS[0].fleeAt,LEVELS[1].fleeAt,LEVELS[2].fleeAt];   // the flagship's hull as it turns up in each sector, on a run that drove it off every time
+const BOSS_AT=[46,LEVELS[0].fleeAt];   // the flagship's hull as it turns up in each sector, on a run that drove it off every time
 function hereLabel(){
   if(state==='cine') return '▸ SKIP THIS SCENE';
   if(state==='launch') return '▸ SKIP THE LAUNCH';
@@ -3022,9 +2973,8 @@ function hereLabel(){
 function whereNow(){   // which button is "you are here"
   if(state==='menu' || cine) return '';
   if(DK) return DK.kind==='defend'?'d1':'d2';
-  if(level===4) return boss||bossPending||levelDone?'b5':'g'+clamp(horde?horde.i:1,1,3);
-  if(level===5) return boss||bossPending||levelDone?'b6':'s6';
-  if(LV.horde) return boss||bossPending||levelDone?'b4':'h'+clamp(horde?horde.i:1,1,3);
+  if(LV.world==='earth') return boss||bossPending||levelDone?'gb':'g'+clamp(horde?horde.i:1,1,3);
+  if(LV.big) return boss||bossPending||levelDone?'b6':'s6';
   return (boss||bossPending||levelDone?'b':'s')+(level+1);
 }
 function openJump(){
@@ -3041,7 +2991,7 @@ function jumpHere(){   // the green button
   closeJump(); closeMini();   // (and if you came here from the menu, back into the fight to see it done)
   if(state==='cine') skipCine();
   else if(state==='launch') endLaunch();
-  else if(state==='deck'){ if(DK && !DK.done && !DK.lost) deckWin(); }
+  else if(state==='deck'){ if(DK && !DK.done && !DK.lost) dkWin(); }
   else if(state==='play'){
     if(!levelDone){ for(const e of enemies) e.alive=false; levelKills=Math.max(levelKills,quota); fleet=null;
       if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; } }
@@ -3060,12 +3010,12 @@ function resetForJump(){   // clear whatever was going on, and start a fresh run
 function jumpTo(id){
   closeJump(); resetForJump();
   if(id==='intro'){ startRun(); return; }
-  if(['t1','d1','c4','g1','g2','g3','b5','f1','d2','c5','s6','b6','e3'].includes(id)){ partTwoJump(id); return; }   // (Part Two)
-  const kind=id[0], n=+id.slice(1), L=kind==='h'?3:kind==='e'?3:n-1;
-  bossHP=BOSS_AT[Math.min(L,3)];
+  if(['t1','d1','c4','g1','g2','g3','gb','f1','d2','c5','s6','b6','e3'].includes(id)){ partTwoJump(id); return; }   // (Part Two)
+  const kind=id[0], n=+id.slice(1), L=kind==='e'?1:n-1;
+  bossHP=BOSS_AT[Math.min(L,1)];
   if(kind==='e'){   // Theta-9 won: the flight home (and the ceremony), or straight to the ceremony; then the uninvited guests
-    setupLevel(3); bossDead=true; clearT=runT; tally={sb:1500*LV.horde.length,cb:1500*4,lost:false,horde:true};
-    const shots=finaleShots(sceneLines(3)); VRAudio.play('menu',0,1);
+    setupLevel(1); bossDead=true; clearT=runT; tally={sb:2500,cb:1500*2,lost:false,horde:false};
+    const shots=finaleShots(sceneLines(1)); VRAudio.play('menu',0,1);
     playCine(n===2?shots.slice(FINALE_CEREMONY):shots,()=>startDeck('defend'));
     return; }
   if(kind==='c'){   // the jump scene out of sector n, then on into the next one as normal
@@ -3075,9 +3025,6 @@ function jumpTo(id){
   setupLevel(L);
   toldShields=!(kind==='s' && L===1);   // the shields card shows when you jump to the start of Ember Reach, where they come back
   beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch();
-  if(kind==='h'){   // a Cradle horde: the ones before it are already broken
-    lvlBanner=0; notes=[]; noteT=0; horde.i=n-1; horde.left=0; horde.rest=50;
-    levelKills=LV.horde.slice(0,n-1).reduce((a,b)=>a+b,0); }
   if(kind==='b'){   // the flagship: the sector's packs (or the hordes) are done, and it's on its way
     lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
     if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; }
@@ -3169,7 +3116,7 @@ function updateWing(){
 // ---- the Cradle's honor flight: Kestrel, Talon and Bastion each send a fighter to fly on your wing through the hordes.
 // They fight the reavers (the flagship is still yours). Lose some, and the carrier tops the flight back up when the horde breaks ----
 let wingmen=[];
-const FLIGHT=['Kestrel','Talon','Bastion'], FLIGHT_SLOTS=[{a:Math.PI*.72,d:56},{a:-Math.PI*.72,d:56},{a:Math.PI,d:78}];   // left, right, behind
+const FLIGHT=['Valkyrie','Comet','Atlas'], FLIGHT_SLOTS=[{a:Math.PI*.72,d:56},{a:-Math.PI*.72,d:56},{a:Math.PI,d:78}];   // left, right, behind
 function launchFlight(arrive){   // fill any empty slots (arrive: they jump in beside you; else they burn in from behind). Returns how many launched
   let n=0;
   for(let i=0;i<3;i++){ if(wingmen.some(W=>W.slot===i)) continue; n++;
@@ -3310,7 +3257,7 @@ function beginLevel(){
     notes.push(()=>{ goodBanner('SHIELDS RESTORED','THREE CELLS · EACH ONE SOAKS A HIT · THEY CHARGE BACK WHEN YOU STAY OUT OF THE FIRE',240);
       say('cmd','shieldsBack',null,2); }); }
   if(LV.horde && !LV.big){ launchFlight(true);   // the Cradle (and Earth): your honor flight jumps in with you
-    notes.push(()=>{ goodBanner('ESCORT FLIGHT JOINED','KESTREL · TALON · BASTION · THREE FIGHTERS ON YOUR WING THROUGH THE HORDES',220);
+    notes.push(()=>{ goodBanner('HOME GUARD JOINED','VALKYRIE · COMET · ATLAS · THREE EARTH FIGHTERS ON YOUR WING THROUGH THE HORDES',220);
       say('flight','flightJoin',null,2); }); }
   if(LV.big) notes.push(()=>{ goodBanner('THE FLAGSHIP IS YOURS','SIX SHIELD CELLS · A THREE-GUN BROADSIDE · ITS OWN POINT DEFENCE · IT TURNS SLOWLY',240);
     say('you','bigTip',null,2); });
@@ -3373,7 +3320,7 @@ function pickLine(key,vars){   // a shuffle-bag per pool, so lines don't repeat 
     if(!bag||!bag.length){ bag=comms.bags[key]=pool.map((_,i)=>i); for(let i=bag.length-1;i>0;i--){ const j=ri(0,i); [bag[i],bag[j]]=[bag[j],bag[i]]; } }
     s=pool[bag.pop()]; if(!/\{\w+\}/.test(fill(s))) break; }
   s=fill(s);
-  if(level>=4 && SWAP_POOLS.has(key)) s=s.replace(/Cerebrant/g,'Matriarch');   // (Part Two: the reavers answer to her now)
+  if(LV.world && SWAP_POOLS.has(key)) s=s.replace(/Cerebrant/g,'Matriarch');   // (Part Two: the reavers answer to her now)
   return s;
 }
 const SWAP_POOLS=new Set(['taunt','alienChatter','mayday','hordeLast','hordeTaunt','hordeStart','win','youWin','chatter','killQuip','gloat']);
@@ -3571,7 +3518,7 @@ function ceremonyShots(){
   const clean=deaths===0;
   return [
     { dur:280, lines:[['cmd',"Pilot Halcyon. Front and center."],
-        ['cmd',"For Kestrel Station, Talon Relay and Bastion Gate. For every ore hauler that made it home."],
+        ['cmd',"For Kestrel Station and Talon Relay. For every ore hauler that made it home."],
         ['cmd',"Frontier Command awards you the Star of Theta-9. You're the first pilot ever to wear it."]],
       init(c){ c.black=1; c.actors=[]; c.title=null; cerT=0; caption(c,'CARRIER RESOLUTE','Command deck · the morning after',300); VRAudio.play('menu',0,1.5); },
       tick(){ cerT++; },
@@ -4311,7 +4258,7 @@ function update(){
       if((m.x-e.x)**2+(m.y-e.y)**2<(e.r+5)**2){ m.life=0; e.hp-=3; sparks(e.x,e.y); if(e.hp<=0) kill(e); else boom(m.x,m.y,'small'); break; }
     }
   }
-  // laser vs boss (missiles can't hurt it); in the first two sectors it runs once it's hurt enough
+  // laser vs boss (missiles can't hurt it); in the Drift it runs once it's hurt enough
   if(boss && boss.warp<=0 && !boss.flee && !boss.dying && !boss.crippled){
     for(const b of bullets){ if(b.life<=0)continue;
       if((b.x-boss.x)**2+(b.y-boss.y)**2<(boss.r*0.82)**2){ b.life=0; boss.hp--; boss.hit=6; VRAudio.sfx.bossHit(b.x,b.y,boss.hp/boss.maxhp);
@@ -4319,7 +4266,7 @@ function update(){
         if(boss.hp<=0){ destroyBoss(); break; }
         if(boss.hp<=boss.fleeAt){ bossFlee(); break; }
         if(LV.boardAt && boss.hp<=LV.boardAt){ bossCrippled(); break; }   // Earth: knocked out, not killed
-        if(boss.hp%8===0 && cool('bossHurt',360)) say(level>=4?'matriarch':'cerebrant',level===4?'eHurt':level===5?'mHurt':'bossHurt'); } }
+        if(boss.hp%8===0 && cool('bossHurt',360)) say(LV.world?'matriarch':'cerebrant',LV.boardAt?'eHurt':LV.big?'mHurt':'bossHurt'); } }
     for(const m of missiles){ if(m.life<=0)continue; // immune — fizzle on contact
       if((m.x-boss.x)**2+(m.y-boss.y)**2<(boss.r*0.82)**2){ m.life=0; boom(m.x,m.y,'small'); } }
   }
@@ -4369,7 +4316,7 @@ function update(){
     if(winTimer===175){
       const next=level+1;   // the arrival shot builds the next sector; a skipped scene has to build it here
       if(jumpNext) playCine(chaseShots(level),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('play'); VRAudio.sfx.launch(); });
-      else if(level===5) playCine(endingShots(),()=>{ state='win'; endScreen(); });   // Broodhome: the end of it all
+      else if(LV.big) playCine(endingShots(),()=>{ state='win'; endScreen(); });   // Broodhome: the end of it all
       else playCine(finaleShots(sceneLines(level)),()=>startDeck('defend'));          // the Cradle: home, the medal, and the boarders
     }
   }
@@ -4420,14 +4367,14 @@ function spawnBoss(){
   // the same flagship every sector: it limps in carrying the damage you did last time, patched up a little.
   // It drops out of warp at the edge of the sector, well clear of the station, and burns in from there
   // (Part Two: a fresh flagship of the Matriarch's over Earth, and over Broodhome the Matriarch's own ark, bigger and far tougher)
-  const ark=level===5, maxhp=ark?150:46, hp=level===0||level>=4?maxhp:Math.min(maxhp,bossHP+[0,6,8,14][level]), p=bossEntry();
+  const ark=!!LV.big, maxhp=ark?150:46, hp=level===0||LV.world?maxhp:Math.min(maxhp,bossHP+6), p=bossEntry();
   boss={x:p.x, y:p.y, vx:0,vy:0, a:Math.atan2(ship.y-p.y,ship.x-p.x), r:ark?80:58, hp, maxhp, cool:110, mcool:220, pdCool:0, wob:0, warp:70, hit:0, ghost:hp,
     fleeAt:LV.fleeAt, flee:0, inbound:true, ark, brood:600};
   bossBanner=200;
   VRAudio.sfx.klaxon(); VRAudio.sfx.warpIn(boss.x,boss.y); VRAudio.play('boss',1.2,.6);
   shockwaves.push({x:boss.x,y:boss.y,delay:0,r0:12,max:150,life:0,maxlife:55,col:'#9ff6ff'});
   shockwaves.push({x:boss.x,y:boss.y,delay:10,r0:8,max:110,life:0,maxlife:45,col:ark?'#3aff9a':'#b06dc0'});
-  if(level>=4){ say('cmd',ark?'mBoss':'eBoss',null,2); say('matriarch',ark?'mTaunt':'eTaunt'); }
+  if(LV.world){ say('cmd',ark?'mBoss':'eBoss',null,2); say('matriarch',ark?'mTaunt':'eTaunt'); }
   else { say('cmd',level===0?'bossArrive':'boss',null,2); say('cerebrant','bossTaunt'); }
   if(Math.random()<.6) say('you','retort');
 }
@@ -4878,7 +4825,7 @@ function pilotLost(cause,by){   // no cutter, no suit: the run is over
   boom(ship.x,ship.y,'small',6); shake=Math.min(shake+6,26); flash=Math.max(flash,.25);
   VRAudio.play(null,0,2); VRAudio.sfx.alarm();
   comms.q=comms.q.filter(m=>m.pri>=2);
-  const who=by&&by.alien&&by.alive?by.alien:boss&&!boss.dying?(level>=4?'matriarch':'cerebrant'):anyCaptain();
+  const who=by&&by.alien&&by.alive?by.alien:boss&&!boss.dying?(LV.world?'matriarch':'cerebrant'):anyCaptain();
   if(who && cause!=='air' && Math.random()<.8) say(who,'gloat');
   say('cmd',cause==='air'?'evaAir':'evaLost',null,2);
   updateHUD();
@@ -5008,7 +4955,7 @@ function killShip(cause,by){
   VRAudio.play(null,0,1.2); VRAudio.sfx.alarm(); VRAudio.sfx.eject();
   addScore(-500,ship.x,ship.y-14,'#ff4d6d');
   // whoever got you crows about it, then Command gets you into a new ship
-  const who=by&&by.alien&&by.alive?by.alien:boss&&!boss.dying?(level>=4?'matriarch':'cerebrant'):anyCaptain();
+  const who=by&&by.alien&&by.alive?by.alien:boss&&!boss.dying?(LV.world?'matriarch':'cerebrant'):anyCaptain();
   if(who && Math.random()<.7) say(who,'gloat');
   say('cmd','cmdDeath');
   updateHUD();
@@ -5033,10 +4980,10 @@ function hudTick(){
     lastScore=score; }
   // top strip: sector progress, or the flagship's hull while it's here (the tick marks where it will run)
   let lab, cnt, fill, ghost=0, mark=0;
-  const bn=level===5?'The Matriarch':level===4?'Brood flagship':'The Cerebrant';
+  const bn=LV.big?'The Matriarch':LV.boardAt?'Brood flagship':'The Cerebrant';
   if(boss){ lab=bn+' · '+(boss.dying?'breaking up':boss.crippled?'crippled':boss.flee?'escaping':boss.fleeAt?'drive it off':LV.boardAt?'cripple it':'destroy it');
     cnt=Math.ceil(boss.hp/boss.maxhp*100)+'%'; fill=boss.hp/boss.maxhp; ghost=boss.ghost/boss.maxhp; mark=(boss.fleeAt||LV.boardAt||0)/boss.maxhp; }
-  else if(bossPending>0){ lab=level===5?'The Matriarch is coming':'Flagship inbound'; cnt='!'; fill=1; }
+  else if(bossPending>0){ lab=LV.big?'The Matriarch is coming':'Flagship inbound'; cnt='!'; fill=1; }
   else if(bossFled){ lab='Flagship escaped · jumping'; cnt=''; fill=1; }
   else if(bossDead){ lab=bn+' · destroyed'; cnt='0%'; fill=0; }
   else { lab=`Level ${level+1} · ${LV.name}`; cnt=`${Math.min(levelKills,quota)} / ${quota}`; fill=levelKills/quota; }
@@ -5144,9 +5091,9 @@ function draw(){
   const toS=(wx,wy)=>[Math.round(wx-cx),Math.round(wy-cy)];
 
   // planets — real sector bodies (gentle gravity when you drift near)
-  for(const p of planets){ const[px,py]=toS(p.x,p.y);
-    if(px<-p.r-60||py<-p.r-60||px>VW+p.r+60||py>VH+p.r+60) continue;
-    drawPlanet(px,py,p); }
+  for(const p of planets){ const[px,py]=toS(p.x,p.y), m=p.real?p.r*2.3+30:p.r+60;
+    if(px<-m||py<-m||px>VW+m||py>VH+m) continue;
+    if(p.real) drawRealPlanet(px,py,p); else drawPlanet(px,py,p); }
 
   // the station you're guarding, then the asteroids (orange ring = on a collision course with it)
   if(outpost && !outpost.none){ const[sx,sy]=toS(outpost.x,outpost.y); if(sx>-80&&sy>-60&&sx<VW+80&&sy<VH+60) drawStation(sx,sy,outpost); }
@@ -5316,7 +5263,7 @@ function draw(){
     // the sector's tally, read off on the way out
     if(tally && winTimer>16 && winTimer<128){
       g.globalAlpha=Math.min(1,(winTimer-16)/14,(128-winTimer)/14); g.textAlign='center';
-      g.fillStyle='#4dffa6'; g.font='bold 20px monospace'; g.fillText(jumpNext?'SECTOR CLEAR':level===5?'THE MATRIARCH IS DEAD':'FLAGSHIP DESTROYED',VW/2,VH*.34);
+      g.fillStyle='#4dffa6'; g.font='bold 20px monospace'; g.fillText(jumpNext?'SECTOR CLEAR':LV.big?'THE MATRIARCH IS DEAD':'FLAGSHIP DESTROYED',VW/2,VH*.34);
       g.font='9px monospace'; g.fillStyle=tally.lost?'#ff4d6d':'#cfe3ff';
       g.fillText(tally.lost?LV.post.toUpperCase()+' LOST · NO STATION BONUS':(tally.horde?'HORDE BONUS +':'STATION BONUS +')+tally.sb.toLocaleString('en-US'),VW/2,VH*.34+18);
       g.fillStyle='#cfe3ff'; g.fillText('SECTOR BONUS +'+tally.cb.toLocaleString('en-US'),VW/2,VH*.34+31);
@@ -5856,316 +5803,370 @@ window.vrDebug=()=>({state,level,score,kills,levelKills,quota:quota,deaths,level
 // seen from above, down in the corridors), jumps for Earth, and you take one of her own flagships home to Broodhome ----
 // ======================================================================================================================
 
-// ---- the decks: 25 x 13 tiles. # hull · . corridor with a power cell · o overcharge cell · (space) bare floor
-// B R E: the Resolute's bridge, reactor and engines, what the boarders are after · X: where a boarding pod can cut in
-// P: where you start, and where the medics patch you up · N: a nerve node · J: the flagship's helm · D: the membrane
-// sealing it · S: a brood pit its crew climbs out of ----
-const DECKS={
-  defend:{name:'Carrier Resolute', map:[
-    '#########################',
-    '#o...X....##B##....X...o#',
-    '#.#######.##.##.#######.#',
-    '#.#######.##.##.#######.#',
-    '#.......................#',
-    '#.###.#############.###.#',
-    '#X........##R##........X#',
-    '#.#######.##.##.#######.#',
-    '#...........P...........#',
-    '#.###.###.##.##.###.###.#',
-    '#.###.###.##.##.###.###.#',
-    '#o...X....##E##....X...o#',
-    '#########################']},
-  assault:{name:'Brood flagship', map:[
-    '#########################',
-    '#o..........S....###...N#',
-    '#.##.#######.###.###.####',
-    '#.##.#######.###.###.####',
-    '#....###............o####',
-    '#.##.###.#######.########',
-    '#P.......###S...N....DDJ#',
-    '#.##.###.#######.########',
-    '#....###............o####',
-    '#.##.#######.###.###.####',
-    '#.##.#######.###.###.####',
-    '#o..........S....###...N#',
-    '#########################']}
+// ---- the fights aboard ship: top-down laser combat across a whole deck that scrolls with you. You and twenty marines,
+// against wave after wave of boarders. Your rifle and the bots' fire instantly, the aliens' bolts are slower, and they pop ----
+const DT=20;   // world px to a deck tile
+const D8=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]];
+const DFOE={   // the boarders: hit points, speed, size, frames between shots, bolts a volley and their spread, how far they see, points, what colour they pop, how high they spit from
+  squid:{hp:1, sp:1.7, r:7,  cool:[44,72],  n:1, spread:0,   range:220, pts:100, goo:'#7ad84e', mz:9},
+  blob: {hp:2, sp:1.2, r:9,  cool:[56,86],  n:1, spread:0,   range:240, pts:150, goo:'#e0283a', mz:8},
+  brute:{hp:7, sp:.8,  r:10, cool:[76,104], n:3, spread:.22, range:260, pts:400, goo:'#c42a52', mz:12}   // (drawn big, but its footing fits the narrow gaps)
 };
-const DPAL={   // the Resolute: navy plating, cyan trim · the flagship: dark chitin, violet membranes, its spores glowing green
-  defend: {space:'#04050b', floor:'#0a1124', plate:'#0d1630', seam:'#16223f', wall:'#0f1830', top:'#1a2747', edge:'#43f0ff', cell:'#9ff6ff', label:'rgba(159,246,255,.78)'},
-  assault:{space:'#06030a', floor:'#130913', plate:'#180b19', seam:'#241024', wall:'#1d0a1c', top:'#33112f', edge:'#d36bff', cell:'#7dffb0', label:'rgba(230,180,255,.8)'}
-};
-const DFOE={   // boarders: hits to put one down, speed (tiles a frame), what it goes for, size, colours, points
-  grunt:  {hp:1, sp:.056, goal:'sabotage', r:.3,  body:'#8e2232', lite:'#d0495a', eye:'#ff2a3a', pts:200},
-  stalker:{hp:1, sp:.071, goal:'ambush',   r:.27, body:'#a8520f', lite:'#eb8d33', eye:'#ffe08a', pts:300},
-  brute:  {hp:2, sp:.046, goal:'hunt',     r:.4,  body:'#55306e', lite:'#8d5dab', eye:'#ff2a3a', pts:500}
-};
-const DDIR=[[1,0],[0,1],[-1,0],[0,-1]], DANG=[0,Math.PI/2,Math.PI,-Math.PI/2];   // right, down, left, up
-const DKEY={arrowright:0,d:0,arrowdown:1,s:1,arrowleft:2,a:2,arrowup:3,w:3};
-const DK_SP=.085, DK_ARC_SP=.1, ARC_FULL=36, ARC_LEN=420, STRIKE_CD=18, HACK=.055, DK_INV=100, DK_REST=300;
-const DWAVES=[{at:2,mix:{grunt:5,stalker:2}}, {at:3,mix:{grunt:5,stalker:3,brute:2}}, {at:4,mix:{grunt:7,stalker:4,brute:3}}];
-const NODE_HOLD=180, HELM_HOLD=270;   // frames you have to stand on a nerve node, and on the helm
-let DK=null, downs=0, bigLost=false, bossBoardT=0;   // the deck fight in progress (null while you fly) · times you went down on foot
-let hintFly=null, dkArcKey='';
+const CREW_N=20, BOT_HP=3, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=360, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck)
+const DWAVES=[{n:30,at:4,mix:[.45,.45,.1]},{n:40,at:5,mix:[.35,.45,.2]},{n:46,at:6,mix:[.32,.46,.22]}];   // boarders, breaches, the share that are squid · blob · brute
+let DK=null, downs=0, bigLost=false, bossBoardT=0, crewLeft=0, hintFly=null;
+const dkMouse={sx:0,sy:0,t:-1e9,down:false};   // (a desktop's mouse: aim with it, hold the button to fire)
 const NUMW=['no','one','two','three'];
 
+// ---- the two ships, drawn as floor shapes in tiles: rooms with their corners cut, and the corridors between them. Props stand on
+// the floor (crates, consoles, machinery: solid, and cover). Breaches are where boarding pods dock, with the way out of the hull ----
+const oct=(x0,y0,x1,y1,c)=>[x0+c,y0,x1-c,y0,x1,y0+c,x1,y1-c,x1-c,y1,x0+c,y1,x0,y1-c,x0,y0+c];
+const box=(x0,y0,x1,y1)=>[x0,y0,x1,y0,x1,y1,x0,y1];
+function inPoly(P,x,y){ let c=false; for(let i=0,j=P.length-2;i<P.length;j=i,i+=2){ const xi=P[i],yi=P[i+1],xj=P[j],yj=P[j+1];
+  if((yi>y)!==(yj>y) && x<(xj-xi)*(y-yi)/(yj-yi)+xi) c=!c; } return c; }
+function mapResolute(){   // the Resolute's core deck: engines aft, the reactor amidships, the bridge in the bow
+  return {W:86, H:48, start:[45,17], thrusters:[[.2,16.5],[.2,31.5]],
+    polys:[oct(2,12,18,36,4), oct(21,4,36,18,3), oct(21,30,36,44,3), oct(38,13,53,35,4), oct(56,4,71,18,3), oct(56,30,71,44,3), oct(73,12,84,36,4),
+      box(16,22,75,26), box(27,17,31,31), box(62,17,66,31), box(8,7,23,10), box(8,7,11,13), box(8,38,23,41), box(8,35,11,41),
+      box(34,9,58,12), box(44,9,47,14), box(34,36,58,39), box(44,34,47,39), box(69,7,79,10), box(76,7,79,13), box(69,38,79,41), box(76,35,79,41)],
+    props:[{x:4,y:14,w:5,h:5,kind:'engine'},{x:4,y:29,w:5,h:5,kind:'engine'},{x:12,y:22,w:2,h:4,kind:'sys',k:'E'},{x:14,y:15,w:1,h:3,kind:'pipe'},{x:14,y:30,w:1,h:3,kind:'pipe'},
+      {x:43,y:21,w:5,h:6,kind:'sys',k:'R'},{x:40,y:16,w:1,h:3,kind:'pipe'},{x:50,y:16,w:1,h:3,kind:'pipe'},{x:40,y:29,w:1,h:3,kind:'pipe'},{x:50,y:29,w:1,h:3,kind:'pipe'},
+      {x:79,y:22,w:3,h:4,kind:'sys',k:'B'},{x:75,y:15,w:3,h:1,kind:'console'},{x:75,y:32,w:3,h:1,kind:'console'},{x:80,y:17,w:1,h:2,kind:'console'},{x:80,y:29,w:1,h:2,kind:'console'},
+      {x:23,y:6,w:3,h:1,kind:'bunk'},{x:23,y:9,w:3,h:1,kind:'bunk'},{x:23,y:12,w:3,h:1,kind:'bunk'},{x:32,y:6,w:3,h:1,kind:'bunk'},{x:32,y:9,w:3,h:1,kind:'bunk'},{x:32,y:12,w:3,h:1,kind:'bunk'},
+      {x:28,y:9,w:2,h:2,kind:'table'},{x:58,y:6,w:2,h:1,kind:'bed'},{x:58,y:9,w:2,h:1,kind:'bed'},{x:58,y:12,w:2,h:1,kind:'bed'},{x:67,y:6,w:2,h:3,kind:'locker'},{x:67,y:11,w:2,h:3,kind:'locker'},
+      {x:23,y:34,w:6,h:3,kind:'shuttle'},{x:32,y:32,w:2,h:2,kind:'crate'},{x:31,y:39,w:2,h:1,kind:'crate'},{x:23,y:40,w:1,h:1,kind:'crate'},
+      {x:58,y:32,w:2,h:2,kind:'crate'},{x:62,y:33,w:2,h:1,kind:'crate'},{x:67,y:32,w:2,h:2,kind:'crate'},{x:59,y:38,w:1,h:2,kind:'crate'},{x:66,y:38,w:2,h:2,kind:'crate'},{x:69,y:36,w:1,h:1,kind:'crate'},
+      {x:20,y:22,w:1,h:1,kind:'pillar'},{x:34,y:25,w:1,h:1,kind:'pillar'},{x:57,y:22,w:1,h:1,kind:'pillar'},{x:70,y:25,w:1,h:1,kind:'pillar'}],
+    windows:[[24,4,33,4,-1],[59,4,68,4,-1],[24,44,33,44,1],[59,44,68,44,1],[38,9,54,9,-1],[38,39,54,39,1]],   // x0,y,x1,y, which side is space
+    breaches:[[26,4,0,-1],[32,4,0,-1],[61,4,0,-1],[66,4,0,-1],[26,43,0,1],[32,43,0,1],[61,43,0,1],[66,43,0,1],[40,9,0,-1],[52,9,0,-1],[40,38,0,1],[52,38,0,1],
+      [2,20,-1,0],[2,27,-1,0],[83,19,1,0],[83,28,1,0]]};
+}
+function mapBroodship(){   // the flagship's insides: chambers like organs, its three nerve nodes, brood pits, and the helm behind a membrane
+  return {W:86, H:48, start:[8,24], brood:true,
+    polys:[oct(2,15,17,33,4), oct(19,3,35,17,4), oct(19,31,35,45,4), oct(37,13,53,35,5), oct(55,3,71,17,4), oct(55,31,71,45,4), oct(74,15,84,33,3),
+      box(10,9,22,12), box(10,9,13,16), box(10,36,22,39), box(10,32,13,39), box(16,22,39,26), box(34,9,57,12), box(43,9,46,15), box(34,36,57,39), box(43,33,46,39),
+      box(52,22,76,26), box(62,16,66,32)],
+    props:[{x:26,y:8,w:2,h:2,kind:'node'},{x:62,y:7,w:2,h:2,kind:'node'},{x:62,y:39,w:2,h:2,kind:'node'},{x:79,y:22,w:3,h:4,kind:'helm'},
+      {x:72,y:22,w:2,h:4,kind:'membrane'},
+      {x:5,y:18,w:2,h:2,kind:'growth'},{x:6,y:29,w:2,h:1,kind:'growth'},{x:30,y:6,w:1,h:2,kind:'growth'},{x:22,y:13,w:2,h:1,kind:'growth'},{x:30,y:41,w:2,h:1,kind:'growth'},
+      {x:40,y:17,w:2,h:2,kind:'growth'},{x:49,y:30,w:2,h:2,kind:'growth'},{x:41,y:29,w:1,h:2,kind:'growth'},{x:49,y:17,w:1,h:2,kind:'growth'},
+      {x:58,y:13,w:2,h:1,kind:'growth'},{x:68,y:5,w:1,h:2,kind:'growth'},{x:58,y:34,w:2,h:1,kind:'growth'},{x:68,y:41,w:1,h:2,kind:'growth'},{x:77,y:17,w:1,h:2,kind:'growth'},{x:77,y:30,w:1,h:2,kind:'growth'}],
+    pits:[[27,38],[45,31],[45,16],[67,13],[67,35],[30,13]], windows:[], breaches:[]};
+}
+
 function startDeck(kind){
-  const L=DECKS[kind], map=L.map.map(r=>[...r]), W=map[0].length, H=map.length;
-  DK={kind,name:L.name,pal:DPAL[kind],map,W,H,t:0,open:false,cells:new Uint8Array(W*H),orig:new Uint8Array(W*H),grow:new Int16Array(W*H),
-    sys:[],nodes:[],jar:null,doors:[],pits:[],breaches:[],pods:[],foes:[],fx:[],pops:[],q:[],start:{x:1,y:1},fc:{},
-    wave:0,rest:kind==='defend'?DK_REST:0,total:0,spawnT:200,done:0,doneT:0,lost:0,lostT:0,lostWhy:'',banner:null,art:null,
-    lives:3,keyDir:[],arcReq:false,arcPad:false,score0:score,said:{},sid:0,stars:[]};
-  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const ch=map[y][x], i=y*W+x;
-    if(ch==='.'||ch==='o') DK.cells[i]=DK.orig[i]=ch==='o'?2:1;
-    else if(ch==='B'||ch==='R'||ch==='E') DK.sys.push({k:ch,name:{B:'BRIDGE',R:'REACTOR',E:'ENGINES'}[ch],x,y,hp:100,max:100,hit:0,hackT:-999,dead:false,low:false});
-    else if(ch==='X') DK.breaches.push({x,y});
-    else if(ch==='P') DK.start={x,y};
-    else if(ch==='N') DK.nodes.push({x,y,prog:0,done:false});
-    else if(ch==='J') DK.jar={x,y,prog:0};
-    else if(ch==='D') DK.doors.push({x,y});
-    else if(ch==='S') DK.pits.push({x,y,t:0}); }
-  for(let i=0;i<90;i++) DK.stars.push({x:Math.random(),y:Math.random(),b:Math.random()});
-  DK.p={x:DK.start.x,y:DK.start.y,d:kind==='defend'?3:0,face:kind==='defend'?3:0,moving:false,armor:3,inv:120,cd:0,swing:0,arc:0,over:0,down:0,step:0};
-  state='deck'; showMap=false; cine=null; fadeIn=40; flash=0; shake=0; heat=0;
+  const M=kind==='defend'?mapResolute():mapBroodship(), W=M.W, H=M.H, grid=new Uint8Array(W*H).fill(1);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(M.polys.some(P=>inPoly(P,x+.5,y+.5))) grid[y*W+x]=0;
+  for(const p of M.props) for(let y=p.y;y<p.y+p.h;y++) for(let x=p.x;x<p.x+p.w;x++) if(grid[y*W+x]===0) grid[y*W+x]=2;
+  const at=(p)=>({cx:(p.x+p.w/2)*DT, cy:(p.y+p.h/2)*DT});
+  DK={kind, map:M, W, H, grid, t:0, open:false, units:[], bolts:[], beams:[], fx:[], pops:[], fields:{}, cam:{x:0,y:0,set:false}, banner:null, art:null, decal:null, mini:null,
+    sys:M.props.filter(p=>p.kind==='sys').map(p=>({...p,...at(p),name:{B:'BRIDGE',R:'REACTOR',E:'ENGINES'}[p.k],hp:100,max:100,dead:false,hackT:-999,low:false})),
+    nodes:M.props.filter(p=>p.kind==='node').map(p=>({...p,...at(p),hp:240,max:240,dead:false,r:22,hitT:-999})),
+    helm:M.props.filter(p=>p.kind==='helm').map(p=>({...p,...at(p),prog:0}))[0]||null,
+    pits:(M.pits||[]).map(([x,y])=>({x:(x+.5)*DT,y:(y+.5)*DT,t:0})), pods:[],
+    breaches:M.breaches.map(([x,y,nx,ny])=>({x,y,nx,ny,cx:(x+.5)*DT,cy:(y+.5)*DT})),
+    wave:0, rest:kind==='defend'?DK_REST:0, q:[], killed:0, aboard:0, total:DWAVES.reduce((a,w)=>a+w.n,0), spawnT:0, done:0, doneT:0, lost:0, lostT:0, lostWhy:'',
+    knock:0, checkpoint:null, score0:score, said:{}, sid:0, dmgMul:1, fireMul:1, preferBots:false, stars:[]};
+  for(let i=0;i<160;i++) DK.stars.push({x:Math.random(),y:Math.random(),b:Math.random()});
+  DK.art=dkArt(); DK.decal=document.createElement('canvas'); DK.decal.width=W*DT; DK.decal.height=H*DT;
+  DK.props=M.props.filter(p=>DK_PH[p.kind]).map(p=>({img:dkPropSprite(p),x:p.x*DT,y:p.y*DT-DK_PH[p.kind],w:p.w*DT,key:(p.y+p.h)*DT}));   // (standing up off the deck)
+  const [sx,sy]=M.start; DK.you=dkUnit('you',(sx+.5)*DT,(sy+.5)*DT); DK.checkpoint={x:DK.you.x,y:DK.you.y};
+  for(let i=0,k=0;i<CREW_N && k<400;k++){   // your squad, gathered round you (on your side of any wall)
+    const a=k*2.4, d=22+k*1.6, x=DK.you.x+Math.cos(a)*d, y=DK.you.y+Math.sin(a)*d;
+    if(dkSolid(Math.floor(x/DT),Math.floor(y/DT)) || !dkLos(DK.you.x,DK.you.y,x,y)) continue;
+    const b=dkUnit('bot',x,y); b.rank=i++; dkPush(b); }
+  if(kind==='assault') for(let i=0;i<14;i++){ const p=DK.pits[i%DK.pits.length]; dkSpawn(['squid','blob','squid','blob','brute'][i%5],p.x+rnd(-12,12),p.y+rnd(-12,12),20+i*6); }
+  state='deck'; showMap=false; cine=null; fadeIn=40; flash=0; shake=0; heat=0; dkMouse.down=false;
   document.body.classList.remove('cine'); deckDom(true); touchReset(); for(const k in keys) keys[k]=false;
   commsReset(); VRAudio.setEngine(false,false,0); VRAudio.play(kind==='defend'?'play':'boss',0,.8);
-  const v={strike:TOUCH?'STRIKE':'Space',arc:TOUCH?'ARC':'E'};
-  if(kind==='defend'){ DK.banner={title:'BOARDING ACTION',sub:'CARRIER RESOLUTE · KEEP THEM OFF THE BRIDGE, THE REACTOR AND THE ENGINES',t:0,life:300};
-    say('cmd','deckStart',null,2); }
-  else { DK.banner={title:'SEIZE THE FLAGSHIP',sub:'TAKE THE THREE NERVE NODES · THEN HOLD THE HELM',t:0,life:300};
-    DK.pits.forEach((p,i)=>{ spawnFoe(i===1?'stalker':'grunt',p.x,p.y,60+i*40); p.t=60; });   // its crew is already up and about
-    say('cmd','aStart',null,2); }
-  say('cmd','deckTipA',v,2); say('cmd','deckTipB',v,2);
+  const v={fire:TOUCH?'FIRE':'Space',mouse:TOUCH?'':' Or aim it with the mouse and hold the button.'};
+  if(kind==='defend'){ DK.banner={title:'REPEL BOARDERS',sub:'CARRIER RESOLUTE · KEEP THEM OFF THE BRIDGE, THE REACTOR AND THE ENGINES',t:0,life:300}; say('cmd','deckStart',null,2); }
+  else { DK.banner={title:'SEIZE THE FLAGSHIP',sub:'BURN OUT THE THREE NERVE NODES · THEN HOLD THE HELM',t:0,life:300}; say('cmd','aStart',null,2); }
+  say('cmd','deckTipA',v,2); say('cmd','deckTipB',null,2);
 }
-function deckDom(on){   // the HUD and the buttons switch between flying and fighting on foot
+function dkUnit(kind,x,y){ const crew=kind==='you'||kind==='bot', T=DFOE[kind];
+  const u={id:++DK.sid, kind, side:crew?0:1, x, y, vx:0, vy:0, a:-Math.PI/2, r:kind==='you'?8:kind==='bot'?7:T.r,
+    hp:kind==='you'?YOU_HP:kind==='bot'?BOT_HP:T.hp, sp:kind==='you'?1.9:kind==='bot'?1.45:T.sp*rnd(.9,1.1),
+    cool:ri(20,60), tgt:null, tgtT:ri(0,12), flash:0, step:rnd(0,9), dead:false, down:0, inv:kind==='you'?120:0, hitT:-999, aimT:0, emerge:0};
+  DK.units.push(u); return u; }
+function deckDom(on){   // the HUD and the buttons switch between flying and fighting aboard
   document.body.classList.toggle('deck',on);
   const hb=document.querySelector('#hud-bottom span'); if(hintFly==null) hintFly=hb.innerHTML;
-  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> run · <kbd>Space</kbd> strike · <kbd>E</kbd> arc overload, once it\'s charged · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
-  document.getElementById('t-fire').textContent=on?'STRIKE':'LASER';
-  dkArcKey=''; lastMis=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
-  if(!on){ tMissile.classList.remove('cool'); elWarn.classList.remove('shielded'); }
+  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
+  document.getElementById('t-fire').textContent=on?'FIRE':'LASER';
+  lastMis=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
+  if(!on) elWarn.classList.remove('shielded');
 }
-function endDeck(){ if(!DK) return; DK=null; deckDom(false); touchReset(); for(const k in keys) keys[k]=false; flash=0; shake=0; }
-const dWall=(x,y)=>{ if(x<0||y<0||x>=DK.W||y>=DK.H) return true; const c=DK.map[y][x]; return c==='#'||(c==='D'&&!DK.open); };
-const dpx=x=>(x-DK.W/2)*20, dpy=y=>(y-DK.H/2)*20;   // a deck tile, as a place for the stereo sound (you're always in earshot)
-function dField(tx,ty){   // corridor steps from every tile to (tx,ty): what the boarders steer by (worked out once a frame per target)
-  const K=DK, W=K.W, key=ty*W+tx, c=K.fc[key]; if(c && c.t===K.t) return c.F;
-  const F=new Int16Array(W*K.H).fill(999), q=[key]; F[key]=0;
-  for(let h=0;h<q.length;h++){ const i=q[h], x=i%W, y=(i/W)|0;
-    for(const [dx,dy] of DDIR){ const nx=x+dx, ny=y+dy; if(dWall(nx,ny)) continue; const j=ny*W+nx; if(F[j]>F[i]+1){ F[j]=F[i]+1; q.push(j); } } }
-  K.fc[key]={t:K.t,F}; return F;
+function endDeck(){ if(!DK) return; DK=null; deckDom(false); touchReset(); for(const k in keys) keys[k]=false; flash=0; shake=0; dkMouse.down=false; }
+
+// ---- the deck's tiles: what's solid, how far everything is from a goal (for walking there), and what can see what ----
+const dkSolid=(tx,ty)=>tx<0||ty<0||tx>=DK.W||ty>=DK.H||DK.grid[ty*DK.W+tx]!==0;
+function dkFloorNear(tx,ty){ for(let r=0;r<6;r++) for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++) if(!dkSolid(tx+dx,ty+dy)) return [tx+dx,ty+dy]; return [tx,ty]; }
+function dkField(key,srcFn,every){   // corridor steps from every floor tile to the nearest goal tile (8-way, never cutting a corner); cached
+  const K=DK, c=K.fields[key]; if(c && (!every || K.t-c.t<every)) return c.F;
+  const W=K.W, F=new Int16Array(W*K.H).fill(32000), q=[];
+  for(const [x,y] of srcFn()){ if(dkSolid(x,y)) continue; const i=y*W+x; if(F[i]){ F[i]=0; q.push(i); } }
+  for(let h=0;h<q.length;h++){ const i=q[h], x=i%W, y=(i/W)|0, f=F[i]+1;
+    for(const [dx,dy] of D8){ const nx=x+dx, ny=y+dy; if(dkSolid(nx,ny) || (dx&&dy&&(dkSolid(x+dx,y)||dkSolid(x,y+dy)))) continue;
+      const j=ny*W+nx; if(F[j]>f){ F[j]=f; q.push(j); } } }
+  K.fields[key]={F,t:K.t}; return F;
 }
-function dMove(m,sp,choose){   // glide along a corridor: anything walking the deck only turns (or stops) on a tile's centre
-  let rem=sp;
-  for(let k=0;k<4 && rem>1e-6;k++){
-    const cx=Math.round(m.x), cy=Math.round(m.y);
-    if(Math.abs(m.x-cx)<1e-6 && Math.abs(m.y-cy)<1e-6){ m.x=cx; m.y=cy;
-      const nd=choose(m,cx,cy); if(nd<0){ m.moving=false; return; } m.d=nd; m.moving=true; }
-    const [dx,dy]=DDIR[m.d], v=dx?m.x:m.y, s=dx||dy, next=s>0?Math.floor(v+1e-6)+1:Math.ceil(v-1e-6)-1, dist=Math.abs(next-v), st=Math.min(rem,dist);
-    if(dx) m.x+=s*st; else m.y+=s*st; rem-=st;
-    if(st>=dist-1e-6){ if(dx) m.x=next; else m.y=next; } }
+const dkAround=(p)=>{ const out=[]; for(let y=p.y-1;y<=p.y+p.h;y++) for(let x=p.x-1;x<=p.x+p.w;x++) out.push([x,y]); return out; };   // the tiles hugging a prop
+const dkYouField=()=>dkField('you',()=>[[Math.floor(DK.you.x/DT),Math.floor(DK.you.y/DT)]],12);
+function dkFollow(u,F){   // the way to step: toward the neighbouring tile that's nearest the goal (null once it's there)
+  const K=DK, W=K.W, tx=Math.floor(u.x/DT), ty=Math.floor(u.y/DT), here=dkSolid(tx,ty)?32001:F[ty*W+tx]; if(here===0) return null;
+  let best=here, bx=0, by=0;
+  for(const [dx,dy] of D8){ const nx=tx+dx, ny=ty+dy; if(dkSolid(nx,ny) || (dx&&dy&&(dkSolid(tx+dx,ty)||dkSolid(tx,ty+dy)))) continue;
+    const v=F[ny*W+nx]; if(v<best){ best=v; bx=dx; by=dy; } }
+  if(best>=here) return null;
+  const gx=(tx+bx+.5)*DT-u.x, gy=(ty+by+.5)*DT-u.y, gl=Math.hypot(gx,gy)||1; return [gx/gl,gy/gl];
 }
-function deckWant(){   // the way you're pushing: the stick (on a phone), or the newest arrow / WASD key still held
-  if(stick.on && stick.mag>.28){ const c=Math.cos(stick.ang), s=Math.sin(stick.ang); return Math.abs(c)>=Math.abs(s)?(c>0?0:2):(s>0?1:3); }
-  const K=DK; for(let i=K.keyDir.length-1;i>=0;i--){ const k=K.keyDir[i]; if(keys[k]) return DKEY[k]; }
-  return -1;
+function dkLos(x0,y0,x1,y1,bx){   // a straight line through the tiles: false if a wall, a crate or a console is in the way (bx: a solid target, reaching it counts)
+  let tx=Math.floor(x0/DT), ty=Math.floor(y0/DT); const ex=Math.floor(x1/DT), ey=Math.floor(y1/DT), dx=x1-x0, dy=y1-y0, sx=Math.sign(dx), sy=Math.sign(dy);
+  const tdx=dx?Math.abs(DT/dx):1e9, tdy=dy?Math.abs(DT/dy):1e9;
+  let tmx=dx?(sx>0?(tx+1)*DT-x0:x0-tx*DT)/Math.abs(dx):1e9, tmy=dy?(sy>0?(ty+1)*DT-y0:y0-ty*DT)/Math.abs(dy):1e9;
+  for(let k=0;k<120;k++){ if(tx===ex && ty===ey) return true; if(tmx<tmy){ tmx+=tdx; tx+=sx; } else { tmy+=tdy; ty+=sy; } if(!(tx===ex&&ty===ey) && dkSolid(tx,ty)) return !!bx && tx>=bx.x && tx<bx.x+bx.w && ty>=bx.y && ty<bx.y+bx.h; }
+  return true;
 }
-function playerChoose(m,cx,cy){
-  const w=deckWant(), open=d=>!dWall(cx+DDIR[d][0],cy+DDIR[d][1]);
-  if(w>=0 && open(w)) return w;
-  if(w>=0 && m.moving && open(m.d)) return m.d;   // holding a turn that isn't open yet: carry on to the next junction
-  if(w>=0) m.face=w;                              // pushing into a wall: turn to face it (and strike that way)
-  return -1;
+function dkRay(x0,y0,a,max){ const dx=Math.cos(a), dy=Math.sin(a);   // where a beam fired this way meets a wall
+  for(let d=0;d<max;d+=4){ const x=x0+dx*d, y=y0+dy*d; if(dkSolid(Math.floor(x/DT),Math.floor(y/DT))) return [x,y]; } return [x0+dx*max,y0+dy*max]; }
+function dkMove(u,dx,dy,sp){   // ease toward the wanted velocity, then slide along whatever's solid
+  u.vx+=(dx*sp-u.vx)*.3; u.vy+=(dy*sp-u.vy)*.3;
+  u.x+=u.vx; dkPush(u); u.y+=u.vy; dkPush(u);
+  const v=Math.hypot(u.vx,u.vy); if(v>.15){ u.step+=v*.18; if(u.aimT<=0) u.a=Math.atan2(u.vy,u.vx); }
 }
-function pickSys(cx,cy){   // usually the nearest system still standing, sometimes another (so they spread out)
-  const live=DK.sys.filter(S=>!S.dead); if(!live.length) return null;
-  if(Math.random()<.35) return live[ri(0,live.length-1)];
-  const F=dField(cx,cy), W=DK.W; return live.reduce((a,b)=>F[b.y*W+b.x]<F[a.y*W+a.x]?b:a);
+function dkPush(u){ const r=u.r, x0=Math.floor((u.x-r)/DT), x1=Math.floor((u.x+r)/DT), y0=Math.floor((u.y-r)/DT), y1=Math.floor((u.y+r)/DT);
+  for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++){ if(!dkSolid(tx,ty)) continue;
+    const cx=clamp(u.x,tx*DT,tx*DT+DT), cy=clamp(u.y,ty*DT,ty*DT+DT), dx=u.x-cx, dy=u.y-cy, d2=dx*dx+dy*dy;
+    if(d2>=r*r) continue;
+    if(d2>1e-6){ const d=Math.sqrt(d2), k=(r-d)/d; u.x+=dx*k; u.y+=dy*k; }
+    else { const l=u.x-tx*DT, rr=tx*DT+DT-u.x, t=u.y-ty*DT, b=ty*DT+DT-u.y, m=Math.min(l,rr,t,b);
+      if(m===l) u.x=tx*DT-r; else if(m===rr) u.x=tx*DT+DT+r; else if(m===t) u.y=ty*DT-r; else u.y=ty*DT+DT+r; } } }
+function dkSeparate(){   // nobody stands inside anybody else (and the bots step out of your way)
+  const U=DK.units.filter(u=>!u.dead&&!u.down&&u.emerge<=0);
+  for(let i=0;i<U.length;i++){ const a=U[i];
+    for(let j=i+1;j<U.length;j++){ const b=U[j], dx=b.x-a.x, dy=b.y-a.y, rr=a.r+b.r+(a.side===0&&b.side===0?7:0); if(dx>rr||dx<-rr||dy>rr||dy<-rr) continue;   // (the squad keeps a little elbow room)
+      const d2=dx*dx+dy*dy; if(d2>=rr*rr) continue; const d=Math.sqrt(d2)||.01, o=(rr-d)/d;
+      const wa=a.kind==='you'?0:b.kind==='you'?1:.5; a.x-=dx*o*wa; a.y-=dy*o*wa; b.x+=dx*o*(1-wa); b.y+=dy*o*(1-wa); } }
+  for(const u of U) dkPush(u);
 }
-function sysAlert(S){ S.hackT=DK.t; if(cool('hack'+S.k,720)){ say('cmd','deckHack',{sys:S.name.toLowerCase()},2); VRAudio.sfx.alarm(); } }
-function foeChoose(f,cx,cy){
-  const K=DK, P=K.p, W=K.W, arc=P.over>0 && P.down<=0;
-  let goal=f.aggro>0?'hunt':f.goal;
-  if(goal==='sabotage' && !arc){   // made it to the system it's after (always at the end of an alcove): set to work
-    if(!f.sys || f.sys.dead) f.sys=pickSys(cx,cy);
-    if(f.sys && cx===f.sys.x && cy===f.sys.y){ f.hack=true; sysAlert(f.sys); return -1; } }
-  const back=(f.d+2)%4, opts=[];
-  for(let d=0;d<4;d++) if(d!==back && !dWall(cx+DDIR[d][0],cy+DDIR[d][1])) opts.push(d);
-  if(!opts.length) return dWall(cx+DDIR[back][0],cy+DDIR[back][1])?-1:back;   // a dead end: turn round
-  const pick=(F,far)=>{ let b=opts[0], bv=far?-1:1e9; for(const d of opts){ const v=F[(cy+DDIR[d][1])*W+cx+DDIR[d][0]]; if(far?v>bv:v<bv){ bv=v; b=d; } } return b; };
-  const px=Math.round(P.x), py=Math.round(P.y);
-  if(arc) return pick(dField(px,py),true);   // the arc's on: put as much corridor between you and it as it can
-  if(goal==='sabotage'){
-    if(!f.sys) goal='hunt';
-    else return Math.random()<.06?opts[ri(0,opts.length-1)]:pick(dField(f.sys.x,f.sys.y),false); }
-  if(goal==='guard'){   // the flagship's crew hangs round the nerve nodes you still need
-    let n=null, nd=1e9; for(const m of K.nodes) if(!m.done){ const d=Math.abs(m.x-cx)+Math.abs(m.y-cy); if(d<nd){ nd=d; n=m; } }
-    if(n && nd>2) return pick(dField(n.x,n.y),false);
-    return opts[ri(0,opts.length-1)]; }
-  if(P.down>0 || Math.random()<.1) return opts[ri(0,opts.length-1)];   // you're down (or it's just being unpredictable): wander
-  let tx=px, ty=py;
-  if(goal==='ambush' && Math.abs(cx-px)+Math.abs(cy-py)>3){ const [dx,dy]=DDIR[P.face]; for(let k=0;k<4 && !dWall(tx+dx,ty+dy);k++){ tx+=dx; ty+=dy; } }   // cut you off
-  return pick(dField(tx,ty),false);
+function dkTarget(u,range,preferBots){   // the nearest enemy u can see (a boarder told to go for the bots looks past you)
+  const c=[], r2=range*range;
+  for(const v of DK.units){ if(v.side===u.side||v.dead||v.down||v.emerge>0) continue; let d2=(v.x-u.x)**2+(v.y-u.y)**2; if(d2>r2) continue;
+    if(preferBots && v.kind==='you') d2+=r2*.6; c.push([d2,v]); }
+  c.sort((a,b)=>a[0]-b[0]);
+  for(let i=0;i<Math.min(4,c.length);i++){ const v=c[i][1]; if(dkLos(u.x,u.y,v.x,v.y)) return v; }
+  if(u.side===0) for(const n of DK.nodes) if(!n.dead && (n.cx-u.x)**2+(n.cy-u.y)**2<r2 && dkLos(u.x,u.y,n.cx,n.cy,n)) return n;   // nothing to shoot? a nerve node
+  return null;
 }
-function foeTick(f){
-  const K=DK, P=K.p; if(f.dead) return;
-  if(f.flash>0) f.flash--;
+
+// ---- shooting: the crew's lasers are instant lines; the boarders' bolts fly, and can be dodged ----
+function dkBeam(u,x1,y1,tgt,dmg){   // a laser line from u's rifle to (x1,y1), hurting tgt if there is one
+  const a=Math.atan2(y1-u.y,x1-u.x), c=Math.cos(a), s=Math.sin(a); u.a=a; u.aimT=18;
+  const hy=tgt&&tgt.cx!=null?20:LIFT;   // (drawn from the rifle's muzzle to the target's chest, or a nerve node's bulb: the deck is seen from a little in front)
+  DK.beams.push({x0:u.x+c*11,y0:u.y-10+s*6,x1,y1:y1-hy,life:u.kind==='you'?7:9,max:u.kind==='you'?7:9,you:u.kind==='you'});
+  if(tgt) dkHurt(tgt,dmg,x1,y1-hy); else dkSparks(x1,y1-LIFT,'#9ff6ff',3);
+}
+function dkHurt(t,dmg,hx,hy){
+  if(t.max && t.cx!=null){ t.hp-=dmg; t.hitT=DK.t; dkSparks(hx,hy,'#ff8ad8',4); if(t.hp<=0) dkNodeDown(t); return; }   // a nerve node
+  t.hp-=dmg; t.flash=6;
+  if(t.hp<=0) dkPop(t); else { dkDroplets(t.x,t.y-LIFT,DFOE[t.kind].goo,5,1.6); VRAudio.sfx.hit(t.x,t.y); }
+}
+function dkFire(u){   // a boarder's volley: bolts at whoever it's after, spat from its mouth
+  const T=DFOE[u.kind], t=u.tgt, lead=t.kind==='bot'?Math.hypot(t.x-u.x,t.y-u.y)/BOLT_SP:0;   // (they lead the bots a little; you, they just shoot at)
+  const a0=Math.atan2(t.y+t.vy*lead-u.y,t.x+t.vx*lead-u.x)+rnd(-.08,.08); u.a=a0; u.aimT=20;
+  for(let k=0;k<T.n;k++){ const a=a0+(k-(T.n-1)/2)*T.spread;
+    DK.bolts.push({x:u.x+Math.cos(a)*(u.r+3),y:u.y+Math.sin(a)*(u.r+3),h:T.mz,vx:Math.cos(a)*BOLT_SP,vy:Math.sin(a)*BOLT_SP,life:110}); }
+  DK.fx.push({ring:1,x:u.x+Math.cos(a0)*(u.r+2),y:u.y-T.mz+Math.sin(a0)*(u.r+2)*.6,r0:2,r1:8,life:7,max:7,col:'#ff4d6d'});   // a spit of red light as it fires
+  VRAudio.sfx.eshot(u.x,u.y,u.kind==='brute');
+}
+function dkPop(f){   // and they pop like water balloons
+  const K=DK, T=DFOE[f.kind]; f.dead=true; K.killed++; kills++; score+=T.pts;
+  K.pops.push({x:f.x,y:f.y-24,txt:'+'+T.pts,col:'#ffd27a',life:50});
+  dkDroplets(f.x,f.y-LIFT,T.goo,f.kind==='brute'?34:20,f.kind==='brute'?3.6:2.8);
+  K.fx.push({ring:1,x:f.x,y:f.y-LIFT*.6,r0:f.r,r1:f.r*2.6,life:14,max:14,col:T.goo});
+  dkSplat(f.x,f.y,T.goo,f.r*(f.kind==='brute'?1.9:1.5));
+  VRAudio.sfx.splat(f.x,f.y);
+}
+function dkDroplets(x,y,col,n,sp){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.3,1)*sp; DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,life:rnd(14,30),max:30,col,r:rnd(1.5,3.2),drop:1}); } }   // (thrown up a little, then they fall)
+function dkSparks(x,y,col,n){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.5,2.2); DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(6,14),max:14,col,r:1}); } }
+function dkSplat(x,y,col,R){   // a stain left on the floor for good (painted into the deck's decal layer)
+  const q=DK.decal.getContext('2d'); q.save(); q.globalAlpha=.78; q.fillStyle=col;
+  for(let i=0;i<8;i++){ const a=rnd(0,TAU), d=rnd(0,R*.8), r=rnd(R*.18,R*.5); q.beginPath(); q.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,r,0,TAU); q.fill(); }
+  for(let i=0;i<12;i++){ const a=rnd(0,TAU), d=rnd(R,R*2.2); q.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,2,2); }
+  q.globalAlpha=.35; q.fillStyle='#000'; q.beginPath(); q.arc(x,y,R*.45,0,TAU); q.fill(); q.restore();
+}
+function dkScorch(x,y){ const q=DK.decal.getContext('2d'); q.save(); q.globalAlpha=.6; q.fillStyle='#0b0d12'; q.beginPath(); q.arc(x,y,9,0,TAU); q.fill();
+  q.fillStyle='#3a404c'; for(let i=0;i<7;i++) q.fillRect(x+rnd(-11,11),y+rnd(-11,11),2,2); q.restore(); }
+function dkHurtCrew(u,dmg){
+  const K=DK;
+  if(u.kind==='you'){ if(u.inv>0) return; u.hp-=dmg; u.hitT=K.t; u.flash=6; shake=Math.min(shake+4,14); flash=Math.max(flash,.18); VRAudio.sfx.shieldHit();
+    if(u.hp<=0) dkYouDown(); else if(u.hp<=3 && cool('dkHurt',600)) say('you','deckHit',null,1); return; }
+  const left=K.units.reduce((a,v)=>a+(v.kind==='bot'&&!v.dead?1:0),0);
+  u.hp-=dmg*K.dmgMul; u.flash=6; u.hitT=K.t;
+  if(u.hp<=0){ if(left<=2){ u.hp=.5; return; }   // (the last couple hang on, whatever happens)
+    dkBotDown(u,left-1); }
+}
+function dkBotDown(u,left){ const K=DK; u.dead=true;
+  dkSparks(u.x,u.y-LIFT,'#ffd27a',10); dkSparks(u.x,u.y-LIFT,'#ff9a3d',8); K.fx.push({fire:1,x:u.x,y:u.y-LIFT*.7,life:16,max:16,r:12}); dkScorch(u.x,u.y);
+  VRAudio.sfx.explode(u.x,u.y,'small',.4);
+  if(left===10||left===5||left===3) say('cmd','crewLow',{n:left},2); else if(cool('botDown',420)) say('cmd','botDown',null,1);
+}
+function dkYouDown(){ const K=DK, P=K.you; P.down=K.kind==='defend'?240:200; P.hp=0; downs++; score=Math.max(0,score-300);
+  VRAudio.sfx.alarm(); dkSparks(P.x,P.y-LIFT,'#ff4d6d',16); shake=Math.min(shake+10,20);
+  if(K.kind==='assault' && ++K.knock>=3){ dkLose('crew'); return; }
+  comms.q=comms.q.filter(m=>m.pri>=2); say('cmd',K.kind==='assault'?'aDown':'deckDown',{n:NUMW[3-K.knock]},2); if(Math.random()<.5) say('matriarch','deckTaunt',null,1);
+}
+function dkRespawn(){ const K=DK, P=K.you, c=K.checkpoint; P.x=c.x; P.y=c.y; P.vx=P.vy=0; P.hp=YOU_HP; P.inv=150; dkPush(P);
+  K.fx.push({ring:1,x:P.x,y:P.y,r0:6,r1:30,life:20,max:20,col:'#4dffa6'}); VRAudio.sfx.shieldUp(); if(Math.random()<.7) say('you','deckBack',null,1); }
+
+// ---- each frame: you, the bots, the boarders, the bolts ----
+function dkPlayer(){
+  const K=DK, P=K.you;
+  if(P.down>0){ if(--P.down===0) dkRespawn(); return; }
+  if(P.inv>0) P.inv--; if(P.cool>0) P.cool--; if(P.aimT>0) P.aimT--; if(P.flash>0) P.flash--;
+  if(K.t-P.hitT>150 && P.hp<YOU_HP && K.t%60===0) P.hp++;   // patched up when you're out of the fire
+  let mx=0, my=0;
+  if(stick.on && stick.mag>.15){ const m=Math.min(1,stick.mag*1.3); mx=Math.cos(stick.ang)*m; my=Math.sin(stick.ang)*m; }
+  else { mx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0); my=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
+    const l=Math.hypot(mx,my); if(l){ mx/=l; my/=l; } }
+  dkMove(P,mx,my,P.sp);
+  const mouse=!TOUCH && (dkMouse.down || K.t-dkMouse.t<150), firing=keys[' ']||keys['j']||touchFire.laser||dkMouse.down;
+  if(firing && P.cool<=0){ P.cool=9; VRAudio.sfx.laser();
+    if(mouse){ const k=VW/Math.max(1,innerWidth), wx=K.cam.x+dkMouse.sx*k, wy=K.cam.y+dkMouse.sy*k+LIFT, a=Math.atan2(wy-P.y,wx-P.x);   // aimed: the first thing along the line (you point at their bodies, a little above their feet)
+      const [ex,ey]=dkRay(P.x,P.y,a,340), lim=Math.hypot(ex-P.x,ey-P.y); let hit=null, hd=lim; const ca=Math.cos(a), sa=Math.sin(a);
+      for(const v of K.units){ if(v.side!==1||v.dead||v.emerge>0) continue; const ox=v.x-P.x, oy=v.y-P.y, t=ox*ca+oy*sa; if(t<0||t>hd) continue; if((ox-ca*t)**2+(oy-sa*t)**2<(v.r+3)**2){ hd=t; hit=v; } }
+      for(const n of K.nodes){ if(n.dead) continue; const ox=n.cx-P.x, oy=n.cy-P.y, t=ox*ca+oy*sa; if(t<0||t-n.r>hd+2) continue; if((ox-ca*t)**2+(oy-sa*t)**2<n.r*n.r){ hd=Math.min(hd,Math.max(0,t-n.r*.6)); hit=n; } }
+      dkBeam(P,P.x+ca*hd,P.y+sa*hd,hit,2); }
+    else { const t=dkAutoTarget(P);   // or it finds the nearest one you can see, favouring the way you're facing
+      if(t) dkBeam(P,t.cx??t.x,t.cy??t.y,t,2); else { const [ex,ey]=dkRay(P.x,P.y,P.a,340); dkBeam(P,ex,ey,null,0); } } }
+}
+function dkAutoTarget(P){ let best=null, bs=1e9;
+  for(const v of DK.units){ if(v.side!==1||v.dead||v.emerge>0) continue; const dx=v.x-P.x, dy=v.y-P.y, d=Math.hypot(dx,dy); if(d>320) continue;
+    const off=Math.abs(((Math.atan2(dy,dx)-P.a+Math.PI*3)%TAU)-Math.PI), s=d*(1+off*.5); if(s<bs && dkLos(P.x,P.y,v.x,v.y)){ bs=s; best=v; } }
+  if(!best) for(const n of DK.nodes) if(!n.dead && Math.hypot(n.cx-P.x,n.cy-P.y)<320 && dkLos(P.x,P.y,n.cx,n.cy,n)) return n;
+  return best; }
+function dkBot(u){
+  const K=DK, P=K.you;
+  if(u.cool>0) u.cool--; if(u.aimT>0) u.aimT--; if(u.flash>0) u.flash--;
+  if(--u.tgtT<=0){ u.tgtT=10+ri(0,6); u.tgt=dkTarget(u,240,false); }
+  if(u.tgt && (u.tgt.dead||u.tgt.down||u.tgt.emerge>0)) u.tgt=null;
+  if(u.tgt && u.cool<=0){ u.cool=ri(34,52); const t=u.tgt, tx=t.cx??t.x, ty=t.cy??t.y;
+    if(Math.random()<.7) dkBeam(u,tx,ty,t,1); else { const [ex,ey]=dkRay(u.x,u.y,Math.atan2(ty-u.y,tx-u.x)+rnd(-.14,.14),300); dkBeam(u,ex,ey,null,0); }
+    VRAudio.sfx.zap(u.x,u.y,false); }
+  // the squad sticks with you: the front rank close, the rest a step further out, and anyone left behind runs to catch up
+  const d=Math.hypot(P.x-u.x,P.y-u.y), keep=22+(u.rank%10)*4+(u.rank>=10?16:0);
+  let dir=null;
+  if(d>keep) dir=d<keep+70 && dkLos(u.x,u.y,P.x,P.y)?[(P.x-u.x)/d,(P.y-u.y)/d]:dkFollow(u,dkYouField());
+  dkMove(u,dir?dir[0]:0,dir?dir[1]:0,clamp(1.25+(d-keep)*.014,1.25,2.05));
+}
+function dkFoe(f){
+  const K=DK, T=DFOE[f.kind];
   if(f.emerge>0){ f.emerge--; return; }
-  if(f.stun>0){ f.stun--; return; }
-  if(f.aggro>0) f.aggro--;
-  if(f.hack){ const S=f.sys;
-    if(P.over>0 || !S || S.dead) f.hack=false;
-    else { S.hp-=HACK; S.hit=5; S.hackT=K.t;
-      if(K.t%6===0) K.fx.push({x:S.x+rnd(-.3,.3),y:S.y+rnd(-.3,.3),vx:rnd(-.03,.03),vy:rnd(-.05,-.01),life:rnd(10,22),max:22,col:Math.random()<.5?'#ffd27a':'#ff9a3d',r:1});
-      if(S.hp<=S.max*.3 && !S.low){ S.low=true; say('cmd','deckLow',{sys:S.name.toLowerCase()},2); }
-      if(S.hp<=0) sysDown(S);
-      return; } }
-  if(P.down<=0 && f.aggro<=0 && (f.goal==='sabotage'||f.goal==='guard') && (K.t+f.id)%20===0 &&
-     Math.abs(f.x-P.x)+Math.abs(f.y-P.y)<(f.goal==='guard'?4:2.2)) f.aggro=200;   // you got close: it turns on you
-  const sp=f.sp*(P.over>0?.7:1);
-  dMove(f,sp,foeChoose); if(f.moving) f.step+=sp;
+  if(f.cool>0) f.cool--; if(f.aimT>0) f.aimT--; if(f.flash>0) f.flash--;
+  if(--f.tgtT<=0){ f.tgtT=12+ri(0,8); f.tgt=dkTarget(f,T.range,K.preferBots); }
+  if(f.tgt && (f.tgt.dead||f.tgt.down)) f.tgt=null;
+  if(f.tgt && f.cool<=0){ f.cool=Math.round(ri(T.cool[0],T.cool[1])*K.fireMul); dkFire(f); }
+  let F=null;
+  if(f.goal==='sys'){ let S=f.sys; if(!S||S.dead){ const live=K.sys.filter(s=>!s.dead); S=f.sys=live.length?live[ri(0,live.length-1)]:null; }
+    if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.max(S.w,S.h)*DT*.5+DT*1.3){ f.hack=S; S.hp-=DK_HACK; S.hackT=K.t;   // at the system: tearing into it
+        if(K.t%8===0) dkSparks(S.cx+rnd(-12,12),S.cy+rnd(-12,12),'#ffd27a',1);
+        if(!S.low && S.hp<=S.max*.3){ S.low=true; say('cmd','deckLow',{sys:S.name.toLowerCase()},2); }
+        if(cool('hack'+S.k,720)){ say('cmd','deckHack',{sys:S.name.toLowerCase()},2); VRAudio.sfx.alarm(); }
+        if(S.hp<=0) dkSysDown(S); dkMove(f,0,0,0); return; }
+      f.hack=null; F=dkField('sys'+S.k,()=>dkAround(S)); } }
+  else if(f.goal==='guard'){ const n=K.nodes.find(n=>!n.dead)||K.helm; if(n){ const d=Math.hypot(n.cx-f.x,n.cy-f.y); F=d>110?dkField('guard'+(n.k||n.x),()=>dkAround(n)):null; } }
+  if(!F) F=dkYouField();
+  const dir=dkFollow(f,F); dkMove(f,dir?dir[0]:0,dir?dir[1]:0,f.sp*(f.tgt?.65:1));
 }
-function sysDown(S){ const K=DK; S.dead=true; S.hp=0;
-  for(const f of K.foes) if(f.sys===S){ f.hack=false; f.sys=null; }
-  for(let i=0;i<40;i++){ const a=rnd(0,TAU), sp=rnd(.02,.12); K.fx.push({x:S.x,y:S.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rnd(20,50),max:50,col:Math.random()<.5?'#ff9a3d':'#ffd27a',r:2}); }
-  K.fx.push({ring:1,x:S.x,y:S.y,life:30,max:30,col:'#ff9a3d',R:3});
-  shake=Math.min(shake+14,26); flash=Math.max(flash,.5); VRAudio.sfx.explode(dpx(S.x),dpy(S.y),'ship',2);
-  deckLose(S.name);
+function dkBolts(){ const K=DK;
+  for(const b of K.bolts){ b.x+=b.vx; b.y+=b.vy; b.life--; b.h+=(LIFT-b.h)*.15;
+    if(dkSolid(Math.floor(b.x/DT),Math.floor(b.y/DT))){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff6a5a',2); continue; }
+    for(const u of K.units){ if(u.side!==0||u.dead||u.down) continue; if((u.x-b.x)**2+(u.y-b.y)**2<(u.r+2)**2){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff8a7a',3); dkHurtCrew(u,1); break; } } }
+  K.bolts=K.bolts.filter(b=>b.life>0);
 }
-function burst(x,y,col,n,sp=.09){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.2,1)*sp; DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(12,26),max:26,col,r:1}); } }
-function addDeckScore(n,x,y,col){ score+=n; DK.pops.push({x,y,txt:'+'+n.toLocaleString('en-US'),col,life:60}); }
-function fxTick(){ const K=DK;
-  for(const p of K.fx){ p.life--; if(!p.ring){ p.x+=p.vx; p.y+=p.vy; p.vx*=.94; p.vy*=.94; } }
-  K.fx=K.fx.filter(p=>p.life>0);
-  for(const p of K.pops) p.life--; K.pops=K.pops.filter(p=>p.life>0);
-  for(const b of K.pods) b.t++; K.pods=K.pods.filter(b=>b.t<b.life); }
-function eatCell(i,x,y){ const K=DK, P=K.p, big=K.cells[i]===2, was=P.arc; K.cells[i]=0; K.grow[i]=big?2400:1500;
-  if(big){ P.arc=ARC_FULL; addDeckScore(50,x,y,'#ffd27a'); burst(x,y,'#ffd27a',10); VRAudio.sfx.ready(); if(!K.said.big){ K.said.big=1; say('cmd','deckBig',null,1); } }
-  else { P.arc=Math.min(ARC_FULL,P.arc+1); score+=10; VRAudio.sfx.beacon(dpx(x),dpy(y)); }
-  if(was<ARC_FULL && P.arc>=ARC_FULL){ K.fx.push({ring:1,x:P.x,y:P.y,life:20,max:20,col:'#9ff6ff'}); if(!big) VRAudio.sfx.shieldUp();
-    if(!K.said.ready){ K.said.ready=1; say('cmd','deckArcReady',{arc:TOUCH?'ARC':'E'},1); } }
-}
-function strike(){   // the shock baton: a swing across the tile in front of you (two tiles with the arc on)
-  const K=DK, P=K.p, [fx,fy]=DDIR[P.face], reach=P.over>0?2.3:1.3; let hit=0;
-  P.cd=STRIKE_CD; P.swing=10;
-  for(const f of K.foes){ if(f.dead||f.emerge>0) continue;
-    const dx=f.x-P.x, dy=f.y-P.y, along=dx*fx+dy*fy, side=Math.abs(dx*fy-dy*fx);
-    if((along>-.3 && along<reach && side<.62) || dx*dx+dy*dy<.4){ hitFoe(f); hit++; } }
-  VRAudio.sfx.zap(dpx(P.x+fx*.7),dpy(P.y+fy*.7),hit>0);
-}
-function hitFoe(f){ f.hp--; f.flash=8; burst(f.x,f.y,'#9ff6ff',6);
-  if(f.hp<=0){ foeDown(f,false); return; }
-  f.stun=55; f.hack=false; if(f.moving) f.d=(f.d+2)%4; VRAudio.sfx.hit(dpx(f.x),dpy(f.y)); }
-function foeDown(f,zap){ const K=DK, T=DFOE[f.type]; if(f.dead) return; f.dead=true; f.hack=false; kills++;
-  addDeckScore(T.pts,f.x,f.y-.3,zap?'#9ff6ff':'#ffd27a');
-  burst(f.x,f.y,T.lite,12,.12); burst(f.x,f.y,'#ffffff',4,.06);
-  K.fx.push({ring:1,x:f.x,y:f.y,life:16,max:16,col:zap?'#9ff6ff':T.lite});
-  VRAudio.sfx.split(dpx(f.x),dpy(f.y));
-}
-function youHit(f){ const K=DK, P=K.p; P.armor--; P.inv=DK_INV; f.stun=60; f.hack=false; if(f.moving) f.d=(f.d+2)%4;
-  shake=Math.min(shake+7,22); flash=Math.max(flash,.3); VRAudio.sfx.shieldHit(); burst(P.x,P.y,'#ff4d6d',10);
-  K.pops.push({x:P.x,y:P.y-.6,txt:P.armor>0?'ARMOR '+P.armor+'/3':'DOWN',col:'#ff4d6d',life:60});
-  if(P.armor<=0) youDown(); else if(cool('dkHit',500)) say('you','deckHit',null,1);
-}
-function youDown(){ const K=DK, P=K.p; P.down=150; P.over=0; P.moving=false; downs++; score=Math.max(0,score-300);
-  VRAudio.sfx.alarm(); burst(P.x,P.y,'#ff4d6d',18,.14); shake=Math.min(shake+10,24);
-  K.pops.push({x:P.x,y:P.y-.9,txt:'-300',col:'#ff4d6d',life:60});
-  if(K.kind==='assault' && --K.lives<=0){ deckLose('crew'); return; }
-  comms.q=comms.q.filter(m=>m.pri>=2);
-  say('cmd',K.kind==='assault'?'aDown':'deckDown',{n:NUMW[K.lives]},2); if(Math.random()<.6) say('matriarch','deckTaunt',null,1);
-}
-function deckRespawn(){ const K=DK, P=K.p; P.x=K.start.x; P.y=K.start.y; P.moving=false; P.armor=3; P.inv=160; P.cd=0;
-  K.fx.push({ring:1,x:P.x,y:P.y,life:26,max:26,col:'#4dffa6'}); burst(P.x,P.y,'#4dffa6',10); VRAudio.sfx.shieldUp();
-  if(Math.random()<.7) say('you','deckBack',null,1); }
-function arcOn(){ const K=DK, P=K.p; P.over=ARC_LEN; P.arc=0; for(const f of K.foes) f.hack=false;
-  K.fx.push({ring:1,x:P.x,y:P.y,life:24,max:24,col:'#9ff6ff',R:4}); burst(P.x,P.y,'#9ff6ff',16,.16);
-  flash=Math.max(flash,.18); VRAudio.sfx.zap(dpx(P.x),dpy(P.y),true); VRAudio.sfx.shieldUp();
-  K.banner={title:'ARC OVERLOAD',sub:'THEY CAN\'T HURT YOU · RUN THEM DOWN',t:0,life:110,good:true};
-  if(cool('arcQuip',900) && Math.random()<.7) say('you','deckArc',null,1); }
-function arcSpark(){ const P=DK.p, a=rnd(0,TAU), r=rnd(.35,.7);
-  DK.fx.push({x:P.x+Math.cos(a)*r,y:P.y+Math.sin(a)*r,vx:rnd(-.02,.02),vy:rnd(-.02,.02),life:8,max:8,col:Math.random()<.5?'#ffffff':'#9ff6ff',r:1}); }
-function spawnFoe(type,x,y,emerge){ const K=DK, T=DFOE[type];
-  const f={id:++K.sid,type,x,y,d:0,moving:false,hp:T.hp,sp:T.sp*rnd(.94,1.06),goal:T.goal,sys:null,stun:0,emerge,flash:0,aggro:0,hack:false,step:rnd(0,2),dead:false};
-  if(K.kind==='assault' && type==='grunt') f.goal=Math.random()<.5?'guard':'hunt';
-  for(let d=0;d<4;d++) if(!dWall(x+DDIR[d][0],y+DDIR[d][1])){ f.d=d; break; }
-  K.foes.push(f); burst(x,y,K.kind==='defend'?'#ffb347':'#7dffb0',8); VRAudio.sfx.clank(dpx(x),dpy(y));
-  return f;
-}
-// holding the Resolute: three waves of boarders cut in through the hull, a few breaches at a time
+function dkSpawn(kind,x,y,emerge){ const f=dkUnit(kind,x,y); f.emerge=emerge||0; f.cool=ri(8,30); /* (they come in shooting) */ f.goal=DK.kind==='defend'?(Math.random()<.45?'sys':'hunt'):(Math.random()<.45?'guard':'hunt'); dkPush(f); return f; }
+function dkMix(m){ const r=Math.random(); return r<m[0]?'squid':r<m[0]+m[1]?'blob':'brute'; }
+
+// ---- holding the Resolute: three waves cut in through the hull, a handful of breaches at a time ----
 function defendTick(){ const K=DK;
-  for(let i=K.q.length-1;i>=0;i--){ const s=K.q[i]; if(K.t>=s.at){ K.q.splice(i,1); spawnFoe(s.type,s.b.x,s.b.y,32); } }
-  if(K.rest>0){ if(--K.rest===0) deckWave(); return; }
-  if(K.q.length || K.foes.length) return;
-  if(K.wave>=DWAVES.length){ deckWin(); return; }
-  K.rest=DK_REST; const bonus=1000*K.wave; addDeckScore(bonus,K.start.x,K.start.y-1,'#4dffa6');
+  for(let i=K.q.length-1;i>=0;i--){ const s=K.q[i]; if(K.t<s.at) continue; K.q.splice(i,1); const b=s.b;
+    dkSpawn(s.kind,b.cx+rnd(-6,6),b.cy+rnd(-6,6),18); K.aboard++; dkSparks(b.cx,b.cy,'#ffb347',6); VRAudio.sfx.clank(b.cx,b.cy); }
+  if(K.rest>0){ if(--K.rest===0) dkWave(); return; }
+  if(K.q.length || K.units.some(u=>u.side===1&&!u.dead)) return;
+  if(K.wave>=DWAVES.length){ dkWin(); return; }
+  K.rest=DK_REST; const bonus=1000*K.wave; score+=bonus;
   for(const S of K.sys) if(!S.dead){ S.hp=Math.min(S.max,S.hp+35); S.low=S.hp<=S.max*.3; }
   K.banner={title:'WAVE '+K.wave+' BEATEN',sub:'+'+bonus.toLocaleString('en-US')+' · DAMAGE CREWS PATCH THE SYSTEMS · MORE PODS ARE COMING',t:0,life:220,good:true};
   VRAudio.sfx.ready(); comms.q=comms.q.filter(m=>m.pri>=2); say('cmd','deckClear',null,2);
 }
-function deckWave(){ const K=DK, W=DWAVES[K.wave++], list=[];
-  for(const k in W.mix) for(let i=0;i<W.mix[k];i++) list.push(k);
-  for(let i=list.length-1;i>0;i--){ const j=ri(0,i); [list[i],list[j]]=[list[j],list[i]]; }
-  const B=[...K.breaches].sort(()=>Math.random()-.5).slice(0,W.at);
-  for(const b of B) K.pods.push({x:b.x,y:b.y,t:0,life:130+Math.ceil(list.length/B.length)*52});
-  list.forEach((type,i)=>K.q.push({type,b:B[i%B.length],at:K.t+100+Math.floor(i/B.length)*52+(i%B.length)*9}));
-  K.total=list.length;
-  K.banner={title:'WAVE '+K.wave+' / '+DWAVES.length,sub:list.length+' BOARDERS · '+B.length+' HULL BREACHES',t:0,life:220};
-  VRAudio.sfx.klaxon(); shake=Math.min(shake+6,20);
-  say('cmd',K.wave===DWAVES.length?'deckLast':'deckWave',{n:list.length},2);
-  if(K.wave===2 && Math.random()<.8) say('matriarch','deckTaunt',null,1);
+function dkWave(){ const K=DK, W=DWAVES[K.wave++], B=[...K.breaches].sort(()=>Math.random()-.5).slice(0,W.at), per=Math.ceil(W.n/B.length);
+  for(const b of B) K.pods.push({b,t:0});
+  for(let i=0;i<W.n;i++){ const b=B[i%B.length]; K.q.push({kind:dkMix(W.mix),b,at:K.t+130+Math.floor(i/B.length)*44+(i%B.length)*7}); }
+  K.banner={title:'WAVE '+K.wave+' / '+DWAVES.length,sub:W.n+' BOARDERS · '+B.length+' HULL BREACHES',t:0,life:220};
+  VRAudio.sfx.klaxon(); shake=Math.min(shake+6,16);
+  say('cmd',K.wave===DWAVES.length?'deckLast':'deckWave',{n:W.n},2); if(K.wave===2 && Math.random()<.8) say('matriarch','deckTaunt',null,1);
 }
-// taking the flagship: its crew keeps climbing out of the brood pits; stand on each nerve node until it's yours, then hold the helm
-function assaultTick(){ const K=DK, P=K.p;
-  const done=K.nodes.filter(n=>n.done).length, cap=5+done+(K.open?1:0);
-  if(--K.spawnT<=0){ K.spawnT=Math.max(100,150-done*18);
-    if(K.foes.length<cap){ const far=K.pits.filter(p=>Math.abs(p.x-P.x)+Math.abs(p.y-P.y)>5), set=far.length?far:K.pits, pt=set[ri(0,set.length-1)];
-      const r=Math.random(), type=r<.5-done*.08?'grunt':r<.8?'stalker':'brute'; spawnFoe(type,pt.x,pt.y,44); pt.t=44; } }
-  const on=o=>P.down<=0 && Math.abs(P.x-o.x)+Math.abs(P.y-o.y)<.4;
-  for(const n of K.nodes){ if(n.done) continue;
-    if(on(n)){ n.prog=Math.min(1,n.prog+1/NODE_HOLD); if(K.t%8===0) burst(n.x,n.y,'#9ff6ff',2,.05); if(n.prog>=1) nodeTaken(n); }
-    else n.prog=Math.max(0,n.prog-1/500); }
-  if(K.open){ const J=K.jar;
-    if(on(J)){ J.prog=Math.min(1,J.prog+1/HELM_HOLD); if(K.t%6===0) burst(J.x,J.y,'#9ff6ff',2,.05); if(J.prog>=1) deckWin(); }
-    else J.prog=Math.max(0,J.prog-1/600); }
+function dkSysDown(S){ const K=DK; S.dead=true; S.hp=0;
+  for(let i=0;i<30;i++) dkSparks(S.cx+rnd(-20,20),S.cy+rnd(-20,20),Math.random()<.5?'#ff9a3d':'#ffd27a',1);
+  K.fx.push({fire:1,x:S.cx,y:S.cy,life:30,max:30,r:40}); dkScorch(S.cx,S.cy);
+  shake=Math.min(shake+14,22); flash=Math.max(flash,.5); VRAudio.sfx.explode(S.cx,S.cy,'ship',2);
+  dkLose(S.name);
 }
-function nodeTaken(n){ const K=DK; n.done=true; n.prog=1; addDeckScore(1500,n.x,n.y-.4,'#4dffa6');
-  burst(n.x,n.y,'#4dffa6',18,.14); K.fx.push({ring:1,x:n.x,y:n.y,life:26,max:26,col:'#4dffa6',R:3}); VRAudio.sfx.medal(); shake=Math.min(shake+5,20);
-  const left=K.nodes.filter(m=>!m.done).length;
-  if(left){ K.banner={title:'NODE TAKEN',sub:left+' MORE · THE SHIP IS FIGHTING BACK',t:0,life:180,good:true}; say('cmd','aNode',{n:NUMW[left]},2); return; }
-  K.open=true; K.art=null; for(const d of K.doors) burst(d.x,d.y,'#d36bff',14,.14);
+// ---- taking the flagship: its crew keeps climbing out of the brood pits; burn out the nerve nodes, then hold the helm ----
+function assaultTick(){ const K=DK, P=K.you, done=K.nodes.filter(n=>n.dead).length, alive=K.units.reduce((a,u)=>a+(u.side===1&&!u.dead?1:0),0);
+  if(--K.spawnT<=0){ K.spawnT=K.open?15:Math.max(15,30-done*5);   // (the ship throws everything it has at you once the helm's open)
+    if(alive<(K.open?46:36+done*4)){ const far=K.pits.filter(p=>Math.hypot(p.x-P.x,p.y-P.y)>180), set=far.length?far:K.pits, pt=set[ri(0,set.length-1)];
+      dkSpawn(dkMix([.42-done*.06,.42,.16+done*.06]),pt.x+rnd(-8,8),pt.y+rnd(-8,8),26); pt.t=26; } }
+  for(const p of K.pits) if(p.t>0) p.t--;
+  const H=K.helm;
+  if(K.open && H){ const on=P.down<=0 && Math.hypot(P.x-H.cx,P.y-H.cy)<DT*3.6;
+    if(on){ H.prog=Math.min(1,H.prog+1/720); if(K.t%6===0) dkSparks(H.cx+rnd(-20,20),H.cy-14+rnd(-20,20),'#9ff6ff',1); if(H.prog>=1) dkWin(); }
+    else H.prog=Math.max(0,H.prog-1/900); }
+}
+function dkNodeDown(n){ const K=DK; if(n.dead) return; n.dead=true; score+=1500; K.pops.push({x:n.cx,y:n.cy-40,txt:'+1,500',col:'#4dffa6',life:60});
+  dkDroplets(n.cx,n.cy-20,'#d36bff',30,3.4); dkSplat(n.cx,n.cy,'#a0479a',30); K.fx.push({ring:1,x:n.cx,y:n.cy,r0:16,r1:70,life:24,max:24,col:'#d36bff'});
+  VRAudio.sfx.medal(); VRAudio.sfx.splat(n.cx,n.cy); shake=Math.min(shake+6,16);
+  const fl=dkFloorNear(Math.floor(n.cx/DT),Math.floor(n.cy/DT)+2); K.checkpoint={x:(fl[0]+.5)*DT,y:(fl[1]+.5)*DT};   // (you'd come back in here, now)
+  const left=K.nodes.filter(m=>!m.dead).length;
+  if(left){ K.banner={title:'NODE BURNED OUT',sub:left+' MORE · THE SHIP IS FIGHTING BACK',t:0,life:180,good:true}; say('cmd','aNode',{n:NUMW[left]},2); return; }
+  K.open=true; for(const p of K.map.props) if(p.kind==='membrane') for(let y=p.y;y<p.y+p.h;y++) for(let x=p.x;x<p.x+p.w;x++) K.grid[y*K.W+x]=0;
+  K.fields={}; K.mini=null;
   K.banner={title:'THE HELM IS OPEN',sub:'GET TO THE HELM AND HOLD IT',t:0,life:240,good:true};
-  VRAudio.sfx.klaxon(); VRAudio.sfx.implode(dpx(K.jar.x),dpy(K.jar.y)); flash=Math.max(flash,.25);
+  VRAudio.sfx.klaxon(); VRAudio.sfx.implode(K.helm.cx,K.helm.cy); flash=Math.max(flash,.25);
   comms.q=comms.q.filter(m=>m.pri>=2); say('cmd','aDoors',null,2); say('matriarch','aTaunt',null,1);
 }
-function deckWin(){ const K=DK; if(K.done||K.lost) return; K.done=1; K.doneT=0; const def=K.kind==='defend';
-  for(const f of K.foes){ f.dead=true; burst(f.x,f.y,'#ff9ab0',8); } K.foes=[]; K.q=[];
-  const bonus=def?Math.round(K.sys.reduce((a,S)=>a+Math.max(0,S.hp),0)*20):6000;
-  addDeckScore(bonus,K.p.x,K.p.y-1,'#4dffa6');
-  K.banner={title:def?'THE RESOLUTE HOLDS':'FLAGSHIP SEIZED',sub:(def?'EVERY BOARDER DOWN · SYSTEMS BONUS +':'THE HELM IS YOURS · +')+bonus.toLocaleString('en-US'),t:0,life:9999,good:true};
+function dkWin(){ const K=DK; if(K.done||K.lost) return; K.done=1; K.doneT=0; const def=K.kind==='defend';
+  for(const u of K.units) if(u.side===1 && !u.dead){ u.dead=true; dkDroplets(u.x,u.y,DFOE[u.kind].goo,8,2); }
+  K.q=[]; K.bolts=[];
+  crewLeft=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0);
+  const bonus=def?Math.round(K.sys.reduce((a,S)=>a+Math.max(0,S.hp),0)*20)+crewLeft*500:6000+crewLeft*500; score+=bonus;
+  K.banner={title:def?'THE RESOLUTE HOLDS':'FLAGSHIP SEIZED',sub:crewLeft+' OF '+CREW_N+' MARINES STILL STANDING · +'+bonus.toLocaleString('en-US'),t:0,life:9999,good:true};
   VRAudio.jingle('win','menu'); comms.q=[]; say(def?'cmd':'you',def?'deckWin':'aWin',null,2);
 }
-function deckLose(why){ const K=DK; if(K.done||K.lost) return; K.lost=1; K.lostT=0; K.lostWhy=why;
+function dkLose(why){ const K=DK; if(K.done||K.lost) return; K.lost=1; K.lostT=0; K.lostWhy=why;
   VRAudio.play(null,0,.8); comms.q=[];
   K.banner={title:why==='crew'?'BOARDING PARTY DOWN':why+' DESTROYED',sub:why==='crew'?'THE FLAGSHIP\'S CREW HAS YOU':'THE RESOLUTE IS GOING DOWN',t:0,life:9999,bad:true};
   say('matriarch',why==='crew'?'aLost':'deckLostM',null,2);
 }
 function deckOver(){   // the fight's won: back out into space for the next scene
   const kind=DK.kind; endDeck();
-  if(kind==='defend') playCine(afterDefenseShots(),()=>{ if(level!==4) setupLevel(4); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
-  else playCine(seizedShots(),()=>{ if(level!==5) setupLevel(5); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
+  if(kind==='defend') playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
+  else playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
 }
-function deckFail(){   // the card: hold the deck (or board the flagship) again, from the top
+function deckFail(){   // the card: hold the ship (or board the flagship) again, from the top
   const K=DK, def=K.kind==='defend', sys=K.lostWhy.charAt(0)+K.lostWhy.slice(1).toLowerCase();
   state='deckfail'; showMap=false; commsReset(); VRAudio.setEngine(false,false,0); VRAudio.jingle('lost','menu'); touchReset();
   const title=document.getElementById('o-title'); title.className='title dead'; title.textContent=def?'THE RESOLUTE IS LOST':'BOARDING FAILED';
   document.getElementById('o-tag').textContent=def?sys+' destroyed · Carrier Resolute':'Knocked down three times · Brood flagship';
   document.getElementById('o-best').textContent='';
   document.getElementById('o-brief').innerHTML=(def?
-    `The boarders wrecked the ${sys.toLowerCase()}, and the Resolute went down with it. Command is giving you the deck to hold again, from the first wave.<br><br>`+
-    `Keep moving between the bridge, the reactor and the engines: a boarder left alone at one tears it apart. Hit them while they work, and save the arc for when they crowd you.`
-   :`The flagship's crew put you down three times. Command is sending you back in from the hangar.<br><br>`+
-    `You have to stand on a nerve node to take it, so clear the corridors round it first, and keep an arc charge for when you're on it.`)+
+    `The boarders wrecked the ${sys.toLowerCase()}, and the Resolute went down with it. Command is giving you the ship to hold again, from the first wave.<br><br>`+
+    `Watch the systems: a boarder left alone at one tears it apart. The minimap shows where they're cutting in. Your marines go where you go, so take them to a system under attack.`
+   :`The flagship's crew put you down three times. Command is sending you back in from the hangar, with a fresh squad of marines.<br><br>`+
+    `Stay with your marines: twenty rifles burn through a node much faster than one. Clear a chamber before you push on to the next.`)+
     `<br><br>Score back to <span class="mono">${K.score0.toLocaleString('en-US')}</span>.`;
-  document.getElementById('o-btn').textContent=def?'Hold the deck again':'Board it again';
+  document.getElementById('o-btn').textContent=def?'Hold the ship again':'Board it again';
   document.getElementById('bestiary').style.display='none'; document.querySelector('.keys').style.display='none';
   document.getElementById('overlay').classList.remove('hidden');
 }
@@ -6173,212 +6174,285 @@ function retryDeck(){ const kind=DK?DK.kind:'defend', s0=DK?DK.score0:score;
   document.getElementById('overlay').classList.add('hidden'); score=s0; retries++; endDeck(); startDeck(kind); }
 
 function deckTick(){
-  const K=DK, P=K.p; K.t++;
+  const K=DK, P=K.you; K.t++;
   if(K.banner && ++K.banner.t>=K.banner.life) K.banner=null;
-  for(const S of K.sys) if(S.hit>0) S.hit--;
-  for(const p of K.pits) if(p.t>0) p.t--;
-  for(let i=0;i<K.grow.length;i++) if(K.grow[i]>0 && --K.grow[i]===0) K.cells[i]=K.orig[i];   // the cells grow back
-  fxTick();
-  if(K.done){ if(++K.doneT===240) deckOver(); else deckHud(); return; }
+  for(const p of K.fx){ p.life--; if(!p.ring && !p.fire){ p.x+=p.vx; p.y+=p.vy; p.vx*=p.drop?.9:.94; p.vy*=p.drop?.9:.94; if(p.drop) p.vy+=.16; } }
+  K.fx=K.fx.filter(p=>p.life>0); for(const b of K.beams) b.life--; K.beams=K.beams.filter(b=>b.life>0);
+  for(const p of K.pops) p.life--; K.pops=K.pops.filter(p=>p.life>0);
+  for(const p of K.pods) p.t++;
+  if(K.done){ if(++K.doneT===260) deckOver(); else deckHud(); return; }
   if(K.lost){ if(++K.lostT===200) deckFail(); deckHud(); return; }
   runT++;
-  if(P.down>0){ if(--P.down===0) deckRespawn(); }
-  else {
-    if(P.inv>0) P.inv--; if(P.cd>0) P.cd--; if(P.swing>0) P.swing--;
-    const w=deckWant(); if(w>=0 && P.moving && w===(P.d+2)%4) P.d=w;   // turn straight round, mid-corridor
-    const sp=P.over>0?DK_ARC_SP:DK_SP; dMove(P,sp,playerChoose); if(P.moving){ P.face=P.d; P.step+=sp; }
-    const cx=Math.round(P.x), cy=Math.round(P.y), i=cy*K.W+cx;
-    if(K.cells[i] && Math.abs(P.x-cx)+Math.abs(P.y-cy)<.45) eatCell(i,cx,cy);
-    if((keys[' ']||keys['j']||touchFire.laser) && P.cd<=0) strike();   // (held, it swings again as soon as it can)
-    const pad=touchFire.rocket; if(pad && !K.arcPad) K.arcReq=true; K.arcPad=pad;
-    if(K.arcReq){ K.arcReq=false; if(P.arc>=ARC_FULL && P.over<=0) arcOn(); else if(P.over<=0 && cool('arcNo',40)) VRAudio.sfx.ui('close'); }
-    if(P.over>0){ if(--P.over===0) VRAudio.sfx.ui('pause'); else if(K.t%3===0) arcSpark(); }
-  }
-  for(const f of K.foes) foeTick(f);
-  if(P.down<=0) for(const f of K.foes){ if(f.dead||f.emerge>0) continue;   // touching: they hurt you, unless the arc is on
-    const dx=f.x-P.x, dy=f.y-P.y, rr=DFOE[f.type].r+.27;
-    if(dx*dx+dy*dy<rr*rr){ if(P.over>0){ foeDown(f,true); continue; } if(f.stun>0 || P.inv>0) continue; youHit(f); break; } }
-  K.foes=K.foes.filter(f=>!f.dead);
-  if(DK!==K || K.lost) return;
+  if(K.t%30===0){   // the fight's director: by the end only two or three bots should still be standing
+    const bots=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0), done=K.nodes.filter(n=>n.dead).length;
+    const p=K.kind==='defend'?(K.killed+K.aboard)/K.total/2:Math.min(1,done*.25+(K.helm?K.helm.prog*.25:0));   // (aboard: the losses come while the boarders pour in)
+    const want=CREW_N-18*clamp(p/.88,0,1)**1.3; /* (most of the squad lasts most of the fight; the heavy losses come at the end) */ K.dmgMul=clamp(1+.35*(bots-want),.2,3); K.fireMul=clamp(1-.06*(bots-want),.5,1.3); K.preferBots=bots-want>1.5; }
+  dkPlayer();
+  for(const u of K.units){ if(u.dead) continue; if(u.kind==='bot') dkBot(u); else if(u.side===1) dkFoe(u); }
+  dkSeparate(); dkBolts();
+  K.units=K.units.filter(u=>!u.dead||u.kind==='you');
+  if(DK!==K || K.lost || K.done) { deckHud(); return; }
   if(K.kind==='defend') defendTick(); else assaultTick();
-  if(K.t%10===0 && K.foes.some(f=>Math.abs(f.x-P.x)+Math.abs(f.y-P.y)<6)) heat=200;   // the drums come in while they're close
+  if(K.t%10===0 && K.units.some(u=>u.side===1&&!u.dead&&Math.hypot(u.x-P.x,u.y-P.y)<260)) heat=200;   // the drums come in when it's close
   if(heat>0) heat--; VRAudio.setIntensity(heat>0);
-  VRAudio.listen(0,0);
+  VRAudio.listen(P.x,P.y);
   deckHud();
 }
-function deckHud(){   // the same HUD as the fight, saying what matters on foot
-  const K=DK, P=K.p;
+function deckHud(){   // the same HUD as the fight in space, saying what matters aboard
+  const K=DK, P=K.you;
   const sec=Math.floor(runT/60); if(sec!==lastSec){ lastSec=sec; elClock.textContent=fmtTime(sec); }
   if(score!==lastScore){ elScore.textContent=score.toLocaleString('en-US');
     if(score>=lastScore+100 && lastScore>=0){ elScore.classList.remove('bump'); void elScore.offsetWidth; elScore.classList.add('bump'); }
     lastScore=score; }
+  const foes=K.units.reduce((a,u)=>a+(u.side===1&&!u.dead?1:0),0), bots=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0);
   let lab,cnt,fill;
-  if(K.kind==='defend'){ const left=K.q.length+K.foes.length;
+  if(K.kind==='defend'){ const left=K.q.length+foes, W=DWAVES[Math.max(0,K.wave-1)];
     if(K.done){ lab='Carrier Resolute · held'; cnt='✓'; fill=1; }
-    else if(K.rest>0){ lab=K.wave?'Wave '+K.wave+' beaten · next pods':'Boarders inbound'; cnt=Math.ceil(K.rest/60)+'s'; fill=1-K.rest/DK_REST; }
-    else { lab='Repel boarders · wave '+K.wave+' / '+DWAVES.length; cnt=left+' left'; fill=K.total?1-left/K.total:0; } }
-  else { const n=K.nodes.filter(x=>x.done).length;
-    if(!K.open){ lab='Take the nerve nodes'; cnt=n+' / '+K.nodes.length; fill=n/K.nodes.length; }
-    else { lab='Hold the helm'; cnt=Math.round(K.jar.prog*100)+'%'; fill=K.jar.prog; } }
+    else if(K.rest>0){ lab=K.wave?'Wave '+K.wave+' beaten · more pods':'Boarders inbound'; cnt=Math.ceil(K.rest/60)+'s'; fill=1-K.rest/DK_REST; }
+    else { lab='Repel boarders · wave '+K.wave+' / '+DWAVES.length; cnt=left+' left'; fill=W?1-left/W.n:0; } }
+  else { const n=K.nodes.filter(x=>x.dead).length;
+    if(!K.open){ lab='Burn out the nerve nodes'; cnt=n+' / '+K.nodes.length; fill=n/K.nodes.length; }
+    else { lab='Hold the helm'; cnt=Math.round(K.helm.prog*100)+'%'; fill=K.helm.prog; } }
   const key='dk|'+lab+'|'+cnt+'|'+fill.toFixed(3);
   if(key!==hudKey){ hudKey=key; elM.level.textContent=lab; elM.count.textContent=cnt; elM.fill.style.transform=`scaleX(${clamp(fill,0,1).toFixed(3)})`;
     elM.ghost.style.transform='scaleX(0)'; elM.mark.style.display='none'; elM.box.classList.remove('boss'); }
-  // the second row: your ship's weakest system (holding the Resolute), or how much fight the boarding party has left
   let pn,pf,pt,pc='';
   if(K.kind==='defend'){ const S=K.sys.reduce((a,b)=>a.hp<=b.hp?a:b); pn=S.name.charAt(0)+S.name.slice(1).toLowerCase(); pf=Math.max(0,S.hp)/S.max;
     pt=S.dead?'—':Math.ceil(pf*100)+'%'; pc=S.dead?' lost':pf<=.3?' crit':pf<=.6?' warn':''; if(K.t-S.hackT<8) pc+=' hit'; }
-  else { pn='Boarding party'; pf=K.lives/3; pt='▮'.repeat(K.lives)+'▯'.repeat(3-K.lives); pc=K.lives<=1?' crit':K.lives===2?' warn':''; }
+  else { pn='Knocked down'; pf=1-K.knock/3; pt='▮'.repeat(K.knock)+'▯'.repeat(3-K.knock); pc=K.knock>=2?' crit':K.knock===1?' warn':''; }
   const pk='dk|'+pn+'|'+pt+'|'+pc+'|'+pf.toFixed(2);
   if(pk!==postKey){ postKey=pk; elM.pname.textContent=pn; elM.hpt.textContent=pt; elM.hp.style.transform=`scaleX(${pf.toFixed(3)})`; elM.post.className='mrow post-row'+pc; }
-  // the third row: whatever needs you right now
   let ot='', ov='', oc='';
   const hacked=K.sys.filter(S=>!S.dead && K.t-S.hackT<8).sort((a,b)=>a.hp-b.hp)[0];
   if(hacked){ ot=hacked.name.charAt(0)+hacked.name.slice(1).toLowerCase()+' under attack'; ov=Math.ceil(hacked.hp)+'%'; oc='beacon urgent'; }
-  else if(K.kind==='assault'){ const n=K.nodes.find(n=>!n.done&&n.prog>0);
-    if(n){ ot='Taking a nerve node'; ov=Math.round(n.prog*100)+'%'; oc='rescue'; } else if(K.open && K.jar.prog<=0){ ot='The helm is open'; ov='◈'; oc='drop'; } }
-  if(!ot && P.arc>=ARC_FULL && P.over<=0 && !K.done){ ot='Arc charged · '+(TOUCH?'tap ARC':'press E'); ov='⚡'; oc='drop'; }
+  else if(K.kind==='assault' && K.open && K.helm.prog>0){ ot='Holding the helm'; ov=Math.round(K.helm.prog*100)+'%'; oc='rescue'; }
   const ok='dk|'+ot+'|'+ov+'|'+oc;
   if(ok!==objKey){ objKey=ok; elObj.className='mrow obj-row'+(ot?' on '+oc:''); elObjT.textContent=ot; elObjV.textContent=ov; }
-  // the status line: your armour and the arc meter (the ARC button shows the meter too)
-  const pct=Math.floor(P.arc/ARC_FULL*100), am=Math.max(0,P.armor), pips='▮'.repeat(am)+'▯'.repeat(3-am);
-  const wt=TOUCH?   // (a phone's is one short row: armour, lives when boarding, the arc)
-      (P.down>0?'⚠ DOWN':P.over>0?'⚡ ARC '+Math.ceil(P.over/60)+'s':'◈'+pips+(K.kind==='assault'?' ♥'+K.lives:'')+' · ARC '+(P.arc>=ARC_FULL?'GO':pct+'%'))
-     :(P.down>0?'⚠ DOWN · MEDICS ON THE WAY':P.over>0?'⚡ ARC OVERLOAD · '+Math.ceil(P.over/60)+'s':'◈ ARMOR '+pips+' · ARC '+(P.arc>=ARC_FULL?'READY':pct+'%'));
-  if(wt!==lastShield){ lastShield=wt; elWarn.textContent=wt; elWarn.style.display=''; elWarn.classList.toggle('shielded',P.down<=0); elWarn.parentElement.classList.remove('nowarn'); }
-  const ak=P.over>0?'on':P.arc>=ARC_FULL?'go':String(pct);
-  if(ak!==dkArcKey){ dkArcKey=ak; tMissile.innerHTML='ARC<b>'+(P.over>0?'ON':P.arc>=ARC_FULL?'GO':pct+'%')+'</b>'; tMissile.classList.toggle('cool',P.arc<ARC_FULL && P.over<=0); }
+  const hp=Math.max(0,Math.ceil(P.hp)), pips='▮'.repeat(hp)+'▯'.repeat(YOU_HP-hp);
+  const wt=TOUCH?(P.down>0?'⚠ DOWN · CREW '+bots:'♥'+hp+' · CREW '+bots):(P.down>0?'⚠ DOWN · MEDICS ON THE WAY · CREW '+bots+' / '+CREW_N:'◈ '+pips+' · CREW '+bots+' / '+CREW_N);
+  if(wt!==lastShield){ lastShield=wt; elWarn.textContent=wt; elWarn.style.display=''; elWarn.classList.toggle('shielded',P.down<=0&&hp>3); elWarn.parentElement.classList.remove('nowarn'); }
 }
 
-// ---- drawing the deck: the whole of it on screen at once, from above ----
-function deckLayout(){   // the biggest tile that fits under the HUD (and, on a phone, clear of the right thumb's buttons)
-  const k=VW/Math.max(1,innerWidth), top=(TOUCH?35:108)*k, side=(TOUCH?dkSide():24)*k, bot=(TOUCH?8:30)*k;
-  const T=Math.max(6,Math.floor(Math.min((VW-2*side)/DK.W,(VH-top-bot)/DK.H)));
-  return {T, ox:Math.round((VW-T*DK.W)/2), oy:Math.round(top+(VH-top-bot-T*DK.H)/2)};
-}
-let dkSideKey='', dkSideV=124;
-function dkSide(){   // (css px from the edge to the nearest of STRIKE and ARC: the deck keeps that clear on both sides, the left one for the stick)
-  const key=innerWidth+'x'+innerHeight; if(key===dkSideKey) return dkSideV;
-  let l=1e9; for(const el of [document.getElementById('t-fire'),tMissile]){ const r=el.getBoundingClientRect(); if(r.width) l=Math.min(l,r.left); }
-  if(l<1e9){ dkSideKey=key; dkSideV=Math.max(70,innerWidth-l+6); }   // (only trust a measurement taken while the buttons are showing)
-  return dkSideV; }
-function buildDeckArt(T){   // painted once a pixel at a time: floor plates, raised walls with rounded corners, a neon trim
-  const K=DK, C=K.pal, W=K.W, H=K.H, cw=W*T, ch=H*T, c=document.createElement('canvas'); c.width=cw; c.height=ch;
-  const q=c.getContext('2d'), img=q.createImageData(cw,ch), d=img.data;
-  const rgb=s=>[parseInt(s.slice(1,3),16),parseInt(s.slice(3,5),16),parseInt(s.slice(5,7),16)];
-  const FL=rgb(C.floor), PL=rgb(C.plate), SE=rgb(C.seam), WA=rgb(C.wall), TO=rgb(C.top), ED=rgb(C.edge);
-  const mix=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
-  const ins=Math.max(2,T*.22), lw=Math.max(1,T/15), wl=[];
-  for(let y=-1;y<=H;y++) for(let x=-1;x<=W;x++) wl[(y+1)*(W+2)+x+1]=dWall(x,y);
-  const isW=(x,y)=>wl[(y+1)*(W+2)+x+1];
-  for(let py=0;py<ch;py++){ const ty=(py/T)|0, fy=py-ty*T;
-    for(let px=0;px<cw;px++){ const tx=(px/T)|0, fx=px-tx*T, o=(py*cw+px)*4; let col;
-      if(!isW(tx,ty)) col=(fx===0||fy===0)?SE:((fx===2||fx===T-3)&&(fy===2||fy===T-3))?SE:(fx===1||fy===1)?FL:PL;
-      else { let dm=1e9;
-        for(let ny=ty-1;ny<=ty+1;ny++) for(let nx=tx-1;nx<=tx+1;nx++){ if(isW(nx,ny)) continue;
-          const ddx=Math.max(nx*T-(px+.5),(px+.5)-(nx+1)*T,0), ddy=Math.max(ny*T-(py+.5),(py+.5)-(ny+1)*T,0), dd=Math.hypot(ddx,ddy); if(dd<dm) dm=dd; }
-        if(dm<ins-lw*.6) col=mix(WA,ED,.12*(dm/ins));   // the wall's face, catching a little of the trim's light
-        else if(dm<ins+lw*.6) col=ED;                    // the neon trim
-        else if(dm<ins+lw*2.2) col=mix(ED,TO,.75);       // its glow along the top
-        else col=TO; }
-      d[o]=col[0]; d[o+1]=col[1]; d[o+2]=col[2]; d[o+3]=255; } }
-  q.putImageData(img,0,0);
-  if(K.kind==='assault'){ q.strokeStyle='rgba(120,30,110,.5)'; q.lineWidth=1;   // veins across the flagship's floor
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++){ if(isW(x,y) || Math.random()<.55) continue; const X=x*T, Y=y*T;
-      q.beginPath(); q.moveTo(X+rnd(0,T),Y); q.quadraticCurveTo(X+rnd(0,T),Y+T/2,X+rnd(0,T),Y+T); q.stroke(); } }
+// ---- drawing the deck, seen from a little in front: the floor plan lies flat, but the walls show you their faces, and everyone
+// and everything on the deck stands up off it, drawn back to front so whatever's nearer you is in front. A minimap in the corner ----
+const DKPAL={ship:{w0:'#0e1117',w1:'#232833',w2:'#353c4a',edge:'#5a6478',floor:'#222a37',seam:'#1a2029',plate:'#283141',f0:'#4a546a',f1:'#2e3544',fseam:'#232834',lip:'#8e9ab0',base:'#11141b'},
+  brood:{w0:'#0d040b',w1:'#26091f',w2:'#3a1131',edge:'#9a3f8e',floor:'#1a0a17',seam:'#110510',plate:'#211020',f0:'#62245a',f1:'#3a1133',fseam:'#290b24',lip:'#c264ae',base:'#0e040c'}};
+const DK_FH=18;   // how tall a wall's face stands
+const DK_PH={crate:9,console:7,bunk:6,bed:6,locker:22,table:6,pipe:24,pillar:30,engine:16,shuttle:10,growth:9};   // and each kind of prop
+const hexRGB=c=>{ const n=parseInt(c.slice(1),16); return [n>>16,(n>>8)&255,n&255]; };
+const hexBlend=(a,b,t)=>{ const A=hexRGB(a), B=hexRGB(b); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join(''); };
+function dkArt(){   // painted once: the hull, the floor, the faces of the walls, the windows (the props stand up off the deck: they're sprites)
+  const K=DK, M=K.map, PL=DKPAL[M.brood?'brood':'ship'], c=document.createElement('canvas'); c.width=K.W*DT; c.height=K.H*DT; const q=c.getContext('2d');
+  const path=new Path2D(); for(const P of M.polys){ path.moveTo(P[0]*DT,P[1]*DT); for(let i=2;i<P.length;i+=2) path.lineTo(P[i]*DT,P[i+1]*DT); path.closePath(); }
+  q.lineJoin='miter';
+  for(const [col,w] of [[PL.w0,58],[PL.w1,30],[PL.w2,20],[PL.edge,9]]){ q.strokeStyle=col; q.lineWidth=w; q.stroke(path); }   // the tops of the walls, dark outside to a lit lip
+  q.fillStyle=PL.floor; q.fill(path);
+  q.save(); q.clip(path);
+  for(let y=0;y<K.H;y++) for(let x=0;x<K.W;x++){ const X=x*DT, Y=y*DT;   // floor plates
+    q.fillStyle=(x+y)%2?PL.plate:PL.floor; q.fillRect(X+1,Y+1,DT-2,DT-2); q.fillStyle=PL.seam; q.fillRect(X,Y,DT,1); q.fillRect(X,Y,1,DT);
+    if(!M.brood && (x*7+y*3)%11===0){ q.fillStyle='#2e3849'; q.fillRect(X+4,Y+4,DT-8,2); q.fillRect(X+4,Y+DT-6,DT-8,2); } }
+  if(M.brood){ q.strokeStyle='rgba(150,40,140,.35)'; q.lineWidth=2;   // veins
+    for(let i=0;i<140;i++){ const x=rnd(0,c.width), y=rnd(0,c.height); q.beginPath(); q.moveTo(x,y); q.quadraticCurveTo(x+rnd(-30,30),y+rnd(-30,30),x+rnd(-50,50),y+rnd(-50,50)); q.stroke(); } }
+  const wall=document.createElement('canvas'); wall.width=c.width; wall.height=c.height; const wq=wall.getContext('2d');   // the walls throw a little shadow on the deck at their feet
+  wq.fillRect(0,0,c.width,c.height); wq.globalCompositeOperation='destination-out'; wq.fill(path);
+  q.globalAlpha=.1; for(let k=1;k<=6;k++) q.drawImage(wall,0,k); q.globalAlpha=1;
+  q.restore();
+  // the faces of the walls you can see: whatever isn't deck, just above the deck, as tall as a wall stands
+  const f=document.createElement('canvas'); f.width=c.width; f.height=c.height; const fq=f.getContext('2d');
+  for(let k=DK_FH;k>=1;k--){ fq.setTransform(1,0,0,1,0,-k); fq.fillStyle=k<=2?PL.base:k%6===0?PL.fseam:hexBlend(PL.f1,PL.f0,k/DK_FH); fq.fill(path); }
+  fq.setTransform(1,0,0,1,0,0); fq.globalCompositeOperation='source-atop';
+  fq.fillStyle=PL.fseam; for(let x=DT;x<f.width;x+=DT*2) fq.fillRect(x,0,1,f.height);   // the panels' seams
+  const deck=(x,y)=>x>=0&&y>=0&&x<K.W&&y<K.H&&K.grid[y*K.W+x]!==1, glass=(tx,ty)=>(M.windows||[]).some(([x0,y,x1,,s])=>s<0&&y===ty&&tx>=x0-1&&tx<=x1+2);
+  for(let ty=1;ty<K.H;ty++) for(let tx=1;tx<K.W-1;tx++){   // screens, vents and lamps along the straight runs of wall
+    if(!deck(tx,ty)||!deck(tx-1,ty)||!deck(tx+1,ty)||deck(tx,ty-1)||deck(tx-1,ty-1)||deck(tx+1,ty-1)||glass(tx,ty)) continue;
+    const h=(tx*7+ty*13)%9, X=tx*DT, Y=ty*DT-DK_FH;
+    if(M.brood){ if(h<3){ fq.fillStyle='#7a2a6a'; fq.fillRect(X+6,Y+4,4,10); fq.fillStyle='#3aff9a'; fq.fillRect(X+7,Y+6,2,2); } else if(h===5){ fq.fillStyle='#4a1640'; fq.fillRect(X+2,Y+3,16,2); } }
+    else if(h===0){ fq.fillStyle='#0c1018'; fq.fillRect(X+3,Y+4,14,9); fq.fillStyle=(tx+ty)%2?'#1f6f8a':'#2a7a5a'; fq.fillRect(X+4,Y+5,12,7);
+      fq.fillStyle='#9ff6ff'; fq.fillRect(X+5,Y+6,5,1); fq.fillRect(X+5,Y+8,8,1); fq.fillRect(X+5,Y+10,3,1); }
+    else if(h===4){ fq.fillStyle='#1a1f28'; for(let i=0;i<4;i++) fq.fillRect(X+4,Y+4+i*3,12,1); }
+    else if(h===7){ fq.fillStyle='#ffb347'; fq.fillRect(X+9,Y+3,2,2); } }
+  for(const [x0,y,x1,,side] of M.windows||[]) if(side<0) for(let x=x0;x<=x1;x+=3){ const X=x*DT, Y=y*DT-DK_FH;   // windows on space
+    fq.fillStyle='#080f24'; fq.fillRect(X+2,Y+3,DT*2-4,DK_FH-7); fq.fillStyle='#132a5e'; fq.fillRect(X+3,Y+4,DT*2-6,DK_FH-9);
+    fq.fillStyle='#dfe9ff'; fq.fillRect(X+9,Y+7,1,1); fq.fillRect(X+27,Y+10,1,1); fq.fillRect(X+18,Y+5,1,1); fq.fillStyle='rgba(170,210,255,.45)'; fq.fillRect(X+4,Y+5,6,1); }
+  fq.globalCompositeOperation='destination-over';   // the wall's top edge: a dark line, then the lit lip
+  fq.setTransform(1,0,0,1,0,-(DK_FH+1)); fq.fillStyle=PL.w0; fq.fill(path);
+  fq.setTransform(1,0,0,1,0,-(DK_FH+3)); fq.fillStyle=PL.lip; fq.fill(path);
+  fq.setTransform(1,0,0,1,0,0); fq.globalCompositeOperation='destination-out'; fq.fill(path);
+  q.drawImage(f,0,0);
+  for(const [x0,y,x1,,side] of M.windows||[]) if(side>0) for(let x=x0;x<=x1;x+=3){ const Y=y*DT+14;   // and in the near walls, seen from above
+    q.fillStyle='#0a1430'; q.fillRect(x*DT+2,Y-5,DT*2-4,10); q.fillStyle='#1d3a7a'; q.fillRect(x*DT+4,Y-3,DT*2-8,6); q.fillStyle='rgba(160,200,255,.5)'; q.fillRect(x*DT+5,Y-3,6,1); }
   return c;
 }
-function drawPilotTop(px,py,T,P){   // you, from above: black-and-copper armour, the blue visor facing your way, the baton in your right hand
-  const s=T/24, w=P.moving?Math.sin(P.step*Math.PI*2)*2.4:0;
-  g.save(); g.translate(Math.round(px),Math.round(py)); g.rotate(DANG[P.face]); g.scale(s,s);
-  g.fillStyle='#0d0f14'; g.fillRect(-3+w,-6,6,4); g.fillRect(-3-w,2,6,4);   // boots, striding
-  g.fillStyle='#1d2027'; g.beginPath(); g.arc(0,0,7.5,0,TAU); g.fill();       // armour
-  g.fillStyle='#b85a22'; g.fillRect(-4,-9,7,4); g.fillRect(-4,5,7,4);          // pauldrons
-  g.fillStyle='#f08a40'; g.fillRect(-4,-9,7,1); g.fillRect(-4,5,7,1);
-  g.fillStyle='#262a34'; g.beginPath(); g.arc(1,0,4.6,0,TAU); g.fill();       // helmet
-  g.fillStyle='#2a6cff'; g.fillRect(3,-3,3,6); g.fillStyle='#8fd0ff'; g.fillRect(5,-2,1,3);   // visor
-  if(P.swing>0){ const k=1-P.swing/10, ang=1.15-k*2.3;   // the swing sweeps from your right across the front
-    g.globalAlpha=P.swing/10; g.strokeStyle='#9ff6ff'; g.lineWidth=3; g.beginPath(); g.arc(0,0,P.over>0?26:15,Math.max(-1.15,ang),1.15); g.stroke(); g.globalAlpha=1;
-    g.strokeStyle='#eaffff'; g.lineWidth=2; g.beginPath(); g.moveTo(Math.cos(ang)*5,Math.sin(ang)*5); g.lineTo(Math.cos(ang)*15,Math.sin(ang)*15); g.stroke(); }
-  else { g.strokeStyle='#43f0ff'; g.lineWidth=2; g.beginPath(); g.moveTo(2,7); g.lineTo(11,6); g.stroke(); g.fillStyle='#eaffff'; g.fillRect(10,5,2,2); }
-  if(P.over>0){ g.strokeStyle=(t>>1)&1?'#ffffff':'#9ff6ff'; g.lineWidth=1; g.beginPath();   // the arc crackling round you
-    for(let k=0;k<3;k++){ let a=rnd(0,TAU), r=rnd(9,13); g.moveTo(Math.cos(a)*r,Math.sin(a)*r); for(let j=0;j<4;j++){ a+=rnd(.2,.5); r=rnd(8,14); g.lineTo(Math.cos(a)*r,Math.sin(a)*r); } }
-    g.stroke(); }
-  g.restore();
+function dkProp(q,p){   // the top of a prop: crates, consoles, bunks, machinery
+  const X=p.x*DT, Y=p.y*DT, W=p.w*DT, H=p.h*DT, R=(x,y,w,h,col)=>{ q.fillStyle=col; q.fillRect(X+x,Y+y,w,h); };
+  if(p.kind==='crate'){ R(1,1,W-2,H-2,'#5e4128'); R(3,3,W-6,H-6,'#7d5833'); R(1,1,W-2,2,'#9a7244'); R(W/2-1,1,2,H-2,'#4a321c'); R(1,H/2-1,W-2,2,'#4a321c'); }
+  else if(p.kind==='console'){ R(0,0,W,H,'#151a22'); R(1,1,W-2,H-2,'#202733'); for(let i=0;i<p.w*2;i++) R(3+i*9,3,6,H-6,(i%3)?'#1f6f8a':'#a8601f'); }
+  else if(p.kind==='bunk'||p.kind==='bed'){ R(0,2,W,H-4,'#3a414f'); R(2,4,W-4,H-8,p.kind==='bed'?'#cfe3ff':'#5a6c90'); R(2,4,8,H-8,'#e9f2ff'); }
+  else if(p.kind==='locker'){ R(1,1,W-2,H-2,'#3e4655'); R(1,1,W-2,2,'#5a6478'); for(let i=0;i<4;i++) R(4+i*8,5,5,H-9,'#2a303c'); }
+  else if(p.kind==='table'){ R(2,2,W-4,H-4,'#4a3e34'); R(4,4,W-8,H-8,'#5e4e40'); R(10,8,6,4,'#cfe3ff'); }
+  else if(p.kind==='pipe'){ R(4,0,W-8,H,'#4b5262'); R(5,0,3,H,'#7a8296'); for(let y=4;y<H;y+=12) R(2,y,W-4,3,'#363c49'); }
+  else if(p.kind==='pillar'){ R(1,1,W-2,H-2,'#3a414f'); R(1,1,W-2,3,'#5a6478'); }
+  else if(p.kind==='engine'){ R(0,0,W,H,'#2b313d'); R(4,4,W-8,H-8,'#3a414f'); for(let y=8;y<H-6;y+=8) R(8,y,W-16,3,'#20252f'); R(W/2-6,H/2-6,12,12,'#ff9a3d'); R(W/2-3,H/2-3,6,6,'#ffe0a0'); }
+  else if(p.kind==='shuttle'){ q.fillStyle='#8a94a8'; q.beginPath(); q.moveTo(X+4,Y+6); q.lineTo(X+W-18,Y+4); q.lineTo(X+W-2,Y+H/2); q.lineTo(X+W-18,Y+H-4); q.lineTo(X+4,Y+H-6); q.closePath(); q.fill();
+    R(W-26,H/2-5,10,10,'#43a0d0'); R(2,8,8,H-16,'#5a6478'); }
+  else if(p.kind==='growth'){ for(let i=0;i<5;i++){ q.fillStyle=i%2?'#5a1c50':'#7a2a6a'; q.beginPath(); q.arc(X+rnd(4,W-4),Y+rnd(4,H-4),rnd(5,Math.min(W,H)*.6),0,TAU); q.fill(); }
+    q.fillStyle='#3aff9a'; q.fillRect(X+W/2-1,Y+H/2-1,3,3); }
 }
-function drawDownTop(px,py,T,P){ const s=T/24; g.save(); g.translate(Math.round(px),Math.round(py)); g.scale(s,s);   // knocked flat, waiting for the medics
-  g.globalAlpha=.75; g.fillStyle='#1d2027'; g.beginPath(); g.ellipse(0,0,9,5,.4,0,TAU); g.fill(); g.fillStyle='#b85a22'; g.fillRect(-5,-4,4,3);
-  g.globalAlpha=1; if((t>>4)&1){ g.fillStyle='#ff4d6d'; g.fillRect(-1,-13,2,6); g.fillRect(-3,-11,6,2); } g.restore(); }
-function drawBoarderTop(px,py,T,f){   // a reaver boarder from above: a hunched shell, claws out front, a pair of eyes
-  const F=DFOE[f.type], s=T/24*(F.r/.3), w=f.moving&&!f.stun?Math.sin(f.step*Math.PI*2.4)*2:0, flee=DK.p.over>0&&DK.p.down<=0;
-  const body=flee?'#3a4a7a':F.body, lite=flee?'#6f86c8':F.lite;
-  g.save(); g.translate(Math.round(px),Math.round(py)); g.rotate(DANG[f.d]); g.scale(s,s);
-  if(f.emerge>0) g.globalAlpha=clamp(1-f.emerge/40,0,1);
-  g.fillStyle='#1a0a10'; for(const [x,y] of [[3,-7],[-3,-7],[3,7],[-3,7]]) g.fillRect(x-1+(y<0?w:-w),y-(y<0?2:0),3,2);   // legs
-  g.fillStyle=body; g.beginPath(); g.ellipse(0,0,8,6.5,0,0,TAU); g.fill();
-  g.fillStyle=lite; g.beginPath(); g.ellipse(-1,-1,5.5,3.5,0,0,TAU); g.fill();
-  g.fillStyle=body; g.fillRect(-6,-.5,10,1);
-  g.strokeStyle=lite; g.lineWidth=1.5; g.beginPath(); g.moveTo(5,-4); g.lineTo(10,-3); g.lineTo(9,-1); g.moveTo(5,4); g.lineTo(10,3); g.lineTo(9,1); g.stroke();   // claws
-  if(f.type==='brute'){ g.fillStyle='#c9b8d8'; for(const y of [-6,6]){ g.beginPath(); g.moveTo(-2,y); g.lineTo(-6,y*1.6); g.lineTo(1,y*1.1); g.fill(); } }   // shoulder spikes
-  const blink=((t+f.id*7)>>4)%7!==0; g.fillStyle=flee?'#ffffff':blink?F.eye:'#3a0a10'; g.fillRect(4,-3,2,2); g.fillRect(4,1,2,2);
-  if(f.flash>0){ g.globalAlpha=f.flash/8*.8; g.fillStyle='#ffffff'; g.beginPath(); g.ellipse(0,0,8,6.5,0,0,TAU); g.fill(); }
-  g.restore(); g.globalAlpha=1;
-  if(f.stun>0) for(let k=0;k<3;k++){ const a=t*.15+k*TAU/3; g.fillStyle='#ffe08a'; g.fillRect(Math.round(px+Math.cos(a)*T*.32)-1,Math.round(py-T*.42+Math.sin(a)*T*.1)-1,2,2); }   // seeing stars
-  if(f.hack && (t>>2)&1){ g.fillStyle='#ffd27a'; g.fillRect(Math.round(px+rnd(-T*.3,T*.3)),Math.round(py+rnd(-T*.3,T*.3)),2,2); }
+function dkPropSprite(p){   // a prop standing on the deck: its top, then below that the face it shows you, and its shadow
+  const ph=DK_PH[p.kind], W=p.w*DT, H=p.h*DT, F=H, c=document.createElement('canvas'); c.width=W; c.height=H+ph+3; const q=c.getContext('2d');
+  const R=(x,y,w,h,col)=>{ q.fillStyle=col; q.fillRect(x,y,w,h); };
+  R(1,H+ph,W-2,3,'rgba(0,0,0,.3)');
+  if(p.kind==='crate'){ R(1,F,W-2,ph,'#4e3520'); R(1,F,W-2,1,'#9a7244'); R(1,F+4,W-2,1,'#3a2614'); R(W/2-1,F,2,ph,'#3a2614'); R(1,F+ph-1,W-2,1,'#2a1a0c'); }
+  else if(p.kind==='console'){ R(0,F,W,ph,'#0e1218'); R(0,F,W,1,'#2a3240'); for(let i=0;i<p.w*3;i++) R(3+i*6,F+3,2,1,(i*5)%4?'#2f6fa0':'#4dffa6'); }
+  else if(p.kind==='bunk'||p.kind==='bed'){ R(0,F-2,W,ph,'#2a303c'); R(0,F-2,W,1,'#4a5262'); R(2,F+ph-3,2,3,'#1a1e26'); R(W-4,F+ph-3,2,3,'#1a1e26'); }
+  else if(p.kind==='locker'){ R(1,F,W-2,ph,'#323946'); for(let i=0;i*9+10<=W;i++){ R(3+i*9,F+2,7,ph-4,'#262c37'); R(8+i*9,F+ph/2-2,1,4,'#8a94a8'); } }
+  else if(p.kind==='table'){ R(2,F-2,W-4,2,'#3a3028'); R(4,F,2,ph,'#2a2018'); R(W-6,F,2,ph,'#2a2018'); }
+  else if(p.kind==='pipe'){ R(4,F,W-8,ph,'#3e4452'); R(5,F,3,ph,'#6a7286'); for(let y=3;y<ph;y+=7) R(3,F+y,W-6,2,'#2a303c'); }
+  else if(p.kind==='pillar'){ R(1,F,W-2,ph,'#323946'); R(2,F,2,ph,'#525b6e'); R(1,F+5,W-2,2,'#22272f'); R(1,F+ph-6,W-2,2,'#22272f'); R(W/2-1,F+11,2,4,'#43f0ff'); }
+  else if(p.kind==='engine'){ R(0,F,W,ph,'#1e232c'); for(let x=5;x<W-8;x+=9) R(x,F+3,5,ph-6,'#12151b'); R(W/2-6,F+4,12,ph-8,'#ff9a3d'); R(W/2-3,F+6,6,ph-12,'#ffe0a0'); }
+  else if(p.kind==='shuttle'){ R(6,F-6,W-24,ph,'#4a5468'); for(let x=12;x<W-30;x+=9) R(x,F-3,5,2,'#43a0d0'); }
+  else if(p.kind==='growth'){ for(let i=0;i<4;i++){ q.fillStyle=i%2?'#4a1640':'#5e1c52'; q.beginPath(); q.ellipse(rnd(5,W-5),F+ph/2,rnd(4,8),ph/2,0,0,TAU); q.fill(); } }
+  dkProp(q,{...p,x:0,y:0});
+  return c;
 }
-function drawSysTop(px,py,T,S){   // a ship's system in its alcove: the bridge's consoles, the reactor's core, the engines' twin drives
-  const s=T/24, hot=DK.t-S.hackT<8, dead=S.dead;
-  g.save(); g.translate(Math.round(px),Math.round(py)); g.scale(s,s);
-  g.fillStyle=dead?'#1a1014':hot&&(t>>2)&1?'#3a0a14':'#0e1a30'; g.fillRect(-11,-11,22,22);
-  g.strokeStyle=dead?'#5a2a33':hot?'#ff4d6d':'#2f6fa0'; g.lineWidth=1; g.strokeRect(-10.5,-10.5,21,21);
-  if(S.k==='R'){ const p=.5+.5*Math.sin(t*.1); g.strokeStyle=dead?'#4a2a20':'#4dffa6'; g.lineWidth=2; g.beginPath(); g.arc(0,0,7,0,TAU); g.stroke();
-    g.fillStyle=dead?'#3a1a10':`rgba(77,255,166,${.5+.4*p})`; g.beginPath(); g.arc(0,0,4,0,TAU); g.fill(); }
-  else if(S.k==='B'){ g.fillStyle=dead?'#2a1a1e':'#16304f'; g.fillRect(-9,2,18,6);
-    for(let i=0;i<3;i++){ g.fillStyle=dead?'#3a2026':((t>>4)+i)%3?'#43f0ff':'#9ff6ff'; g.fillRect(-8+i*6,-6,4,5); } }
-  else for(const x of [-5,5]){ g.fillStyle=dead?'#2a1a1e':'#2a3a5a'; g.beginPath(); g.arc(x,0,4.5,0,TAU); g.fill();
-    g.fillStyle=dead?'#3a1a10':(t>>1)&1?'#9ff6ff':'#43f0ff'; g.beginPath(); g.arc(x,0,2,0,TAU); g.fill(); }
-  g.restore();
-  if(!dead){ const w=Math.round(T*.9), x=Math.round(px-w/2), y=Math.round(py+T*.5-3);   // its health
-    g.fillStyle='rgba(5,8,18,.85)'; g.fillRect(x-1,y-1,w+2,4);
-    g.fillStyle=S.hp>60?'#4dffa6':S.hp>30?'#ffb347':'#ff4d6d'; g.fillRect(x,y,Math.max(1,Math.round(w*S.hp/S.max)),2); }
-  else if((t>>2)&1){ g.fillStyle='#ff9a3d'; g.fillRect(Math.round(px+rnd(-T*.3,T*.3)),Math.round(py+rnd(-T*.3,T*.3)),2,2); }
+function dkPaintMini(){ const K=DK, c=document.createElement('canvas'); c.width=K.W; c.height=K.H; const q=c.getContext('2d'), img=q.createImageData(K.W,K.H);
+  for(let i=0;i<K.W*K.H;i++){ const v=K.grid[i], o=i*4; if(v===1) continue; const [r,gg,b]=v===2?[24,32,50]:K.map.brood?[70,24,64]:[42,56,86]; img.data[o]=r; img.data[o+1]=gg; img.data[o+2]=b; img.data[o+3]=230; }
+  q.putImageData(img,0,0); return c; }
+
+// ---- the people and creatures on the deck: pixel sprites seen from a little in front, painted once for each facing and step ----
+const DKSPR={};
+function dkSpr(key,w,h,paint){
+  const have=DKSPR[key]; if(have) return have;
+  const c=document.createElement('canvas'); c.width=w; c.height=h; const q=c.getContext('2d'), img=q.createImageData(w,h), D=img.data;
+  const px=(x,y,col)=>{ x=Math.round(x); y=Math.round(y); if(x<0||y<0||x>=w||y>=h||!col) return; const o=(y*w+x)*4, v=hexRGB(col); D[o]=v[0]; D[o+1]=v[1]; D[o+2]=v[2]; D[o+3]=255; };
+  paint(px,(x,y,ww,hh,col)=>{ for(let j=0;j<hh;j++) for(let i=0;i<ww;i++) px(x+i,y+j,col); });
+  const A=new Uint8Array(w*h); for(let i=0;i<w*h;i++) A[i]=D[i*4+3];   // a dark outline round it all, so it stands out on the deck
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x; if(A[i]) continue;
+    if((x>0&&A[i-1])||(x<w-1&&A[i+1])||(y>0&&A[i-w])||(y<h-1&&A[i+w])){ D[i*4]=6; D[i*4+1]=7; D[i*4+2]=11; D[i*4+3]=255; } }
+  q.putImageData(img,0,0);
+  const f=document.createElement('canvas'); f.width=w; f.height=h; const fq=f.getContext('2d');   // and a white one, for the frame it's hit
+  fq.drawImage(c,0,0); fq.globalCompositeOperation='source-atop'; fq.fillStyle='rgba(255,240,240,.85)'; fq.fillRect(0,0,w,h);
+  return DKSPR[key]={c,f,w,h};
 }
-function drawNodeTop(px,py,T,n){   // a nerve node: a pulsing knot of the ship's nerves in the floor (cyan once it's yours)
-  const s=T/24, p=.5+.5*Math.sin(t*.1+n.x);
-  g.save(); g.translate(Math.round(px),Math.round(py)); g.scale(s,s);
-  g.fillStyle=n.done?'#0e3a4a':'#3a0f3a'; g.beginPath(); g.arc(0,0,9,0,TAU); g.fill();
-  g.strokeStyle=n.done?'#43f0ff':'#d36bff'; g.lineWidth=1.5;
-  for(let k=0;k<6;k++){ const a=k*TAU/6+t*.01; g.beginPath(); g.moveTo(Math.cos(a)*4,Math.sin(a)*4); g.lineTo(Math.cos(a+.4)*9,Math.sin(a+.4)*9); g.stroke(); }
-  g.fillStyle=n.done?'#9ff6ff':`rgba(255,140,255,${.6+.4*p})`; g.beginPath(); g.arc(0,0,3.5+p,0,TAU); g.fill();
-  g.restore();
-  if(!n.done && n.prog>0){ g.strokeStyle='#9ff6ff'; g.lineWidth=Math.max(2,T*.08); g.beginPath(); g.arc(px,py,T*.48,-Math.PI/2,-Math.PI/2+n.prog*TAU); g.stroke(); }
+function dkBall(px,cx,cy,rx,ry,P,tex){   // a shaded ellipse of pixels, lit from the upper left (tex can swap in a colour, for folds and spots)
+  for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++) for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){
+    const nx=(x+.5-cx)/rx, ny=(y+.5-cy)/ry, d=nx*nx+ny*ny; if(d>1) continue;
+    const l=-(nx*.55+ny*.7)+(1-d)*.35; px(x,y,(tex&&tex(x,y,l))||(l>.55?P.l:l<-.3?P.d:P.b)); } }
+const DK_LOOK={   // the marines in orange helmets; you in black and copper, with a blue visor
+  bot:{armor:'#3d4554',armorL:'#5d6880',armorD:'#272c36',leg:'#2c323e',boot:'#14161c',trim:'#e8742a',trimL:'#ffa860',helm:'#f08a3a',helmL:'#ffc480',helmD:'#b0561c',visor:'#43d6ff',visorD:'#1a6c8c',pack:'#2a303b',gun:'#191c23',tip:'#9ff6ff'},
+  you:{armor:'#24211e',armorL:'#4a3c30',armorD:'#121110',leg:'#1c1a18',boot:'#0b0a09',trim:'#c87838',trimL:'#f2aa6a',helm:'#2a2724',helmL:'#5a4a3c',helmD:'#141210',visor:'#3a9cff',visorD:'#1a4aa8',pack:'#1a1816',gun:'#101216',tip:'#eaffff'}};
+function paintSoldier(px,R,f,fr,P){   // 16×24, boots on row 22; f: 0 facing you, 1 to the right, 2 away; fr: the step
+  if(f!==1){ const a=fr===1?1:0, b=fr===3?1:0;   // a leg lifts as it steps
+    R(5,16,2,5-a,P.leg); R(4,21-a,3,2,P.boot); R(9,16,2,5-b,P.leg); R(9,21-b,3,2,P.boot);
+    R(4,15,8,1,'#16191f'); if(f===0) R(7,15,2,1,P.trim);   // the belt
+    R(4,10,8,5,P.armor); R(4,10,1,5,P.armorD); R(11,10,1,5,P.armorD);
+    if(f===0){ R(6,11,4,2,P.armorL); R(7,13,2,1,P.armorD); } else { R(5,10,6,5,P.pack); R(6,11,4,1,P.armorL); px(9,13,'#4dffa6'); }   // the chest plate, or the pack on the back
+    R(2,10,3,2,P.trim); R(11,10,3,2,P.trim); R(2,10,3,1,P.trimL); R(11,10,3,1,P.trimL);   // shoulder plates
+    R(2,12,2,3,P.armorD); R(12,12,2,3,P.armorD); R(6,9,4,1,'#16191f');
+    R(5,3,6,6,P.helm); R(6,2,4,1,P.helm); R(5,3,1,5,P.helmL); R(6,2,2,1,P.helmL); R(10,3,1,6,P.helmD); R(5,8,6,1,P.helmD);
+    if(f===0){ R(6,5,4,2,P.visor); R(6,6,4,1,P.visorD); px(6,5,'#ffffff'); } else R(6,6,4,1,P.helmD); }
+  else { const s=fr===1?2:fr===3?-2:0;   // side on: the legs swing
+    R(7-s,16,2,5,P.armorD); R(7-s,21,3,2,P.boot); R(7+s,16,2,5,P.leg); R(7+s,21,3,2,P.boot);
+    R(5,15,6,1,'#16191f'); R(3,10,2,5,P.pack); px(3,11,P.armorL);
+    R(5,10,6,5,P.armor); R(5,10,1,5,P.armorD); R(9,11,2,2,P.armorL);
+    R(6,10,4,2,P.trim); R(6,10,4,1,P.trimL); R(8,12,2,3,P.armorD); R(6,9,4,1,'#16191f');
+    R(5,3,6,6,P.helm); R(6,2,4,1,P.helm); R(5,3,1,6,P.helmD); R(7,2,2,1,P.helmL); R(5,8,6,1,P.helmD);
+    R(9,5,2,2,P.visor); R(9,6,2,1,P.visorD); px(10,5,'#ffffff'); }
 }
-function drawHelmTop(px,py,T,J){   // the helm: the flagship's own brain in its jar, plugged into the deck
-  const s=T/24; g.save(); g.translate(Math.round(px),Math.round(py)); g.scale(s,s);
-  g.fillStyle='#2a0d27'; g.fillRect(-11,-11,22,22); g.strokeStyle='#d36bff'; g.lineWidth=1; g.strokeRect(-10.5,-10.5,21,21);
-  g.fillStyle='rgba(60,200,140,.35)'; g.beginPath(); g.arc(0,0,8,0,TAU); g.fill();
-  g.fillStyle='#e48ac8'; g.beginPath(); g.ellipse(0,0,5.5,4.5,0,0,TAU); g.fill();
-  g.strokeStyle='#a04a8a'; g.beginPath(); g.moveTo(-4,0); g.quadraticCurveTo(-1,-3,0,0); g.quadraticCurveTo(1,3,4,0); g.stroke();
-  g.strokeStyle='rgba(220,240,255,.7)'; g.beginPath(); g.arc(0,0,8,0,TAU); g.stroke();
-  g.restore();
-  if(J.prog>0){ g.strokeStyle='#9ff6ff'; g.lineWidth=Math.max(2,T*.08); g.beginPath(); g.arc(px,py,T*.52,-Math.PI/2,-Math.PI/2+J.prog*TAU); g.stroke(); }
+function paintSquid(px,R,f,fr){   // a green octopus-thing on curling legs, 18×21
+  const b=fr&1;
+  for(let i=0;i<5;i++){ const bx=6+i*1.5;
+    for(let j=0;j<7;j++){ const x=bx+(bx-9)*j*.2+Math.round(Math.sin(j*1.1+fr*1.57+i*1.9)*.9), y=13+j; px(x,y,j<2?'#4fae34':'#2f7a20'); if(j<3) px(x+1,y,'#2f7a20'); } }
+  dkBall(px,9,7.5+b,4.8,5.8,{l:'#b6f48c',b:'#6fd04a',d:'#3a8a26'},(x,y)=>(x*3+y*5)%11===0?'#a8f080':null);
+  if(f===0){ R(6,8+b,2,2,'#f4ffe8'); R(10,8+b,2,2,'#f4ffe8'); px(7,9+b,'#10260b'); px(10,9+b,'#10260b'); R(8,11+b,2,1,'#10260b'); }
+  else if(f===1){ R(11,8+b,2,2,'#f4ffe8'); px(12,9+b,'#10260b'); px(9,8+b,'#d8f0c8'); px(13,11+b,'#10260b'); }
 }
-function drawMembrane(x,y,T){ const p=.5+.5*Math.sin(t*.08);   // the membrane sealing the helm
-  g.fillStyle=`rgba(150,40,170,${.55+.25*p})`; g.fillRect(x,y,T,T);
-  g.strokeStyle='#ff8ad8'; g.lineWidth=1; g.beginPath();
-  for(let k=1;k<4;k++){ g.moveTo(x+k*T/4,y+2); g.quadraticCurveTo(x+k*T/4+(p-.5)*T*.2,y+T/2,x+k*T/4,y+T-2); } g.stroke(); }
-function drawPitTop(px,py,T,p){ g.fillStyle='#050208'; g.beginPath(); g.arc(px,py,T*.36,0,TAU); g.fill();   // a brood pit
-  g.strokeStyle=p.t>0?'#c8ffe4':'#3aff9a'; g.lineWidth=Math.max(1,T*.06); g.beginPath(); g.arc(px,py,T*.36,0,TAU); g.stroke(); }
-function drawPodTop(b,T,ox,oy){   // a boarding pod clamped to the hull, cutting its way in beside the breach
-  const K=DK, side=b.y===1?3:b.y===K.H-2?1:b.x===1?2:0, [dx,dy]=DDIR[side], cx=ox+(b.x+dx+.5)*T, cy=oy+(b.y+dy+.5)*T;
-  b.sx=cx; b.sy=cy;
-  g.save(); g.translate(Math.round(cx+dx*T*.8),Math.round(cy+dy*T*.8)); g.rotate(DANG[side]); g.scale(T/24,T/24);
-  g.globalAlpha=Math.min(1,b.t/30); g.fillStyle='#4c0f1a'; g.fillRect(-6,-8,16,16); g.fillStyle='#8e2232'; g.fillRect(-4,-7,12,14); g.fillStyle='#ff8a4a'; g.fillRect(8,-2,2,4);
-  g.restore(); g.globalAlpha=1;
-  if(b.t<100){ g.strokeStyle=(t>>1)&1?'#fff1b0':'#ffb347'; g.lineWidth=Math.max(1,T*.08); g.beginPath(); g.arc(cx,cy,T*.32,0,b.t/100*TAU); g.stroke(); }   // the cut going round
-  else { g.fillStyle='#050208'; g.beginPath(); g.arc(cx,cy,T*.32,0,TAU); g.fill(); g.strokeStyle='#ff6a3d'; g.lineWidth=Math.max(1,T*.06); g.beginPath(); g.arc(cx,cy,T*.32,0,TAU); g.stroke(); }
+function paintBrain(px,R,f,fr){   // a pink-brown brain on tentacles, a beaked face under it, 22×24
+  const b=fr&1;
+  for(let i=0;i<6;i++){ const bx=6.5+i*1.8;
+    for(let j=0;j<7;j++){ const x=bx+(bx-11)*j*.16+Math.round(Math.sin(j*.95+fr*1.57+i*2.1)), y=16+j; px(x,y,j<3?'#a24c5c':'#7e3444'); if(j<3) px(x+1,y,'#7e3444'); } }
+  dkBall(px,11,14.5+b,5.6,2.9,{l:'#c8606a',b:'#a84a56',d:'#7a2a38'});
+  if(f===0){ R(7,14+b,2,1,'#ffe08a'); R(13,14+b,2,1,'#ffe08a'); R(10,16+b,2,1,'#3a0a12'); }
+  else if(f===1){ R(14,14+b,2,1,'#ffe08a'); px(16,16+b,'#3a0a12'); }
+  dkBall(px,11,7.5+b,8.6,6.4,{l:'#efb2ae',b:'#c97a7f',d:'#9a5260'},(x,y,l)=>{
+    if(f!==1 && x===10 && y<10+b) return '#7a3442';
+    const v=Math.sin(x*1.3+Math.sin(y*1.2)*2)+Math.sin(y*1.7+x*.4)*.6; return v>1.05?(l>.4?'#b4646c':'#8a4250'):null; });
 }
+function paintBrute(px,R,f,fr){   // a great dark brain with a mouthful of teeth and four eyes, on heavy tentacles, 32×34
+  const b=fr&1;
+  for(let i=0;i<6;i++){ const bx=7.5+i*3.4;
+    for(let j=0;j<9;j++){ const x=bx+(bx-16)*j*.09+Math.round(Math.sin(j*.8+fr*1.57+i*1.7)*1.2), y=24+j; px(x,y,j<4?'#6e2242':'#4a1430'); px(x+1,y,j<6?'#4a1430':null); } }
+  dkBall(px,16,21+b,9.8,4.6,{l:'#8a2a4a',b:'#6e1c3a',d:'#4a1026'});
+  if(f===0){ dkBall(px,16,22+b,6.5,2.2,{l:'#1a0308',b:'#1a0308',d:'#1a0308'}); for(let x=11;x<=21;x+=2) px(x,20+b,'#fff2e0'); for(let x=12;x<=20;x+=2) px(x,23+b,'#fff2e0');
+    for(const x of [9,12,19,22]){ R(x,18+b,2,1,'#ffb000'); px(x,18+b,'#ffe08a'); } }
+  else if(f===1){ dkBall(px,21,22+b,4,2,{l:'#1a0308',b:'#1a0308',d:'#1a0308'}); for(let x=18;x<=24;x+=2) px(x,20+b,'#fff2e0'); for(const x of [20,24]){ R(x,18+b,2,1,'#ffb000'); px(x+1,18+b,'#ffe08a'); } }
+  dkBall(px,16,9.5+b,13,8.6,{l:'#c0587a',b:'#8a2a4a',d:'#5e1a34'},(x,y,l)=>{
+    if(f!==1 && x===15 && y<13+b) return '#4a1028';
+    const v=Math.sin(x*.95+Math.sin(y*.9)*2.2)+Math.sin(y*1.3+x*.3)*.6; return v>1.0?(l>.4?'#9a3a5a':'#5a1530'):null; });
+}
+function dkDrawUnit(u,x,y){   // x,y: where u's feet are, on screen
+  const c=Math.cos(u.a), s=Math.sin(u.a), f=s>.4?0:s<-.4?2:1, fl=f===1&&c<0, fr=Math.hypot(u.vx,u.vy)>.25?Math.floor(u.step*1.2)%4:0;
+  const crew=u.side===0, look=u.kind==='you'?'you':'bot';
+  const S=crew?dkSpr(look+f+fr,16,24,(px,R)=>paintSoldier(px,R,f,fr,DK_LOOK[look])):u.kind==='squid'?dkSpr('sq'+f+fr,18,21,(px,R)=>paintSquid(px,R,f,fr))
+    :u.kind==='blob'?dkSpr('bl'+f+fr,22,24,(px,R)=>paintBrain(px,R,f,fr)):dkSpr('br'+f+fr,32,34,(px,R)=>paintBrute(px,R,f,fr));
+  const img=u.flash>0&&(u.flash&2)?S.f:S.c, ax=S.w>>1, ay=S.h-2;
+  if(u.emerge>0) g.globalAlpha=clamp(1-u.emerge/20,0,1);
+  if(crew && f===2) dkRifle(x,y,c,s,look);   // aiming away: the rifle's behind them
+  if(fl){ g.save(); g.translate(x,y); g.scale(-1,1); g.drawImage(img,-ax,-ay); g.restore(); } else g.drawImage(img,x-ax,y-ay);
+  if(crew && f!==2) dkRifle(x,y,c,s,look);
+  g.globalAlpha=1;
+}
+function dkRifle(x,y,c,s,look){   // the rifle, from the hands out to the muzzle, pointing where they aim
+  const P=DK_LOOK[look], x0=x+c*2, y0=y-10+s, x1=x+c*11, y1=y-10+s*6, n=Math.max(1,Math.round(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));
+  g.fillStyle=P.gun; for(let i=0;i<=n;i++) g.fillRect(Math.round(x0+(x1-x0)*i/n)-1,Math.round(y0+(y1-y0)*i/n)-1,2,2);
+  g.fillStyle=P.tip; g.fillRect(Math.round(x1)-1,Math.round(y1)-1,1,1); }
+function dkDrawDowned(x,y,K){   // you, down on the deck till the medics have you up
+  g.fillStyle='rgba(0,0,0,.34)'; g.fillRect(x-12,y-1,24,3);
+  g.fillStyle='#0b0a09'; g.fillRect(x-12,y-4,3,3); g.fillStyle='#14110e'; g.fillRect(x-9,y-5,14,5); g.fillStyle='#24211e'; g.fillRect(x-9,y-5,14,2);
+  g.fillStyle='#c87838'; g.fillRect(x-3,y-6,3,2); g.fillStyle='#2a2724'; g.fillRect(x+5,y-7,6,6); g.fillStyle='#3a9cff'; g.fillRect(x+8,y-5,2,2);
+  if((K.t>>4)&1){ g.fillStyle='#ff4d6d'; g.fillRect(x-1,y-22,2,6); g.fillRect(x-3,y-20,6,2); } }
+function dkDrawSys(S,X,Y,K){   // one of the Resolute's systems: a machine standing on the deck, its state on its top, its lights on its face
+  const W=S.w*DT, H=S.h*DT, ph=14, T=Y-ph, hot=K.t-S.hackT<8, dead=S.dead;
+  g.fillStyle='rgba(0,0,0,.3)'; g.fillRect(X+1,Y+H,W-2,3);
+  g.fillStyle=dead?'#1a1014':'#1c2230'; g.fillRect(X,Y+H-ph,W,ph); g.fillStyle=dead?'#2a1a1f':'#2c3546'; g.fillRect(X,Y+H-ph,W,2);
+  for(let i=0;i<Math.floor(W/10)-1;i++){ g.fillStyle=dead?'#3a2026':hot&&(K.t>>2)&1?'#ff4d6d':((K.t>>3)+i)%4?'#2f6fa0':'#4dffa6'; g.fillRect(X+6+i*10,Y+H-ph+6,4,2); }
+  g.fillStyle=dead?'#1a1014':hot&&(K.t>>2)&1?'#3a0a14':'#121a2a'; g.fillRect(X,T,W,H); g.strokeStyle=dead?'#5a2a33':hot?'#ff4d6d':'#2f6fa0'; g.lineWidth=2; g.strokeRect(X+1,T+1,W-2,H-2);
+  if(S.k==='R'){ const pl=.5+.5*Math.sin(K.t*.1); g.strokeStyle=dead?'#4a2a20':'#4dffa6'; g.lineWidth=3; g.beginPath(); g.arc(X+W/2,T+H/2,Math.min(W,H)*.36,0,TAU); g.stroke();
+    g.fillStyle=dead?'#3a1a10':`rgba(77,255,166,${.5+.4*pl})`; g.beginPath(); g.arc(X+W/2,T+H/2,Math.min(W,H)*.2,0,TAU); g.fill(); }
+  else for(let i=0;i<S.h*2;i++){ g.fillStyle=dead?'#3a2026':((K.t>>4)+i)%3?'#43f0ff':'#9ff6ff'; g.fillRect(X+6,T+5+i*9,W-12,5); }
+  if(!dead){ const w=W+10, x=X-5, y=T-9; g.fillStyle='rgba(5,8,18,.85)'; g.fillRect(x-1,y-1,w+2,5); g.fillStyle=S.hp>60?'#4dffa6':S.hp>30?'#ffb347':'#ff4d6d'; g.fillRect(x,y,Math.max(1,w*S.hp/S.max),3); }
+}
+function dkDrawNode(n,x,y,K){   // a nerve node: a bulb on a fleshy stalk, rooted in the deck
+  if(n.dead){ g.fillStyle='#1a0818'; g.beginPath(); g.ellipse(x,y+4,17,8,0,0,TAU); g.fill(); g.fillStyle='#2a0d27'; g.fillRect(x-3,y-8,6,12); return; }
+  const pl=.5+.5*Math.sin(K.t*.12+n.x);
+  g.fillStyle='#3a0f3a'; g.beginPath(); g.ellipse(x,y+4,19,9,0,0,TAU); g.fill();
+  g.strokeStyle='#8a3a9a'; g.lineWidth=2; for(let k=0;k<7;k++){ const a=k*TAU/7+.3; g.beginPath(); g.moveTo(x+Math.cos(a)*6,y+4+Math.sin(a)*3); g.lineTo(x+Math.cos(a)*23,y+4+Math.sin(a)*11); g.stroke(); }
+  g.fillStyle='#5a1c50'; g.fillRect(x-4,y-14,8,18); g.fillStyle='#7a2a6a'; g.fillRect(x-4,y-14,2,18);
+  g.fillStyle=K.t-n.hitT<6?'#ffffff':`rgba(255,140,255,${.75+.25*pl})`; g.beginPath(); g.arc(x,y-20,9+pl*2,0,TAU); g.fill();
+  g.fillStyle='#ffd6ff'; g.beginPath(); g.arc(x-3,y-23,2.5,0,TAU); g.fill();
+  g.fillStyle='rgba(5,8,18,.85)'; g.fillRect(x-17,y-40,34,5); g.fillStyle='#d36bff'; g.fillRect(x-16,y-39,32*n.hp/n.max,3);
+}
+function dkDrawHelm(H,X,Y,K){   // the helm: the flagship's own brain in its jar, on a plinth
+  const W=H.w*DT, Hh=H.h*DT, T=Y-8, jx=X+W/2, jy=T+Hh/2;
+  g.fillStyle='rgba(0,0,0,.3)'; g.fillRect(X+1,Y+Hh,W-2,3);
+  g.fillStyle='#1a0818'; g.fillRect(X,Y+Hh-8,W,8); g.fillStyle='#2a0d27'; g.fillRect(X,T,W,Hh);
+  g.fillStyle='rgba(60,200,140,.32)'; g.fillRect(jx-14,jy-30,28,32);
+  g.fillStyle='#e48ac8'; g.beginPath(); g.ellipse(jx,jy-14,11,9,0,0,TAU); g.fill();
+  g.strokeStyle='#a04a88'; g.lineWidth=1; g.beginPath(); g.moveTo(jx,jy-23); g.lineTo(jx,jy-6); g.moveTo(jx-8,jy-16); g.quadraticCurveTo(jx-4,jy-20,jx-2,jy-12); g.moveTo(jx+8,jy-16); g.quadraticCurveTo(jx+4,jy-20,jx+2,jy-12); g.stroke();
+  g.strokeStyle='rgba(220,240,255,.7)'; g.strokeRect(jx-14.5,jy-30.5,29,33); g.fillStyle='rgba(220,240,255,.3)'; g.fillRect(jx-12,jy-28,2,28);
+  g.fillStyle='#5a4a6a'; g.fillRect(jx-16,jy-33,32,4); g.fillStyle='#8a7a9a'; g.fillRect(jx-16,jy-33,32,1);
+}
+function dkDrawMembrane(p,X,Y,K){   // the membrane sealing the helm off: a living wall
+  const W=p.w*DT, H=p.h*DT, ph=22, pl=.5+.5*Math.sin(K.t*.08);
+  g.fillStyle=`rgba(150,40,170,${.75+.2*pl})`; g.fillRect(X,Y-ph,W,H); g.fillStyle='rgba(100,20,112,.92)'; g.fillRect(X,Y+H-ph,W,ph);
+  g.strokeStyle='#ff8ad8'; g.lineWidth=1; g.strokeRect(X+.5,Y-ph+.5,W-1,H-1);
+  for(let i=0;i<3;i++){ const vx=X+6+i*13; g.beginPath(); g.moveTo(vx,Y+H-ph+2); g.quadraticCurveTo(vx+4*Math.sin(K.t*.05+i),Y+H-ph/2,vx,Y+H-2); g.stroke(); }
+}
+function dkDrawPod(K,b,cx,cy){   // a boarding vessel docked on the hull at a breach, its nose against the wall
+  const S=BVESSEL, x=b.cx+b.nx*44-cx, y=b.cy+b.ny*44-cy; if(x<-60||y<-60||x>VW+60||y>VH+60) return;
+  g.save(); g.translate(x,y); g.rotate(Math.atan2(-b.ny,-b.nx)); g.scale(1.6,1.6); g.drawImage(S.img,-S.cx,-S.cy); g.restore(); }
 function drawDeckBanner(B){ const a=Math.min(1,B.t/12,(B.life-B.t)/30); if(a<=0) return;
-  const good=B.good, col=good?'#4dffa6':'#ff4d6d', y=Math.round(VH*.4);
+  const good=B.good, col=good?'#4dffa6':'#ff4d6d', y=Math.round(VH*.36);
   g.globalAlpha=a*.85; g.fillStyle=good?'rgba(0,22,14,.82)':'rgba(20,0,6,.8)'; g.fillRect(0,y,VW,44);
   g.globalAlpha=a; g.fillStyle=col; g.fillRect(0,y,VW,1); g.fillRect(0,y+43,VW,1);
   g.textAlign='center'; g.font='bold 22px monospace'; g.fillText(B.title,VW/2,y+24);
@@ -6386,55 +6460,96 @@ function drawDeckBanner(B){ const a=Math.min(1,B.t/12,(B.life-B.t)/30); if(a<=0)
   g.globalAlpha=1; g.textAlign='left'; }
 function drawDeckFrame(){
   if(TOUCH){ g=wg; setView(); }
-  const K=DK, P=K.p, C=K.pal;
+  const K=DK, P=K.you;
+  if(!K.mini) K.mini=dkPaintMini();
   g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over';
-  g.fillStyle=C.space; g.fillRect(0,0,VW,VH);
-  for(const s of K.stars){ g.globalAlpha=.2+.5*s.b*(.6+.4*Math.sin(t*.03+s.b*9)); g.fillStyle=s.b>.8?'#dcefff':'#7f8fbf'; g.fillRect((s.x*VW)|0,(s.y*VH)|0,1,1); }
+  const tx=clamp(P.x-VW/2,-90,K.W*DT-VW+90), ty=clamp(P.y-10-VH/2,-90,K.H*DT-VH+90);
+  if(!K.cam.set){ K.cam.x=tx; K.cam.y=ty; K.cam.set=true; } else { K.cam.x+=(tx-K.cam.x)*.18; K.cam.y+=(ty-K.cam.y)*.18; }
+  const sh=shake>.2, cx=Math.round(K.cam.x+(sh?rnd(-shake,shake)*.3:0)), cy=Math.round(K.cam.y+(sh?rnd(-shake,shake)*.3:0));
+  g.fillStyle='#03040a'; g.fillRect(0,0,VW,VH);
+  const span=VW+400;
+  for(const s of K.stars){ const x=((s.x*span-cx*.25)%span+span)%span-200, y=((s.y*(VH+300)-cy*.25)%(VH+300)+VH+300)%(VH+300)-150;
+    g.globalAlpha=.25+.5*s.b; g.fillStyle=s.b>.85?'#ffffff':'#8fa2d8'; g.fillRect(x|0,y|0,1,1); }
   g.globalAlpha=1;
-  const L=deckLayout(), T=L.T, sh=shake>.2, ox=L.ox+(sh?Math.round(rnd(-shake,shake)*.25):0), oy=L.oy+(sh?Math.round(rnd(-shake,shake)*.25):0);
-  if(!K.art || K.artT!==T || K.artOpen!==K.open){ K.art=buildDeckArt(T); K.artT=T; K.artOpen=K.open; }
-  const X=x=>ox+(x+.5)*T, Y=y=>oy+(y+.5)*T;
-  g.strokeStyle=K.kind==='defend'?'rgba(67,240,255,.2)':'rgba(211,107,255,.2)'; g.lineWidth=1; g.strokeRect(ox-3.5,oy-3.5,K.W*T+7,K.H*T+7);   // the outer hull
-  g.drawImage(K.art,ox,oy);
-  const cs=Math.max(2,Math.round(T*.12)), bp=.5+.5*Math.sin(t*.12);   // power cells, and the big overcharge cells
-  for(let y=0;y<K.H;y++) for(let x=0;x<K.W;x++){ const c=K.cells[y*K.W+x]; if(!c) continue;
-    if(c===1){ g.fillStyle=C.cell; g.fillRect(Math.round(X(x)-cs/2),Math.round(Y(y)-cs/2),cs,cs); }
-    else { g.fillStyle='#ffd27a'; g.beginPath(); g.arc(X(x),Y(y),T*(.17+.05*bp),0,TAU); g.fill(); g.fillStyle='#fff6d0'; g.beginPath(); g.arc(X(x)-T*.04,Y(y)-T*.04,T*.07,0,TAU); g.fill(); } }
-  for(const S of K.sys) drawSysTop(X(S.x),Y(S.y),T,S);
-  for(const n of K.nodes) drawNodeTop(X(n.x),Y(n.y),T,n);
-  if(K.jar) drawHelmTop(X(K.jar.x),Y(K.jar.y),T,K.jar);
-  if(!K.open) for(const d of K.doors) drawMembrane(ox+d.x*T,oy+d.y*T,T);
-  for(const p of K.pits) drawPitTop(X(p.x),Y(p.y),T,p);
-  for(const b of K.pods) drawPodTop(b,T,ox,oy);
-  for(const f of K.foes) drawBoarderTop(X(f.x),Y(f.y),T,f);
-  if(P.down<=0){ if(!(P.inv>0 && (t>>2)&1) || K.done) drawPilotTop(X(P.x),Y(P.y),T,P); }
-  else drawDownTop(X(P.x),Y(P.y),T,P);
-  for(const p of K.fx){ const a=clamp(p.life/p.max,0,1);   // sparks and rings
-    if(p.ring){ g.globalAlpha=a*.9; g.strokeStyle=p.col; g.lineWidth=Math.max(1,T*.06); g.beginPath(); g.arc(X(p.x),Y(p.y),T*(.3+(p.R||1.6)*(1-a)),0,TAU); g.stroke(); }
-    else { g.globalAlpha=a; g.fillStyle=p.col; const r=Math.max(1,Math.round(T*.07*p.r)); g.fillRect(Math.round(X(p.x)-r/2),Math.round(Y(p.y)-r/2),r,r); } }
+  for(const p of K.pods) dkDrawPod(K,p.b,cx,cy);
+  g.drawImage(K.art,-cx,-cy); g.drawImage(K.decal,-cx,-cy);
+  const on=(x,y,m)=>x>cx-m&&y>cy-m&&x<cx+VW+m&&y<cy+VH+m;
+  for(const p of K.pods){ const b=p.b, x=b.cx-cx, y=b.cy-cy; if(!on(b.cx,b.cy,40)) continue;   // the breach, cut glowing through the wall
+    const k=Math.min(1,p.t/120); g.strokeStyle=k<1?((K.t>>1)&1?'#fff1b0':'#ffb347'):'#ff6a3d'; g.lineWidth=2; g.beginPath(); g.arc(x+b.nx*12,y+b.ny*12,9,0,k*TAU); g.stroke(); }
+  for(const p of K.pits){ if(!on(p.x,p.y,30)) continue; g.fillStyle='#050208'; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.fill();   // the brood pits
+    g.strokeStyle=p.t>0?'#c8ffe4':'#3aff9a'; g.lineWidth=2; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.stroke(); }
+  if(K.helm && K.open && on(K.helm.cx,K.helm.cy,90)){ const H=K.helm;   // where you stand to take the helm
+    g.strokeStyle='rgba(159,246,255,.35)'; g.lineWidth=1; g.setLineDash([4,4]); g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,0,TAU); g.stroke(); g.setLineDash([]);
+    if(H.prog>0){ g.strokeStyle='#9ff6ff'; g.lineWidth=4; g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,-Math.PI/2,-Math.PI/2+H.prog*TAU); g.stroke(); } }
+  // everything standing on the deck, back to front: the props, the systems, the nodes, the helm, and everyone in the fight
+  const L=[];
+  for(const s of K.props) if(on(s.x+s.w/2,s.key,s.w/2+90)) L.push({k:s.key,s});
+  for(const S of K.sys) if(on(S.cx,S.cy,100)) L.push({k:(S.y+S.h)*DT,S});
+  for(const n of K.nodes) if(on(n.cx,n.cy,70)) L.push({k:(n.y+n.h)*DT,n});
+  if(K.helm && on(K.helm.cx,K.helm.cy,100)) L.push({k:(K.helm.y+K.helm.h)*DT,H:K.helm});
+  if(!K.open) for(const p of K.map.props) if(p.kind==='membrane' && on(p.x*DT,p.y*DT,90)) L.push({k:(p.y+p.h)*DT,m:p});
+  for(const u of K.units) if(!u.dead && on(u.x,u.y,44)) L.push({k:u.y,u});
+  L.sort((a,b)=>a.k-b.k);
+  g.fillStyle='rgba(0,0,0,.34)';   // their shadows
+  for(const it of L){ const u=it.u; if(!u || u.emerge>0 || u.down>0) continue; const x=Math.round(u.x-cx), y=Math.round(u.y-cy), w=u.kind==='brute'?15:u.kind==='blob'?10:8;
+    g.fillRect(x-w,y-1,w*2,3); g.fillRect(x-w+2,y-2,w*2-4,5); }
+  if(P.down<=0){ g.strokeStyle='rgba(67,240,255,.8)'; g.lineWidth=1; g.beginPath(); g.ellipse(Math.round(P.x-cx)+.5,Math.round(P.y-cy)+.5,11,5,0,0,TAU); g.stroke(); }   // (so you can pick yourself out of the crowd)
+  for(const it of L){
+    if(it.s) g.drawImage(it.s.img,it.s.x-cx,it.s.y-cy);
+    else if(it.S) dkDrawSys(it.S,it.S.x*DT-cx,it.S.y*DT-cy,K);
+    else if(it.n) dkDrawNode(it.n,it.n.cx-cx,it.n.cy-cy,K);
+    else if(it.H) dkDrawHelm(it.H,it.H.x*DT-cx,it.H.y*DT-cy,K);
+    else if(it.m) dkDrawMembrane(it.m,it.m.x*DT-cx,it.m.y*DT-cy,K);
+    else { const u=it.u, x=Math.round(u.x-cx), y=Math.round(u.y-cy);
+      if(u.kind!=='you') dkDrawUnit(u,x,y); else if(u.down>0) dkDrawDowned(x,y,K); else if(!(u.inv>0 && (K.t>>2)&1)) dkDrawUnit(u,x,y); } }
+  for(const b of K.bolts){ const x=Math.round(b.x-cx), y=Math.round(b.y-b.h-cy);   // their bolts: hot red slugs with a tail
+    g.fillStyle='rgba(255,42,74,.5)'; g.fillRect(Math.round(x-b.vx*2)-1,Math.round(y-b.vy*2)-1,2,2); g.fillStyle='rgba(255,42,74,.3)'; g.fillRect(Math.round(x-b.vx*3.6),Math.round(y-b.vy*3.6),1,1);
+    g.fillStyle='#ff2a4a'; g.fillRect(x-2,y-2,4,4); g.fillStyle='#ffd0d6'; g.fillRect(x-1,y-1,2,2); }
+  for(const b of K.beams){ const k=b.life/b.max;   // the lasers: instant lines
+    g.globalAlpha=k; g.strokeStyle=b.you?'#9ff6ff':'#43a8ff'; g.lineWidth=b.you?2.5:2; g.beginPath(); g.moveTo(b.x0-cx,b.y0-cy); g.lineTo(b.x1-cx,b.y1-cy); g.stroke();
+    g.strokeStyle='#ffffff'; g.lineWidth=1; g.beginPath(); g.moveTo(b.x0-cx,b.y0-cy); g.lineTo(b.x1-cx,b.y1-cy); g.stroke(); }
   g.globalAlpha=1;
-  g.globalCompositeOperation='lighter';   // light: the overcharge cells, the arc, the swing, the systems' cores, the nodes, the pits, the cutting
-  for(let y=0;y<K.H;y++) for(let x=0;x<K.W;x++) if(K.cells[y*K.W+x]===2) glow(X(x),Y(y),T*.7,'#ffd27a',.35+.2*bp);
-  if(P.down<=0 && P.over>0) glow(X(P.x),Y(P.y),T*1.4,'#43f0ff',.35+.15*Math.random());
-  if(P.down<=0 && P.swing>0){ const [fx,fy]=DDIR[P.face]; glow(X(P.x+fx*.7),Y(P.y+fy*.7),T*.8,'#9ff6ff',P.swing/10*.5); }
-  for(const S of K.sys) if(!S.dead) glow(X(S.x),Y(S.y),T*.9,K.t-S.hackT<8?'#ff4d6d':S.k==='R'?'#4dffa6':'#43f0ff',.25);
-  for(const n of K.nodes) glow(X(n.x),Y(n.y),T*.8,n.done?'#43f0ff':'#d36bff',.3+.15*Math.sin(t*.1));
-  if(K.jar) glow(X(K.jar.x),Y(K.jar.y),T,K.open?'#ff8ad8':'#7a2a6a',.35);
-  for(const p of K.pits) glow(X(p.x),Y(p.y),T*.8,'#3aff9a',.18+(p.t>0?.4:0));
-  for(const b of K.pods) if(b.sx!=null) glow(b.sx,b.sy,T*.9,b.t<100?'#ffb347':'#ff4d6d',b.t<100?.45+.2*Math.random():.25);
-  for(const f of K.foes) if(f.flash>0) glow(X(f.x),Y(f.y),T*.6,'#ffffff',f.flash/8*.6);
-  g.globalAlpha=1; g.globalCompositeOperation='source-over';
-  g.textAlign='center'; g.font=wFont(7);   // the systems' names, and the points popping up
-  for(const S of K.sys){ g.fillStyle=S.dead?'rgba(255,77,109,.9)':K.t-S.hackT<8&&(t>>3)&1?'#ff4d6d':C.label;
-    g.fillText(S.dead?S.name+' · LOST':S.name,X(S.x),S.k==='E'?oy+(S.y+1)*T+T*.36:oy+S.y*T-T*.14); }
-  if(K.kind==='assault'){ g.fillStyle=C.label; g.fillText(K.open?'HELM':'HELM · SEALED',X(K.jar.x)-T*.2,oy+K.jar.y*T-T*.14); }
-  for(const p of K.pops){ g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.fillText(p.txt,X(p.x),Y(p.y-(60-p.life)*.012)); }
+  for(const p of K.fx){ const a=clamp(p.life/p.max,0,1), x=p.x-cx, y=p.y-cy;   // sparks, goo, rings
+    if(p.ring){ g.globalAlpha=a*.9; g.strokeStyle=p.col; g.lineWidth=2; g.beginPath(); g.arc(x,y,p.r0+(p.r1-p.r0)*(1-a),0,TAU); g.stroke(); }
+    else if(p.fire){ g.globalAlpha=a; g.fillStyle=a>.5?'#ffd27a':'#ff6a2a'; g.beginPath(); g.arc(x,y,p.r*(1.4-a),0,TAU); g.fill(); }
+    else { g.globalAlpha=a; g.fillStyle=p.col; const r=p.r|0||1; g.fillRect(Math.round(x-r/2),Math.round(y-r/2),r,r); } }
+  g.globalAlpha=1;
+  g.globalCompositeOperation='lighter';   // the light: beams, bolts, the reactor, the nodes, fires
+  for(const b of K.beams){ const k=b.life/b.max; glow(b.x1-cx,b.y1-cy,b.you?12:9,b.you?'#9ff6ff':'#43a8ff',.6*k); glow(b.x0-cx,b.y0-cy,7,'#cfefff',.5*k); }
+  for(const b of K.bolts) glow(b.x-cx,b.y-b.h-cy,9,'#ff2a4a',.6);
+  for(const p of K.fx) if(p.fire) glow(p.x-cx,p.y-cy,p.r*2.4,'#ff9a3d',.5*p.life/p.max);
+  for(const S of K.sys) if(!S.dead && on(S.cx,S.cy,80)) glow(S.cx-cx,S.cy-cy-14,S.k==='R'?60:30,K.t-S.hackT<8?'#ff4d6d':S.k==='R'?'#4dffa6':'#43f0ff',.3);
+  for(const n of K.nodes) if(!n.dead && on(n.cx,n.cy,60)) glow(n.cx-cx,n.cy-cy-20,40,'#d36bff',.35+.15*Math.sin(K.t*.1));
+  for(const p of K.pods){ const b=p.b; if(p.t<130 && on(b.cx,b.cy,40)) glow(b.cx+b.nx*12-cx,b.cy+b.ny*12-cy,24,'#ffb347',.45+.2*Math.random()); }
+  for(const [x,y] of K.map.thrusters||[]) glow(x*DT-cx,y*DT-cy,70,'#ff9a3d',.35+.08*Math.sin(K.t*.3));   // the drives, burning out past the stern
+  if(P.down<=0) glow(P.x-cx,P.y-cy-10,22,'#43f0ff',.12);
+  g.globalCompositeOperation='source-over';
+  g.textAlign='center'; g.font=wFont(7);
+  for(const S of K.sys) if(on(S.cx,S.cy,80)){ g.fillStyle=S.dead?'rgba(255,77,109,.9)':K.t-S.hackT<8&&(K.t>>3)&1?'#ff4d6d':'rgba(159,246,255,.8)'; g.fillText(S.dead?S.name+' · LOST':S.name,S.cx-cx,S.y*DT-cy-28); }
+  if(K.helm && on(K.helm.cx,K.helm.cy,90)){ const H=K.helm; g.fillStyle='rgba(230,180,255,.85)'; g.fillText(K.open?'HELM':'HELM · SEALED',H.cx-cx,H.y*DT-8+H.h*DT/2-cy-38); }
+  for(const p of K.pops){ g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.fillText(p.txt,p.x-cx,p.y-cy-(60-p.life)*.4); }
   g.globalAlpha=1; g.textAlign='left';
-  // the overlay (on a phone, its own layer): the flash of a hit, the banners, the fade
-  if(TOUCH){ ctx.drawImage(bb,0,0,WVW,WVH,0,0,cv.width,cv.height);
-    g=ug; VW=UVW; VH=UVH; g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.clearRect(0,0,VW,VH); }
+  // the overlay (on a phone, its own layer): the minimap, arrows to trouble off screen, the banners
+  const z=TOUCH?WZ:1;
+  if(TOUCH){ ctx.drawImage(bb,0,0,WVW,WVH,0,0,cv.width,cv.height); g=ug; VW=UVW; VH=UVH; g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.clearRect(0,0,VW,VH); }
   if(flash>0){ g.fillStyle=`rgba(255,140,120,${flash*.5})`; g.fillRect(0,0,VW,VH); }
-  if(P.down>0 && !K.lost){ g.textAlign='center'; g.globalAlpha=Math.min(1,(150-P.down)/14);
+  const ms=TOUCH?.78:1.6, mw=K.W*ms, mh=K.H*ms, mx=VW-mw-8-SAFE.r, my=8+SAFE.t;   // the minimap
+  g.fillStyle='rgba(5,8,18,.72)'; g.fillRect(mx-2,my-2,mw+4,mh+4); g.strokeStyle='rgba(67,240,255,.5)'; g.lineWidth=1; g.strokeRect(mx-1.5,my-1.5,mw+3,mh+3);
+  g.save(); g.imageSmoothingEnabled=false; g.drawImage(K.mini,mx,my,mw,mh); g.restore();
+  const dot=(x,y,col,r)=>{ g.fillStyle=col; g.fillRect(Math.round(mx+x/DT*ms-r/2),Math.round(my+y/DT*ms-r/2),r,r); };
+  for(const S of K.sys) dot(S.cx,S.cy,S.dead?'#5a2a33':K.t-S.hackT<8&&(K.t>>2)&1?'#ff4d6d':'#4dffa6',TOUCH?3:4);
+  for(const n of K.nodes) if(!n.dead) dot(n.cx,n.cy,(K.t>>3)&1?'#d36bff':'#ffffff',TOUCH?3:4);
+  if(K.helm) dot(K.helm.cx,K.helm.cy,K.open?'#9ff6ff':'#7a2a6a',TOUCH?3:4);
+  for(const p of K.pods) if(p.t<400) dot(p.b.cx,p.b.cy,'#ffb347',2);
+  for(const u of K.units){ if(u.dead||u.emerge>0) continue; if(u.side===1) dot(u.x,u.y,'#ff4d6d',TOUCH?1:2); else if(u.kind==='bot') dot(u.x,u.y,'#e8742a',TOUCH?1:2); }
+  dot(P.x,P.y,(K.t>>3)&1?'#43f0ff':'#ffffff',TOUCH?3:4);
+  for(const S of K.sys){ if(S.dead || K.t-S.hackT>=8) continue; const sx=(S.cx-cx)/z, sy=(S.cy-cy)/z; if(sx>0&&sy>0&&sx<VW&&sy<VH) continue;   // an arrow to a system under attack, off screen
+    const a=Math.atan2(sy-VH/2,sx-VW/2), ex=clamp(VW/2+Math.cos(a)*VW,24,VW-24), ey=clamp(VH/2+Math.sin(a)*VH,30,VH-24);
+    g.save(); g.translate(ex,ey); g.rotate(a); g.fillStyle=(K.t>>3)&1?'#ff4d6d':'#ffd0d6'; g.beginPath(); g.moveTo(9,0); g.lineTo(-6,-6); g.lineTo(-6,6); g.closePath(); g.fill(); g.restore();
+    g.fillStyle='#ffd0d6'; g.font='8px monospace'; g.textAlign='center'; g.fillText(S.name,ex-Math.cos(a)*18,ey-Math.sin(a)*18+3); g.textAlign='left'; }
+  if(!TOUCH && K.t-dkMouse.t<150 && P.down<=0){ const k=innerWidth/VW, x=dkMouse.sx/k, y=dkMouse.sy/k;   // the crosshair, when the mouse is aiming
+    g.strokeStyle='rgba(159,246,255,.85)'; g.lineWidth=1; g.beginPath(); g.arc(x,y,6,0,TAU); g.moveTo(x-10,y); g.lineTo(x-3,y); g.moveTo(x+3,y); g.lineTo(x+10,y); g.moveTo(x,y-10); g.lineTo(x,y-3); g.moveTo(x,y+3); g.lineTo(x,y+10); g.stroke(); }
+  if(P.down>0 && !K.lost){ g.textAlign='center'; g.globalAlpha=Math.min(1,(240-P.down)/14);
     g.fillStyle='#ff4d6d'; g.font='bold 18px monospace'; g.fillText('YOU\'RE DOWN',VW/2,VH*.24);
     g.fillStyle='#cfe3ff'; g.font='9px monospace'; g.fillText('THE MEDICS HAVE YOU · BACK ON YOUR FEET IN '+Math.ceil(P.down/60),VW/2,VH*.24+14);
     g.globalAlpha=1; g.textAlign='left'; }
@@ -6443,6 +6558,19 @@ function drawDeckFrame(){
   if(TOUCH){ ctx.drawImage(ub,0,0,UVW,UVH,0,0,cv.width,cv.height); g=wg; VW=WVW; VH=WVH; }
   else { ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(bb,0,0,VW,VH,0,0,cv.width,cv.height); }
 }
+// the mouse, on a desktop: point to aim, hold the button to fire
+cv.addEventListener('mousemove',e=>{ if(!DK||TOUCH) return; dkMouse.sx=e.clientX; dkMouse.sy=e.clientY; dkMouse.t=DK.t; });
+cv.addEventListener('mousedown',e=>{ if(!DK||TOUCH||e.button!==0||state!=='deck') return; dkMouse.sx=e.clientX; dkMouse.sy=e.clientY; dkMouse.t=DK.t; dkMouse.down=true; e.preventDefault(); });
+window.addEventListener('mouseup',()=>{ dkMouse.down=false; });
+window.addEventListener('blur',()=>{ dkMouse.down=false; });
+
+// ---- a reaver boarding vessel: an armoured ram with grapple claws at the nose and one fat drive (nose to the right) ----
+const BVESSEL=(()=>{ const P=HULLS.raider, M=METAL;
+  return {cx:15,cy:9, img:paintHull(30,18,R=>{
+    R(6,3,16,6,P.hull); R(6,3,16,1,P.lite); R(6,8,16,1,P.dark); R(9,4,10,2,P.dark); R(10,4,2,1,P.trim); R(15,4,2,1,P.trim);   // the plated body, its seams and lights
+    R(2,5,4,4,M.dark); R(2,5,4,1,M.base); R(1,6,1,3,M.deep);                                                              // the drive
+    R(22,4,4,5,M.base); R(22,4,4,1,M.lite); R(26,2,3,2,M.lite); R(27,4,2,1,M.dark); R(26,6,2,3,M.base); })};                // the ram, the grapple claws
+})();
 
 // ---- the Matriarch, for the radio: violet skin, a crown of bone, four amber eyes, a gold collar ----
 function paintMatriarch(S){
@@ -6537,10 +6665,236 @@ function bigWorld(kind){
   return BIGW[kind]=c;
 }
 function drawBigWorld(cx,cy){   // (a touch of parallax as you fly)
-  const earth=LV.world==='earth', img=bigWorld(LV.world), z=.05;
-  const r=VH*(earth?.62:.56), px=VW*(earth?.14:.88)-(cx-(WORLD-VW)/2)*z, py=VH*(earth?1.06:-.08)-(cy-(WORLD-VH)/2)*z;
-  g.globalCompositeOperation='lighter'; glow(px,py,r*1.2,earth?'#2a6cff':'#b04ad8',.16); g.globalCompositeOperation='source-over';
+  const earth=LV.world==='earth', z=.04;
+  if(earth){ const sx=VW*.03-(cx-(WORLD-VW)/2)*.015, sy=-VH*.08-(cy-(WORLD-VH)/2)*.015;   // the Sun, off to the upper left, lighting everything
+    g.globalCompositeOperation='lighter'; glow(sx,sy,VH*.95,'#ffb85a',.1); glow(sx,sy,VH*.24,'#fff0c8',.42); glow(sx,sy,VH*.07,'#ffffff',.85); g.globalCompositeOperation='source-over'; }
+  const img=earth?earthGlobe():bigWorld(LV.world);
+  const r=VH*(earth?.5:.56), px=VW*(earth?.2:.88)-(cx-(WORLD-VW)/2)*z, py=VH*(earth?.78:-.08)-(cy-(WORLD-VH)/2)*z;
+  g.globalCompositeOperation='lighter'; glow(px,py,r*1.18,earth?'#3a80ff':'#b04ad8',earth?.22:.16); g.globalCompositeOperation='source-over';
   const sm=g.imageSmoothingEnabled; g.imageSmoothingEnabled=true; g.drawImage(img,px-r,py-r,r*2,r*2); g.imageSmoothingEnabled=sm;
+}
+
+// ---- Earth Orbit is our own solar system: Earth with its real continents, the Moon, and the planets as they really look ----
+// coastlines as [lon,lat, lon,lat, ...] runs: rough, but true to shape. Painted onto a flat map once, then wrapped round the globe
+const EARTH_LAND=[
+  [-168,65.6,-165,68.5,-156.8,71.3,-148,70.3,-141,69.6,-135,69.5,-128,70.1,-118,68.8,-110,68,-102,67.8,-96,68.2,-94,71.5,-90,69,-85,69.6,-82,66.5,-86,66,-88,64.2,
+   -91,62.8,-94,61,-94.2,58.8,-92.5,57,-88,56,-85,55.3,-82.3,52.9,-79.5,51.5,-78.6,54.5,-77,58,-78,60.5,-77.5,62.5,-72,61.5,-65,60.4,-61.5,56.5,-58,54,-56,52.4,
+   -59.5,50.2,-64,50.2,-66.5,49.5,-64.5,48.4,-65,47.1,-64,46.3,-61,45.6,-60,45.9,-63.5,44.6,-66,43.6,-67,44.7,-70,43.5,-70.5,41.8,-74,40.6,-75.5,38.5,-76,37,
+   -75.5,35.2,-78.5,33.8,-81,32,-81.4,30.3,-80.1,26.8,-80.4,25.2,-81.8,26.1,-82.6,27.9,-83.8,29.9,-85.4,29.7,-88,30.5,-89.5,29,-91.5,29.5,-94,29.6,-97.2,27.8,
+   -97.5,25.8,-97.8,22.3,-96.1,19.2,-94.5,18.2,-91.5,18.5,-90.4,20.8,-87.1,21.5,-87.5,18.5,-88.3,15.9,-84,15.9,-83.2,15,-83.6,11,-82,9,-79.5,9.6,-77.4,8.7,
+   -77.9,7.2,-79.5,8.9,-80.4,7.3,-83,8.3,-85.7,10.8,-87.6,13.2,-91.4,13.9,-94.4,16.2,-96.5,15.7,-99.9,16.8,-105.3,19.9,-105.7,22.5,-106.4,23.2,-108.9,25.6,
+   -110.9,27.9,-112.8,30,-114.7,31.6,-113.5,29.5,-112.4,27.3,-111.2,25.8,-110.3,24.2,-109.9,22.9,-112.1,24.8,-115.1,27.8,-115.8,30.4,-116.6,31.8,-117.1,32.5,
+   -118.5,34,-120.6,34.6,-122.5,37.7,-124.2,40.4,-124.5,43,-124,46.2,-124.7,48.4,-125.5,48.9,-128,50.8,-127.5,52,-130.5,54.5,-133.5,57,-135.5,57.7,-137,58.5,
+   -140,59.8,-144,60,-146.5,60.9,-149.5,59.5,-151.8,59.2,-154,57.5,-156.5,57,-158.5,56,-162,55,-164.5,54.5,-160,56.5,-157,58.8,-160,58.6,-162,59.9,-165,60.5,
+   -165.3,61.6,-164.8,63.4,-161,63.9,-162,64.5,-166.3,64.5],   // North America
+  [-77.4,8.7,-76,9.5,-75.5,10.5,-74,11.2,-71.9,12.4,-71.3,11,-70,12.2,-68,10.5,-66,10.6,-64,10.6,-62,10.7,-60.8,8.6,-58.5,7,-57,6,-54,5.8,-52,4.8,-51,3.5,
+   -50,1.8,-49.5,0,-48.5,-1.2,-44.5,-2.6,-41.5,-2.9,-38.5,-3.7,-35.2,-5.5,-34.8,-7.1,-35.2,-9.2,-37,-11,-38.5,-13,-39,-15,-39.2,-17.8,-40.3,-20.3,-41,-22,
+   -43.2,-22.9,-46.3,-24,-48.5,-26.5,-48.6,-28.5,-50.2,-30.9,-52.5,-33,-53.4,-33.7,-54.9,-34.9,-56.2,-34.9,-58.4,-34.5,-57.2,-35.6,-56.7,-36.3,-57.5,-38,
+   -62.3,-38.8,-62.8,-40.7,-65,-41,-63.6,-42.6,-65,-45,-67.5,-46,-65.8,-47.8,-67.7,-49.3,-69,-51.6,-68.4,-52.4,-65.3,-54.8,-67.3,-55.9,-70,-55.1,-74.5,-52.5,
+   -75.5,-50,-75.3,-47,-75.7,-46.6,-74,-44,-74,-43,-73.7,-41.8,-73.3,-39,-73.6,-37.2,-71.6,-33,-71.4,-30,-70.6,-27,-70.4,-23.6,-70.2,-20.2,-70.3,-18.4,
+   -71.4,-17.3,-75.1,-15.4,-76.3,-13.6,-77,-12,-79,-8.5,-81.3,-5.1,-80.9,-2.3,-80.1,0,-79.6,1,-78.9,1.5,-77.5,3.5,-77.3,6.5,-77.9,7.2],   // South America
+  [-5.9,35.8,-6.8,34,-9.6,30.4,-11.5,28,-13.2,27.6,-14.5,26.1,-15.9,23.7,-17.05,20.8,-16.5,19.4,-16,18.1,-16.5,16.2,-17.5,14.7,-16.7,12.5,-15.2,11,-14.6,10.5,
+   -13.7,9.5,-13.2,8.4,-11.5,6.9,-10.8,6.3,-7.6,4.4,-5,5.2,-4,5.3,-2.1,4.75,-0.2,5.55,2.4,6.35,3.4,6.4,5.8,4.4,6.1,4.3,8.5,4.5,9.7,4,9.6,2.3,9.4,0.4,8.7,-0.7,
+   11.8,-4.8,12.3,-6,13.2,-8.8,13.8,-11,12.3,-13.5,12.15,-15.2,11.8,-17.3,13,-20,14.5,-22.9,15.15,-26.6,16.5,-28.6,17.9,-31,18.4,-34.1,19.9,-34.8,22,-34.1,
+   25.6,-34,27.9,-33,31,-29.9,32.6,-26.2,35.4,-23.9,35.2,-21.5,34.8,-19.8,36.9,-17.9,40.7,-15,40.5,-10.5,39.3,-6.8,39.7,-4,41,-2,42.5,-0.4,45.3,2,48,5,
+   49.8,8.5,51.3,11.8,49,11.3,45,10.4,43.3,11.6,42.7,13,39.5,15.6,38.5,18,37.2,19.6,35.6,23.9,34.5,26,33.9,27.2,32.6,29.9,32.3,31.3,29.9,31.2,27.2,31.4,
+   25,31.6,23.97,32.08,20.1,32.1,19.6,30.4,18.5,30.3,15.4,31.4,15.1,32.4,13.2,32.9,11.5,33.2,10.1,33.9,10.8,34.7,10.8,35.8,11.05,37.08,10.2,36.8,9.9,37.3,
+   8.7,36.9,5,36.8,3,36.8,-0.6,35.7,-2.2,35.1,-4,35.2,-5.3,35.9],   // Africa
+  [-5.6,36,-6.3,36.5,-7.4,37.2,-8.9,37,-9.5,38.8,-8.9,41.2,-8.7,42.2,-9.3,43,-7.7,43.8,-3.8,43.5,-1.8,43.4,-1.2,46,-2.2,47.3,-4.8,48.4,-1.6,48.7,-1.9,49.7,
+   0.2,49.5,1.6,50.9,4,51.8,4.7,52.9,7,53.5,8.6,53.9,8.6,55.5,8.2,56.8,10.6,57.7,10.3,56.2,11,54.6,10.9,54,12.1,54.2,14.3,53.9,16.2,54.3,18.6,54.4,20.5,54.7,
+   21.1,55.7,21.6,57.4,23.5,58.4,24.7,59.4,28,59.5,30.3,59.9,28.5,60.5,25,60.2,22.95,59.8,21.4,60.9,21.6,63.1,24.5,64.9,24.2,65.8,22.1,65.6,21.2,64.7,19.8,63.8,
+   17.3,62.4,17.2,60.7,18.9,59.9,18.1,59.3,16.7,57.7,16.4,56.2,14.3,55.5,12.9,55.6,12.7,56.2,11.9,57.7,10.5,59,8,58,5.6,58.9,5,60.4,5.2,62.5,10.4,63.4,11.6,64.9,
+   12.5,66,13.6,68.1,16.1,69.3,19,69.7,23.7,70.7,25.8,71.1,28,70.9,31.1,70.4,33,69.3,36,69.1,41,67.8,44,66.6,44.1,68.5,54,68.5,59,68.9,60,69.8,66.6,70.8,
+   68.5,73,69.9,73.5,72.6,72.8,73.5,71.3,75,72.8,80.5,72.9,86,74.5,90,75.6,98,76.5,104.3,77.7,112,76,113.5,73.6,118,73.3,127,73.5,131,71.6,140,72.5,150,71.4,
+   152,70.9,161,69.6,170,70.1,176,69.7,180,69,180,65.5,177,64.7,179,62.3,174,61.7,170,60,163.5,59.8,162,58,163,56.1,160,53,158.6,53,156.7,51,156,52.5,156,57.5,
+   157,57.9,160,61.1,155,59.4,150.8,59.6,143.3,59.4,140.5,58.4,138,56.3,137,54.2,140.5,53.2,141.4,52.6,140.5,50.5,140.3,48.4,138.4,46.6,135.6,43.8,132.3,43.1,
+   130.7,42.3,129.7,40.8,129.4,37.5,129.3,35.2,128.7,34.8,126.4,34.4,126.6,37.5,125.2,37.7,124.7,39.7,122.2,40.4,121.2,38.8,121.9,40.7,118.8,39.2,117.7,39,
+   118.6,37.9,119.4,37.4,122.5,37.4,120.4,36.1,119.3,34.8,120.9,32,121.9,31,121.9,29.9,120.6,27.9,119.6,25.9,118.1,24.5,116.7,23.4,114.2,22.3,113.5,22.2,
+   110.4,21,109.7,21.5,107.9,21.5,106.7,20.7,105.9,19.5,106.4,18,107.6,16.4,108.9,15.1,109.3,12.2,108.9,11,107.1,10.4,106.4,9.3,105,8.6,104.8,10.4,103.5,10.6,
+   102.3,12.2,100.9,12.7,100.5,13.5,99.9,12.6,99.2,10.5,100.3,8.4,100.6,7.2,101.3,6.9,102.2,6.2,103.4,4.3,104.2,1.4,103.8,1.3,103.4,1.5,101.4,2.8,100.3,5.4,
+   100.1,6.6,98.3,7.9,98.6,9.9,98.6,12.4,98.2,14.1,97.6,16.5,96.2,16.8,95.3,15.8,94.3,16,94.2,18.8,92.9,20.1,92.3,21.4,91.8,22.3,90.4,22.4,89,21.8,87,21.6,
+   86.9,20.4,85.8,19.8,84.1,18.1,82.3,16.6,80.3,15.7,80.2,13.1,79.8,11,79.9,9.3,78.1,8.8,77.5,8.1,76.3,9.9,75,12.8,73.8,15.5,72.8,19,72.6,21.1,72.2,21.8,
+   71,20.7,69.6,21.6,69,22.2,69.5,22.8,68.8,23.5,67,24.8,64,25.3,61.6,25.2,57.8,25.7,56.3,27.2,56.3,26.4,56.4,24.8,58.6,23.6,59.8,22.4,58.6,20.4,57,18.8,
+   55,17.1,54.1,17,52.2,15.6,49.1,14.5,45,12.8,43.4,12.7,42.95,14.8,42.55,16.9,41,19,39.2,21.5,38.1,24.1,36.6,26,35.1,28.1,34.95,29.55,34.3,27.9,33.6,28.4,
+   32.6,29.9,32.3,31.3,34.4,31.5,34.8,32.1,35.5,33.9,35.8,35.5,36.1,36.6,34.6,36.8,32,36.5,30.7,36.9,28.2,36.7,27.3,37,27,38.4,26.2,39.5,26.4,40.1,26,40.8,
+   22.9,40.6,23.9,39.2,24,38,23.7,37.9,23.1,36.5,22.5,36.4,21.7,36.8,21.1,37.8,21.6,38.3,20.7,39,19.9,39.6,19.4,40.4,19.5,41.8,18.5,42.4,16.4,43.5,15.2,44.1,
+   14.4,45.3,13.7,45.6,12.3,45.4,12.4,44.4,13.6,43.6,14.5,42.2,16.2,41.9,16.9,41.1,18.5,40.1,17.2,40.5,16.6,39.2,16.1,38.2,15.6,38.2,15.8,39.6,15,40.3,14.2,40.8,
+   13,41.2,12.2,41.8,11.1,42.4,10.3,43.6,9,44.4,7.3,43.7,5.4,43.3,4.8,43.4,3.3,43.3,3.1,42.4,3.2,41.8,2.2,41.4,0.9,41,-0.3,39.5,0.2,38.7,-0.5,38.3,-0.7,37.6,
+   -2.1,36.7,-4.4,36.7],   // Eurasia
+  [-180,69,-176,69.7,-172,69.4,-169.7,66.1,-171.5,65.4,-173,64.3,-175.5,64.9,-178.5,64.5,-180,65],   // Chukotka, across the date line
+  [49.3,-12,50.5,-15.3,49.4,-17.5,47.1,-25,45.1,-25.6,43.6,-23.3,44,-20,44.4,-16.2,47.5,-14,48.3,-13.3],   // Madagascar
+  [113.6,-22,113.5,-26,114.9,-29,115.7,-31.9,115.1,-34.4,117.9,-35,121.9,-33.9,124,-33,126,-32.3,129,-31.7,131.1,-31.5,133.5,-32.2,135.6,-34.9,137.8,-32.5,
+   138.5,-34.9,139.5,-36.5,140.9,-38,143.5,-38.8,144.9,-37.9,146.4,-39.1,148,-37.8,149.9,-37.5,150.2,-35.7,151.2,-33.9,152.5,-32,153.6,-28.6,153,-27.5,
+   152.7,-25,150.5,-23.3,149.2,-21.2,147,-19.3,145.8,-16.9,145.3,-15,144.5,-14.2,142.5,-10.7,141.9,-12.7,141.5,-15.5,140.8,-17.5,139.2,-17.4,137.4,-16.3,
+   135.8,-15,135.9,-13.3,136.8,-12.2,135.5,-12,132.6,-11.5,130.8,-12.5,129.5,-14.8,129,-15.2,128.1,-15.5,126.6,-14,124.2,-16.3,123.6,-17.3,122.2,-18,121,-19.6,
+   118.6,-20.3,116.7,-20.7,114.6,-21.8],   // Australia
+  [144.6,-40.7,148.3,-40.9,148.3,-42.2,147.3,-43.5,146,-43.6,145.2,-42.2],   // Tasmania
+  [172.7,-34.4,174.3,-35.8,174.8,-36.9,175.9,-37.4,178.5,-37.7,177.9,-39.1,176.9,-39.6,176,-41.3,174.8,-41.3,174.6,-39.9,173.8,-39.2,174.6,-37,173,-35.4],
+  [172.7,-40.5,174.3,-41.7,173,-43,172.7,-43.8,171.2,-44.4,170.6,-45.9,169,-46.6,166.6,-46.1,166.5,-45.3,168.2,-44,170.5,-43,171.5,-41.8,172.1,-40.9],   // New Zealand
+  [-5.7,50.1,-3,50.7,1.4,51.2,1.7,52.7,0.2,53.5,-0.2,54.1,-1.2,54.6,-1.6,55.6,-2,56,-2.6,56.5,-1.8,57.6,-3.1,58.6,-5,58.6,-5.7,57.5,-5.6,56.4,-5,55.8,
+   -5.1,54.8,-3.4,54.8,-3,53.8,-4.6,53.3,-4.6,52.8,-4.1,52.3,-5.2,51.7,-3.2,51.4,-4.3,51.2],   // Great Britain
+  [-6,52.2,-6,53.3,-5.6,54.6,-7.3,55.4,-8.5,55,-10,54.2,-9.9,53.4,-10.4,52.1,-9.6,51.5,-8.2,51.8,-6.4,52.2],   // Ireland
+  [-24,65.5,-22,66.4,-18,66.2,-14.5,66.4,-13.5,65.3,-15,64.2,-18,63.4,-21,63.8,-22.7,64,-23.8,64.7],   // Iceland
+  [12.4,37.8,13.4,38.2,15.6,38.3,15.1,36.7,13.9,37.1],[8.2,40.9,9.6,41.2,9.7,39.4,8.9,38.9,8.4,39],[8.6,42,9.4,43,9.6,42.1,9.2,41.4,8.6,41.6],
+  [23.5,35.5,26.3,35.3,26,35,23.6,35.2],[32.3,34.9,34.6,35.7,34,34.9,32.9,34.6],   // Sicily, Sardinia, Corsica, Crete, Cyprus
+  [-59.4,47.6,-56,51.6,-55.5,51.4,-53,49.5,-52.6,47.5,-53.6,46.6,-55.6,47,-57,47.6],   // Newfoundland
+  [-84.9,21.9,-83,22.9,-80.2,23.1,-77.5,21.7,-74.1,20.2,-77.7,19.9,-80,21.7,-82.5,21.5,-84.5,21.8],[-74.4,18.5,-72.8,19.9,-68.4,18.6,-70,18.2,-72.9,18],
+  [-78.3,18.4,-76.2,18,-76.8,17.9,-78.2,18.2],[-67.2,18.5,-65.6,18.4,-65.7,18,-67.2,18],   // Cuba, Hispaniola, Jamaica, Puerto Rico
+  [142,46,143.3,46.5,143.2,49.3,143,51.7,143.2,54,142.7,54.4,141.8,53.4,142.2,51,142,48],   // Sakhalin
+  [140,41.5,141.7,42.5,143.3,42,145.8,43.3,145.2,44.3,141.9,45.5,141.3,43.4,140.2,42.6],
+  [130.9,34,132.5,35.5,135.5,35.6,136.7,37.3,139,38.4,139.9,40.6,141.5,41.5,141.9,39.9,141,38.2,140.9,36.9,140.8,35.7,139.8,35.6,138.8,34.6,136.9,34.6,135.1,33.8,132.4,34.3],
+  [129.6,33.5,130.9,33.9,131.9,32.9,131.2,31.4,130.2,31,129.9,32.6],[132.6,33.9,134.7,34.2,134.3,33.3,133,32.8],   // Japan
+  [120.1,23,120.9,21.9,121.9,24.9,121.5,25.3,120.5,24.5],[108.6,19.2,110.5,20.1,111,19.6,109.6,18.2,108.7,18.5],   // Taiwan, Hainan
+  [120,16,120.6,18.5,122.3,18.5,122.2,16.6,121.6,15,124,13.2,123.8,12.6,122,13.8,120.6,14.3,120,15],[122,7,123.4,8.6,125.4,9.8,126.6,7.3,125.4,5.6,124,6.4],
+  [122,11.8,124,12.5,125.7,11,124.8,10,123.5,9.3,122.4,9.5,121.9,10.6],   // the Philippines
+  [95.3,5.6,97.5,5.2,100.4,2.2,103.6,-0.5,106,-3.2,105.8,-5.9,104.5,-5.6,102.3,-4,100.4,-1,98.7,1.7,96.2,3.9],   // Sumatra
+  [105.2,-6.8,106.8,-6.1,108.6,-6.7,110.4,-6.9,112.7,-7.2,114.4,-7.8,114.5,-8.7,111,-8.2,108.3,-7.8,106.4,-7.4],   // Java
+  [115.1,-8.1,116.8,-8.4,119,-8.3,120.8,-8.3,122.9,-8.2,122.8,-8.8,120,-8.9,117,-9,115.2,-8.8],[123.5,-10.2,124.5,-9,127.3,-8.4,126.5,-8.7,125,-9.5],
+  [109,1.5,109.6,2,111,1.7,113,3.2,115,4.9,116,6,117.3,6.9,119.3,5.4,118,4.4,117.8,1,118.9,0.9,117.5,0,116.5,-2,116,-3.9,114.5,-3.6,113,-3.2,110.2,-2.9,109.6,-0.9,109,0.4],   // Borneo
+  [119.4,-5.6,119.5,-3.4,118.8,-2.6,119.8,0.2,120.8,1.3,124.9,1.6,123.3,0.4,120.7,0.6,121.3,-1,123.4,-0.9,122.6,-2.6,123.2,-4.4,121.6,-4.7,121,-2.8,120.4,-4,120.4,-5.6],   // Sulawesi
+  [130.9,-1.3,132.5,-0.4,134.1,-0.9,135.2,-3.4,137.8,-1.5,140.7,-2.6,143.5,-3.4,145.8,-4.9,147.5,-6.1,148,-8,149.6,-9.6,150.8,-10.2,149,-10.3,147.2,-9.5,
+   145.8,-8,143.4,-9,142.6,-9.4,141,-9.1,139,-8.1,137.9,-8.4,138.3,-6.9,138,-5.5,135.5,-4.5,133.4,-4.1,132,-2.9,131.2,-2],   // New Guinea
+  [79.8,9.8,81.2,8.6,81.9,7.3,81,6.1,80.1,6,79.8,7.5]   // Sri Lanka
+];
+const EARTH_ICE=[   // (land too, painted white over it)
+  [-73,78.5,-68,80.5,-60,82,-45,83.2,-30,83.6,-20,82.5,-12,81.5,-18,79,-19,77,-22,73,-22,70.5,-25,68.5,-32,68,-38,65.6,-41,63.5,-43.5,60,-48,61,-51.5,64.2,
+   -53.5,66.9,-53,69.5,-55,71.5,-58,75.5,-66,76.8],   // Greenland
+  [-180,-78,-160,-77.5,-150,-76,-140,-75,-130,-74,-120,-73.5,-110,-74,-100,-73,-90,-73,-80,-73,-75,-71,-68,-67,-62,-64,-57,-63.3,-60,-65,-62,-68,-64,-71,
+   -61,-74,-60,-77,-50,-78,-40,-78,-30,-76,-20,-74,-15,-72,-10,-71,0,-70,10,-70,20,-70,30,-69.5,40,-68.5,50,-67,55,-66,60,-67,70,-68.5,72,-69.5,75,-69,80,-67,
+   90,-66.5,100,-66,110,-66,120,-66.5,130,-66.5,140,-66.7,150,-68,160,-70,165,-71.5,170,-72,166,-76,170,-77.5,180,-78,180,-90,-180,-90]   // Antarctica
+];
+const EARTH_TUNDRA=[   // the Arctic islands
+  [-80,74.6,-91,74.7,-96,76.3,-93,78.5,-90,81,-80,83,-66,82.6,-62,82,-70,79.5,-75,78,-80,76.2],
+  [-61.5,66.5,-64,63.2,-68.5,62.2,-72.5,63.5,-77.5,64.8,-74,67.6,-80.6,69.5,-82,69.6,-88,70.5,-90,72.5,-84,73.6,-75,72.6,-68.5,70.5,-63.5,67.5],
+  [-117,68.9,-106,69,-101,69.8,-101.5,72,-108,73.3,-117,73.5,-119.5,71.5],[-125.5,71.8,-125,74.5,-117.5,74.3,-116,72.8,-120.5,71.4],[-118,75.5,-104,75.6,-105,77,-116,77.5],
+  [11,78.5,16,80,27,80.2,27,78.5,21,77,16.5,76.6,13.5,77.6],[52,71,55,73,57.5,75.5,68,76.9,66,75.5,60,74,56,71.3,53,70.6],[95,79,105,81,104,78.3,98,78.2],[137,75,150,76,148,74.5,140,73.8]
+];
+const EARTH_DESERT=[
+  [-15,27,-8,29.5,0,31,10,31,20,30,30,30.5,32,28,33,22,33,18,25,17,15,16,5,17,-5,16.5,-16,17,-16.5,20,-15,24],   // the Sahara
+  [36,29,40,31,47,29,50,26,55,23,57,20,52,17,46,15,43,17,39,22,36,27],[53,35,58,35,62,32,60,28,55,29],[69,24,73,27,74,30,70,29,68,26],   // Arabia, Iran, the Thar
+  [76,37,80,41,90,42,100,44,110,45,115,43,110,40,100,39,90,38,80,36],   // the Gobi and the Taklamakan
+  [114,-24,118,-20,125,-18,135,-19,140,-22,141,-27,138,-31,130,-30,122,-30,116,-28],[14,-22,16,-18,22,-20,25,-24,22,-28,17,-28],   // the Outback, the Kalahari
+  [-118,35,-112,37,-106,35,-104,31,-108,28,-112,29,-115,32],[-70,-40,-65,-40,-66,-48,-70,-50,-71,-45],[-71,-18,-68,-18,-68.5,-27,-71,-27]   // the Southwest, Patagonia, the Atacama
+];
+const EARTH_HIGH=[[78,35,90,36,100,34,102,30,95,28,85,28,78,31]];   // the Tibetan plateau
+const EARTH_WATER=[   // inland seas and the great lakes, cut back out of the land
+  [28,41.6,27.5,42.5,28.6,43.4,29.7,45.2,30.7,46.5,31.5,46.6,33.5,46,32.6,45.3,33.5,44.4,35.5,45,36.6,45.3,37.8,44.7,39.7,43.5,41.6,41.6,39.7,41,36.3,41.3,35,42,33.3,41.9,31.5,41.3,29.1,41.2],
+  [35,45.4,35.7,46.4,37.5,47.1,39.3,47.2,38.2,46,36.6,45.4],
+  [47.5,45.6,46.6,44.3,47.5,43,49,41,49.9,40.4,49,39,48.9,38.4,49.6,37.4,51.5,36.8,53.9,36.9,54,37.5,53,39.4,53,40,52.7,41.6,52.8,42.6,51.3,43.3,50.8,44.6,51.4,45.3,53,45.3,53.2,46.5,51.9,47.1,49.2,46.6,48,46],
+  [48,30,50.3,29.3,50.8,28.9,52.6,27.5,54.7,26.6,56.3,27.1,56.4,26.3,56,25.6,55.3,25.3,54.4,24.5,52.5,24.2,51.6,24.4,51.6,25.3,51.3,26.1,50.8,25.6,50.8,24.8,50.2,25.8,49.6,27.1,48.6,28.1,48,29.4],
+  [34,64.5,35,66,37,66.5,41,66.5,44,66,41,64.5,39,64.6,37,63.9,34.8,64],
+  [-92.1,46.7,-89.5,48,-86.5,48.7,-84.6,46.5,-87.4,46.5],[-87.8,42,-87.5,44.5,-85.5,45.8,-86.2,44,-86.5,42.5],[-84.5,45.9,-81.5,45.9,-81.7,44,-82.4,43,-83.5,43.9,-84.4,45.6],
+  [-83.4,41.7,-79,42.8,-78.9,42.9,-80.4,42.6,-83,42],[-79.8,43.3,-76.3,43.5,-76.1,44.1,-79.4,43.7],
+  [31.6,-1,33,0.3,34.1,-0.4,33.6,-2.5,32,-2.6,31.7,-1.8],[103.9,51.6,105.5,52.6,108.5,54,109.8,55.7,109.3,55.8,108,54.3,105,52.8,103.7,51.8]
+];
+function noise3(seed){   // seeded value noise on points in space, and fractal sums of it
+  const hash=(x,y,z)=>{ let h=Math.imul(x|0,374761393)^Math.imul(y|0,668265263)^Math.imul(z|0,1440662683)^Math.imul(seed,1274126177);
+    h=Math.imul(h^(h>>>13),1274126177); return ((h^(h>>>16))>>>0)/4294967296; };
+  const sm=v=>v*v*(3-2*v);
+  const vn=(x,y,z)=>{ const X=Math.floor(x), Y=Math.floor(y), Z=Math.floor(z), u=sm(x-X), v=sm(y-Y), w=sm(z-Z); let r=0;
+    for(let k=0;k<8;k++){ const a=k&1, b=(k>>1)&1, e=k>>2; r+=hash(X+a,Y+b,Z+e)*(a?u:1-u)*(b?v:1-v)*(e?w:1-w); } return r; };
+  return {hash, fbm:(x,y,z,o)=>{ let r=0, a=.5, f=1; for(let i=0;i<o;i++){ r+=a*vn(x*f,y*f,z*f); a*=.5; f*=2.03; } return r/(1-Math.pow(.5,o)); }};
+}
+function earthMap(){   // the flat map: alpha = land; green land, blue ice, magenta tundra, red desert, yellow highland
+  const W=720, H=360, c=document.createElement('canvas'); c.width=W; c.height=H; const q=c.getContext('2d');
+  const fill=(polys,col,op)=>{ q.globalCompositeOperation=op; q.fillStyle=col;
+    for(const P of polys){ q.beginPath(); for(let i=0;i<P.length;i+=2) q[i?'lineTo':'moveTo']((P[i]+180)*2,(90-P[i+1])*2); q.closePath(); q.fill(); } };
+  fill(EARTH_LAND,'#00ff00','source-over'); fill(EARTH_ICE,'#00ff00','source-over'); fill(EARTH_TUNDRA,'#00ff00','source-over');
+  fill(EARTH_ICE,'#0000ff','source-atop'); fill(EARTH_TUNDRA,'#ff00ff','source-atop'); fill(EARTH_DESERT,'#ff0000','source-atop'); fill(EARTH_HIGH,'#ffff00','source-atop');
+  fill(EARTH_WATER,'#000000','destination-out');
+  return q.getImageData(0,0,W,H).data;
+}
+const EARTH_BIOME=[[0,[40,92,40]],[10,[44,96,42]],[20,[110,124,62]],[30,[96,122,60]],[45,[74,120,58]],[58,[52,88,54]],[68,[124,120,98]],[90,[124,120,98]]];   // forest, savanna, farmland, taiga, tundra
+function earthGlobe(){   // the whole Earth, the Atlantic side: the Americas, Greenland, Europe and Africa, in daylight shading to night
+  if(BIGW.earth) return BIGW.earth;
+  const MW=720, MH=360, map=earthMap(), N=noise3(11), DEG=180/Math.PI;
+  const S=448, c=document.createElement('canvas'); c.width=c.height=S; const q=c.getContext('2d'), img=q.createImageData(S,S), d=img.data;
+  const lon0=-40/DEG, lat0=20/DEG, s0=Math.sin(lat0), c0=Math.cos(lat0);
+  const L=[-.38,-.36,.85], ll=Math.hypot(...L); for(let i=0;i<3;i++) L[i]/=ll;
+  const Hv=[L[0],L[1],L[2]+1], hl=Math.hypot(...Hv); for(let i=0;i<3;i++) Hv[i]/=hl;   // halfway to the eye: where the Sun glints off the sea
+  const cover=(u,v)=>map[((clamp(v,0,MH-1))*MW+((u%MW)+MW)%MW)*4+3]/255;
+  for(let j=0;j<S;j++) for(let i=0;i<S;i++){ const x=(i+.5)/S*2-1, y=(j+.5)/S*2-1, r2=x*x+y*y, o=(j*S+i)*4;
+    if(r2>=1){ d[o+3]=0; continue; }
+    const z=Math.sqrt(1-r2), Y=-y, lat=Math.asin(clamp(z*s0+Y*c0,-1,1)), lon=lon0+Math.atan2(x,z*c0-Y*s0);
+    const u=((lon*DEG+180)%360+360)%360*2, v=(90-lat*DEG)*2, u0=Math.floor(u-.5), v0=Math.floor(v-.5), fu=u-.5-u0, fv=v-.5-v0;
+    const land=cover(u0,v0)*(1-fu)*(1-fv)+cover(u0+1,v0)*fu*(1-fv)+cover(u0,v0+1)*(1-fu)*fv+cover(u0+1,v0+1)*fu*fv;   // (smoothed, so the coasts don't step)
+    const k=(clamp(v|0,0,MH-1)*MW+((u|0)%MW))*4, R0=map[k], G0=map[k+1], B0=map[k+2];
+    const type=R0>128&&B0>128?3:R0>128&&G0>128?4:R0>128?2:B0>128?1:0;   // 0 land · 1 ice · 2 desert · 3 tundra · 4 highland
+    const sx=Math.cos(lat)*Math.cos(lon), sy=Math.sin(lat), sz=Math.cos(lat)*Math.sin(lon), ad=Math.abs(lat*DEG);   // the spot on the globe (noise stays tied to the ground)
+    const f=N.fbm(sx*7,sy*7,sz*7,2);
+    let col;
+    if(type===1) col=[226+f*24,232+f*18,240+f*12];
+    else if(type===3) col=f>.55?[214,220,228]:[136,130,112];
+    else if(type===2) col=[176+f*52,146+f*44,98+f*32];
+    else if(type===4) col=[118+f*34,100+f*26,78+f*20];
+    else { let b=EARTH_BIOME[0][1]; for(let n=1;n<EARTH_BIOME.length;n++){ const [aB,cB]=EARTH_BIOME[n], [aA,cA]=EARTH_BIOME[n-1];   // (blended by latitude, so there's no seam)
+        if(ad<=aB){ const k=(ad-aA)/(aB-aA); b=[cA[0]+(cB[0]-cA[0])*k,cA[1]+(cB[1]-cA[1])*k,cA[2]+(cB[2]-cA[2])*k]; break; } b=cB; }
+      const m=.8+f*.45; col=[b[0]*m,b[1]*m,b[2]*m]; }
+    const dp=N.fbm(sx*3+7,sy*3,sz*3,1), sh=land>.02&&land<.7?(1-Math.abs(land-.35)/.35)*.6:0;
+    let R=(16+dp*14)*(1-sh)+40*sh, G=(52+dp*26)*(1-sh)+110*sh, B=(120+dp*36)*(1-sh)+160*sh;   // the sea, paler over the shallows
+    R+=(col[0]-R)*land; G+=(col[1]-G)*land; B+=(col[2]-B)*land;
+    const w=N.fbm(sx*1.7+3,sy*1.7+1,sz*1.7+5,2), cl=N.fbm(sx*2.8+w*1.6,sy*3.4+w*1.3,sz*2.8+w*1.6,3);
+    const band=.86+.24*Math.exp(-((ad/11)**2))+.2*Math.exp(-(((ad-54)/13)**2));   // (cloudier at the equator and along the storm tracks)
+    const cloud=clamp((cl*band-.6)/.18,0,1)*.8;
+    R+=(248-R)*cloud; G+=(250-G)*cloud; B+=(255-B)*cloud;
+    const day=clamp((x*L[0]+y*L[1]+z*L[2])*1.3+.2,0,1), lv=.05+.95*day;
+    R*=lv; G*=lv; B*=lv;
+    if(day<.3 && land>.5 && (type===0||type===4) && N.hash(u>>1,v>>1,5)>.9){ const kk=(.3-day)/.3*(.45+.55*N.hash(i,j,9))*(1-cloud); R+=225*kk; G+=172*kk; B+=92*kk; }   // the night side's cities
+    const sp=Math.pow(Math.max(0,x*Hv[0]+y*Hv[1]+z*Hv[2]),70)*(1-land)*(1-cloud)*day; R+=230*sp; G+=220*sp; B+=190*sp;   // the Sun off the sea
+    const rim=Math.pow(1-z,2.6), ra=day*.85+.12; R+=50*rim*ra; G+=110*rim*ra; B+=240*rim*ra;   // the air, thickening toward the edge
+    d[o]=Math.min(255,R); d[o+1]=Math.min(255,G); d[o+2]=Math.min(255,B); d[o+3]=255; }
+  q.putImageData(img,0,0);
+  return BIGW.earth=c;
+}
+// the Moon and the planets: where they sit in the sector (fractions of it), their size, and Saturn's and Uranus's rings [inner, outer, colour, alpha] x radius
+const SOL=[
+  {name:'MOON',kind:'moon',x:.73,y:.29,r:44},
+  {name:'MERCURY',kind:'mercury',x:.51,y:.13,r:28},
+  {name:'VENUS',kind:'venus',x:.82,y:.76,r:50},
+  {name:'MARS',kind:'mars',x:.2,y:.22,r:38},
+  {name:'JUPITER',kind:'jupiter',x:.18,y:.76,r:105},
+  {name:'SATURN',kind:'saturn',x:.83,y:.18,r:84,tilt:.3,la:-.32,rings:[[1.22,1.48,'#8a7a5e',.45],[1.52,1.92,'#e0cc9e',.85],[1.97,2.22,'#c8b48a',.7]]},
+  {name:'URANUS',kind:'uranus',x:.47,y:.88,r:58,tilt:.22,la:1.32,rings:[[1.55,1.6,'#cfeef4',.45],[1.7,1.74,'#cfeef4',.3]]},
+  {name:'NEPTUNE',kind:'neptune',x:.89,y:.47,r:56}
+];
+function planetSprite(kind,r){   // one of the Sun's planets, painted once a pixel at a time and lit from the upper left like everything else here
+  const S=Math.ceil(r*2)+2, c=document.createElement('canvas'); c.width=c.height=S;
+  const q=c.getContext('2d'), img=q.createImageData(S,S), d=img.data, h=S/2, N=noise3(kind.length*97+(r|0));
+  const L=[-.56,-.52,.65], ll=Math.hypot(...L); for(let i=0;i<3;i++) L[i]/=ll;
+  const rocky=kind==='moon'||kind==='mercury', craters=[];
+  if(rocky) for(let k=0;k<(kind==='moon'?22:34);k++){ const a=N.hash(k,1,2)*TAU, rr=Math.sqrt(N.hash(k,3,4))*.9; craters.push({x:Math.cos(a)*rr,y:Math.sin(a)*rr,r:.04+.12*N.hash(k,5,6)**2}); }
+  for(let j=0;j<S;j++) for(let i=0;i<S;i++){ const x=(i+.5-h)/r, y=(j+.5-h)/r, r2=x*x+y*y, o=(j*S+i)*4;
+    if(r2>=1){ d[o+3]=0; continue; }
+    const z=Math.sqrt(1-r2), lat=Math.asin(-y), lon=Math.atan2(x,z);
+    let col;
+    if(rocky){ const m=N.fbm(x*2.1+4,-y*2.1,z*2.1,3), f=N.fbm(x*9,-y*9,z*9,2);
+      col=kind==='moon'?(m>.56?[92,92,100]:[160,158,162]):[146,132,120]; let k2=.86+.2*f;   // the Moon's dark seas; Mercury's dust
+      for(const C of craters){ const dx=x-C.x, dy=y-C.y, dl=Math.hypot(dx,dy), dd=dl/C.r; if(dd<1){ k2*=.84+.12*dd; if(dd>.7) k2*=1+.5*(dd-.7)*(-(dx*L[0]+dy*L[1])/(dl||1)); } }
+      col=col.map(v=>v*k2); }
+    else if(kind==='venus'){ const b=N.fbm(lon*1.3+2,lat*5,1.3,4); col=[226+b*22,208+b*22,160+b*26]; }
+    else if(kind==='mars'){ const m=N.fbm(x*2.4,-y*2.4,z*2.4,4); col=m>.57?[118,54,32]:m>.5?[160,72,40]:[192,92,48]; if(lat>1.18||lat<-1.28) col=[236,232,226]; }
+    else if(kind==='jupiter'){ const w=N.fbm(lon*1.6,lat*9,.5,3), b=Math.sin(lat*10+w*2.4);
+      col=b>.6?[236,222,196]:b>.1?[206,170,128]:b>-.4?[176,128,90]:[226,206,170];
+      const gx=(lon-.42)/.32, gy=(lat+.36)/.13, gr=gx*gx+gy*gy; if(gr<1) col=gr<.55?[192,88,58]:[224,150,112]; }   // the Great Red Spot
+    else if(kind==='saturn'){ const w=N.fbm(lon*1.2,lat*7,.7,2), b=Math.sin(lat*8+w*1.4); col=b>.3?[232,214,168]:b>-.3?[216,194,142]:[200,174,120]; }
+    else if(kind==='uranus'){ const b=N.fbm(lon,lat*4,.2,2); col=[160+b*20,214+b*16,224+b*12]; }
+    else { const b=N.fbm(lon*1.4,lat*6,.4,3); col=b>.55?[78,116,228]:[52,84,196];   // Neptune, its dark spot and a white streak
+      const sx=(lon+.3)/.26, sy=(lat+.32)/.1; if(sx*sx+sy*sy<1) col=[28,48,130]; if(Math.abs(lat+.2)<.03 && lon>-.4 && lon<.1) col=[214,226,255]; }
+    const day=clamp((x*L[0]+y*L[1]+z*L[2])*1.15+.16,0,1), lv=(.07+.93*day)*(rocky||kind==='mars'?1:.72+.28*z);   // (gas giants darken toward the limb)
+    d[o]=Math.min(255,col[0]*lv); d[o+1]=Math.min(255,col[1]*lv); d[o+2]=Math.min(255,col[2]*lv); d[o+3]=255; }
+  q.putImageData(img,0,0);
+  return c;
+}
+function solRings(px,py,p,front){   // a ring system, half of it behind the planet and half in front
+  g.save(); g.translate(px,py); g.rotate(p.la); g.scale(1,p.ringTilt);
+  for(const [a,b,col,al] of p.rings){ g.globalAlpha=al; g.strokeStyle=col; g.lineWidth=(b-a)*p.r; g.beginPath(); g.arc(0,0,(a+b)/2*p.r,front?0:Math.PI,front?Math.PI:TAU); g.stroke(); }
+  g.restore(); g.globalAlpha=1;
+}
+function drawRealPlanet(px,py,p){
+  if(p.rings) solRings(px,py,p,false);
+  g.drawImage(p.sprite,Math.round(px-p.sprite.width/2),Math.round(py-p.sprite.height/2));
+  if(p.rings) solRings(px,py,p,true);
+  g.font=wFont(7); g.textAlign='center'; g.fillStyle='rgba(207,227,255,.42)'; g.fillText(p.name,px,py+p.r+(p.rings?16:12)); g.textAlign='left';
 }
 
 // ---- Part Two's cutscenes ----
@@ -6559,14 +6913,51 @@ function cerHonour(a){ const y=Math.round(VH*.11)+34;   // the honour, over the 
   g.globalAlpha=a; g.textAlign='center'; g.fillStyle='#ffd27a'; g.font='bold 22px monospace'; g.fillText('STAR OF THETA-9',VW/2,y);
   g.fillStyle='#fff1b0'; g.font='9px monospace'; g.fillText('AWARDED TO THE PILOT OF THE HALCYON',VW/2,y+13);
   g.globalAlpha=1; g.textAlign='left'; }
-function bpod(carrier,from){   // a boarding pod: out of a flagship's belly, across, and clamped onto the carrier's hull, cutting
-  const hx=rnd(-100,100), hy=rnd(-28,28);
+function bpod(carrier,from){   // a boarding vessel: out of a flagship's belly, across, and clamped onto the carrier's hull, cutting
+  const hx=rnd(-100,100), hy=Math.random()<.5?rnd(-46,-30):rnd(30,46);
   return {kind:'bpod',x:from.x,y:from.y,vx:0,vy:0,a:0,stuck:0,
     tick(A){ if(A.stuck){ A.x=carrier.x+hx; A.y=carrier.y+hy; if(++A.stuck%9===0) sparks(A.x,A.y); return; }
-      const dx=carrier.x+hx-A.x, dy=carrier.y+hy-A.y, d=Math.hypot(dx,dy)||1; A.a=Math.atan2(dy,dx); A.vx=dx/d*4.2; A.vy=dy/d*4.2;
+      const dx=carrier.x+hx-A.x, dy=carrier.y+hy-A.y, d=Math.hypot(dx,dy)||1; A.a=Math.atan2(dy,dx); A.vx=dx/d*3.6; A.vy=dy/d*3.6;
       if(d<5){ A.stuck=1; A.vx=A.vy=0; sparks(A.x,A.y); VRAudio.sfx.clank(A.x,A.y); } },
-    draw(px,py,A){ g.save(); g.translate(px,py); g.rotate(A.a); g.fillStyle='#4c0f1a'; g.fillRect(-4,-3,8,6); g.fillStyle='#d0495a'; g.fillRect(-3,-2,6,4); g.fillStyle='#ffb347'; g.fillRect(3,-1,2,2); g.restore(); },
-    glow(px,py,A){ glow(px,py,A.stuck?7:5,A.stuck?'#ffd27a':'#ff4d6d',A.stuck?.5+.3*Math.random():.5); } };
+    draw(px,py,A){ const S=BVESSEL; g.save(); g.translate(px,py); g.rotate(A.a); g.scale(.75,.75); g.drawImage(S.img,-S.cx-8,-S.cy); g.restore(); },
+    glow(px,py,A){ if(A.stuck) glow(px,py,8,'#ffd27a',.5+.3*Math.random()); else glow(px-Math.cos(A.a)*16,py-Math.sin(A.a)*16,7,'#ff6a2a',.55); } };
+}
+// close in on the Resolute's flank: one boarding vessel after another comes in, fires its grapples, clamps on and starts cutting
+const LATCH=[[.3,0,60],[.55,1,105],[.42,0,150],[.22,1,190],[.75,0,225],[.62,1,258],[.18,0,285]];   // where along the hull, top or bottom, when it hits
+function latchHull(u){ const x=u*240; return x>=40&&x<=150?44:x>=16&&x<=212?26:20; }   // the carrier's edge there, in sprite px from its centre line
+function drawLatch(c,lt){
+  const L=c.latch, H=HULKS.carrier, k=VW/240*.9, cx=VW/2+Math.sin(lt*.012)*5, cy=VH/2+4, S=BVESSEL;
+  g.fillStyle='#03040a'; g.fillRect(0,0,VW,VH);
+  for(const s of L.stars){ g.globalAlpha=s.b; g.fillStyle=s.b>.8?'#ffffff':'#8fa2d8'; g.fillRect((s.x*VW)|0,(s.y*VH)|0,1,1); }
+  g.globalAlpha=1;
+  g.save(); g.imageSmoothingEnabled=false; g.translate(cx,cy); g.scale(k,k); g.drawImage(H.img,-H.cx,-H.cy); g.restore();
+  g.globalCompositeOperation='lighter'; glow(cx-H.cx*k,cy,40*k*.6,'#43f0ff',.4); g.globalCompositeOperation='source-over';
+  for(const [u,side,at] of LATCH){ const T=(lt-(at-70))/70; if(T<0) continue;
+    const ny=side?1:-1, hx=cx+(u*240-H.cx)*k, hy=cy+ny*latchHull(u)*k, len=S.cx*k*.85, gap=(1-easeOut(Math.min(1,T)))*VH*.62;
+    const vx=hx, vy=hy+ny*(len+gap);
+    if(T<1){ g.globalCompositeOperation='lighter'; glow(vx,vy+ny*len*.9,len*.7,'#ff6a2a',.6); g.globalCompositeOperation='source-over'; }   // its drive, braking
+    if(T>.55 && T<1.05){ g.strokeStyle='rgba(200,210,230,.85)'; g.lineWidth=Math.max(1,k*.6);   // the grapples, fired ahead
+      for(const s of [-1,1]){ g.beginPath(); g.moveTo(vx+s*len*.35,vy-ny*len*.75); g.lineTo(hx+s*len*.45,hy); g.stroke(); } }
+    g.save(); g.translate(vx,vy); g.rotate(-ny*Math.PI/2); g.scale(k*.85,k*.85); g.drawImage(S.img,-S.cx,-S.cy); g.restore();
+    if(T>=1){ const fl=.6+.4*Math.random();   // clamped on: the cutting torch, white-hot round the seam
+      g.globalCompositeOperation='lighter'; glow(hx,hy,14*k*fl,'#ffb347',.7); glow(hx,hy,6*k,'#fff6d0',.8*fl); g.globalCompositeOperation='source-over'; } }
+  for(const p of L.sparks){ g.globalAlpha=clamp(p.life/p.max,0,1); g.fillStyle=p.col; g.fillRect(p.x|0,p.y|0,2,2); }
+  g.globalAlpha=1;
+}
+function latchShot(){
+  return { dur:340, toBlack:true, lines:[['cmd',"They're latching on! They're cutting into the hull on every deck!"],
+      ['cmd',"All hands, repel boarders. Halcyon, grab a rifle and take a squad of marines. Hold the core deck."],
+      ['you',"A rifle? Commander, I fly cutters."],
+      ['cmd',"Not today. You've got twenty marines. Make them count."]],
+    init(c){ c.actors=[]; c.cap=null; c.latch={stars:Array.from({length:120},()=>({x:Math.random(),y:Math.random(),b:Math.random()})),sparks:[]};
+      caption(c,'CARRIER RESOLUTE','Hull contact on every deck',260); },
+    tick(c,lt){ const L=c.latch, H=HULKS.carrier, k=VW/240*.9;
+      for(const [u,side,at] of LATCH) if(lt===at){ const hx=VW/2+(u*240-H.cx)*k, hy=VH/2+4+(side?1:-1)*latchHull(u)*k;
+        for(let i=0;i<26;i++){ const a=rnd(0,TAU), s=rnd(1,5); L.sparks.push({x:hx,y:hy,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(14,34),max:34,col:Math.random()<.5?'#ffd27a':'#ffffff'}); }
+        shake=Math.min(shake+7,14); flash=Math.max(flash,.12); VRAudio.sfx.clank(camX+VW/2,camY+VH/2); VRAudio.sfx.bump(); }
+      for(const p of L.sparks){ p.x+=p.vx; p.y+=p.vy; p.vx*=.93; p.vy*=.93; p.life--; } L.sparks=L.sparks.filter(p=>p.life>0);
+      if(lt>60 && lt%9===0) VRAudio.sfx.zap(camX+VW/2+rnd(-200,200),camY+VH/2,false); },
+    draw(c,lt){ drawLatch(c,lt); } };
 }
 function twistShots(){
   let H, carrier; const ships=[];   // (H is found when the outside shot starts, so the ceremony before it plays out exactly as it always has)
@@ -6584,15 +6975,14 @@ function twistShots(){
         ['matriarch',"You took a sector from my children. Now I take this ship from you."]],
       tick(c,lt){ cerT++; c.inv++; if(lt%150===0) VRAudio.sfx.klaxon(); },
       draw(c){ drawCeremony(2,999,{t:c.inv,alert:true}); } },
-    { dur:360, toBlack:true, lines:[['cmd',"Boarding pods! They're cutting into the hull on every deck!"],
-        ['cmd',"All hands, repel boarders. Halcyon, grab a shock baton and hold the core deck."],
-        ['you',"Hand to hand? Commander, I fly cutters."],
-        ['cmd',"Not today you don't. Today you hold this ship."]],
+    { dur:300, lines:[['cmd',"They're launching boarding vessels. Dozens of them, straight at us!"],
+        ['cmd',"Brace for contact!"]],
       init(c){ H=clearSpot(WORLD/2,WORLD/2,0,1500); c.actors=[]; c.cap=null; carrier=hulk('carrier',H.x,H.y,.04); c.actors.push(carrier); c.cam={x:H.x,y:H.y+10};
-        caption(c,'CARRIER RESOLUTE','Boarders on every deck',300);
+        caption(c,'CARRIER RESOLUTE','Surrounded',260);
         for(const [dx,dy] of [[-330,-170],[-40,-230],[250,-200],[350,30],[220,215],[-110,230],[-360,110]]){
           const b=actor('boss',H.x+dx,H.y+dy,Math.atan2(-dy,-dx)); b.sc=.5; ships.push(b); c.actors.push(b); } },
-      tick(c,lt){ c.cam.x+=.04; if(lt%11===0 && lt<300) c.actors.push(bpod(carrier,ships[ri(0,ships.length-1)])); } }
+      tick(c,lt){ c.cam.x+=.04; if(lt%9===0 && lt<270) c.actors.push(bpod(carrier,ships[ri(0,ships.length-1)])); } },
+    latchShot()   // (and up close: the vessels clamping on and cutting in)
   ];
 }
 // the Resolute holds; the fleet turns away and jumps, for Earth; the Halcyon goes after it
@@ -6618,7 +7008,7 @@ function afterDefenseShots(){
       tick(c){ c.flag.wob+=.03; },
       draw(c,lt){ drawHyperspace(c,lt); } },
     { dur:150,
-      init(c){ setupLevel(4); c.white=1; c.actors=[]; c.title=null; c.hyper=null;
+      init(c){ setupLevel(2); c.white=1; c.actors=[]; c.title=null; c.hyper=null;
         const cut=actor('cutter',spawnPt.x,spawnPt.y+420,-Math.PI/2); cut.vy=-21; cut.tick=A=>{ A.vy*=.95; }; c.actors.push(cut);
         c.cam={x:spawnPt.x,y:spawnPt.y-50}; VRAudio.sfx.arrive(cut.x,cut.y-300); } }
   ];
@@ -6664,7 +7054,7 @@ function seizedShots(){
       tick(c){ c.flag.wob+=.03; },
       draw(c,lt){ drawHyperspace(c,lt); } },
     { dur:150,
-      init(c){ setupLevel(5); c.white=1; c.actors=[]; c.title=null; c.hyper=null;
+      init(c){ setupLevel(3); c.white=1; c.actors=[]; c.title=null; c.hyper=null;
         const A=actor('boss',spawnPt.x,spawnPt.y+420,-Math.PI/2); A.ours=1; A.sc=.55; A.vy=-18; A.tick=a=>{ a.vy*=.95; a.wob+=.03; }; c.actors.push(A);
         c.cam={x:spawnPt.x,y:spawnPt.y-50}; VRAudio.sfx.arrive(A.x,A.y-300); } }
   ];
@@ -6693,20 +7083,20 @@ function endingShots(){
 function partTwoJump(id){
   toldShields=true;
   const at=(L)=>{ setupLevel(L); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); };
-  if(id==='t1'){ setupLevel(3); bossDead=true; cerT=0; VRAudio.play('menu',0,1); playCine(twistShots(),()=>startDeck('defend')); return; }
-  if(id==='d1'){ setupLevel(3); startDeck('defend'); return; }
-  if(id==='c4'){ setupLevel(3); playCine(afterDefenseShots(),()=>{ if(level!==4) setupLevel(4); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
-  if(id[0]==='g'){ const n=+id[1]; at(4);   // an Earth horde: the ones before it are already broken
+  if(id==='t1'){ setupLevel(1); bossDead=true; cerT=0; VRAudio.play('menu',0,1); playCine(twistShots(),()=>startDeck('defend')); return; }
+  if(id==='d1'){ setupLevel(1); startDeck('defend'); return; }
+  if(id==='c4'){ setupLevel(1); playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
+  if(id[0]==='g'){ const n=+id[1]; at(2);   // an Earth horde: the ones before it are already broken
     if(n>1){ lvlBanner=0; notes=[]; noteT=0; horde.i=n-1; horde.left=0; horde.rest=50; levelKills=LV.horde.slice(0,n-1).reduce((a,b)=>a+b,0); } return; }
-  if(id==='b5'||id==='b6'){ at(id==='b5'?4:5); lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
+  if(id==='gb'||id==='b6'){ at(id==='gb'?2:3); lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
     horde.i=LV.horde.length; horde.left=0; horde.rest=0; commsReset(); sectorWon(); bossPending=70; return; }
-  if(id==='f1'){ setupLevel(4); levelDone=true; spawnBoss(); boss.warp=0; boss.inbound=false; boss.hp=LV.boardAt; boss.ghost=boss.hp; boss.crippled=true;
+  if(id==='f1'){ setupLevel(2); levelDone=true; spawnBoss(); boss.warp=0; boss.inbound=false; boss.hp=LV.boardAt; boss.ghost=boss.hp; boss.crippled=true;
     boss.x=clamp(ship.x+500,600,WORLD-600); boss.y=clamp(ship.y-200,500,WORLD-500); commsReset(); bossBanner=0;
     playCine(boardShots(),()=>startDeck('assault')); return; }
-  if(id==='d2'){ setupLevel(4); startDeck('assault'); return; }
-  if(id==='c5'){ setupLevel(4); boss=null; playCine(seizedShots(),()=>{ if(level!==5) setupLevel(5); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
-  if(id==='s6'){ at(5); return; }
-  if(id==='e3'){ setupLevel(5); bossDead=true; clearT=runT; VRAudio.play('menu',0,1); playCine(endingShots(),()=>{ state='win'; endScreen(); }); return; }
+  if(id==='d2'){ setupLevel(2); startDeck('assault'); return; }
+  if(id==='c5'){ setupLevel(2); boss=null; playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
+  if(id==='s6'){ at(3); return; }
+  if(id==='e3'){ setupLevel(3); bossDead=true; clearT=runT; VRAudio.play('menu',0,1); playCine(endingShots(),()=>{ state='win'; endScreen(); }); return; }
 }
 // Earth: the flagship's hull is low enough. Its guns go dark, and the boarding begins
 function bossCrippled(){
@@ -6721,10 +7111,13 @@ function bossCrippled(){
 }
 const vrDebug1=window.vrDebug;   // (the snapshot for automated playtests, with Part Two's state added)
 window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bossBoardT, world:LV.world||null, crippled:!!(boss&&boss.crippled), ark:!!(boss&&boss.ark),
-  deck:DK&&{kind:DK.kind,t:DK.t,wave:DK.wave,rest:DK.rest,q:DK.q.length,open:DK.open,lives:DK.lives,done:DK.done,lost:DK.lost,banner:DK.banner&&DK.banner.title,
-    p:{...DK.p}, foes:DK.foes.map(f=>({type:f.type,x:f.x,y:f.y,d:f.d,hack:f.hack,stun:f.stun,emerge:f.emerge,goal:f.goal,aggro:f.aggro,sys:f.sys&&f.sys.k})),
-    sys:DK.sys.map(S=>({k:S.k,x:S.x,y:S.y,hp:S.hp,dead:S.dead})), nodes:DK.nodes.map(n=>({x:n.x,y:n.y,prog:n.prog,done:n.done})), jar:DK.jar&&{...DK.jar},
-    cells:DK.cells.reduce((a,b)=>a+(b?1:0),0), layout:deckLayout()}});
+  deck:DK&&{kind:DK.kind,t:DK.t,wave:DK.wave,rest:DK.rest,q:DK.q.length,open:DK.open,knock:DK.knock,done:DK.done,lost:DK.lost,banner:DK.banner&&DK.banner.title,
+    killed:DK.killed,total:DK.total,dmgMul:+DK.dmgMul.toFixed(2),preferBots:DK.preferBots,cam:{...DK.cam},bolts:DK.bolts.length,beams:DK.beams.length,
+    you:{x:DK.you.x,y:DK.you.y,hp:DK.you.hp,down:DK.you.down,inv:DK.you.inv,a:DK.you.a},
+    bots:DK.units.filter(u=>u.kind==='bot'&&!u.dead).map(u=>({x:u.x,y:u.y,hp:+u.hp.toFixed(2),tgt:!!u.tgt})),
+    foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt})),
+    sys:DK.sys.map(S=>({k:S.k,hp:S.hp,dead:S.dead,cx:S.cx,cy:S.cy})), nodes:DK.nodes.map(n=>({cx:n.cx,cy:n.cy,hp:n.hp,dead:n.dead})), helm:DK.helm&&{cx:DK.helm.cx,cy:DK.helm.cy,prog:DK.helm.prog},
+    map:{W:DK.W,H:DK.H,grid:DK.grid}}});
 
 // ---- loop ----
 let last=performance.now(), acc=0; const STEP=1000/60;
