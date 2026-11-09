@@ -786,6 +786,17 @@ function splat(x,y,up){ if(!live()||!gate('splat',35)) return; const P=place(x,y
 function dash(){ if(!live()||!gate('dash',80)) return; const t=ac.currentTime, o=out(ME,.2,.1);   // your dive aboard: a quick rush of air, and a lift under it
   const f=filt('bandpass',500,1.6,vca(t,1,.008,.16,o)); sweep(f.frequency,450,2600,t,.14); nz(t,.18,f);
   sweep(osc('sine',190,t,.12,vca(t,.35,.004,.1,o)).frequency,190,420,t,.1); }
+// the capital ships' war: a gun firing out across the gap (a deep thud and a crack), a lance spooling up (a rising whine),
+// and a lance firing (a roar of light that falls away)
+function cannon(x,y,brood){ if(!live()||!gate('cannon',110)) return; const P=place(x,y,1500); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.15,.3), f0=brood?R(80,95):R(110,130);
+  sweep(osc('sine',f0,t,.3,vca(t,1,.003,.27,o)).frequency,f0,38,t,.24);
+  nz(t,.1,filt('lowpass',brood?650:1100,null,vca(t,.55,.002,.1,o))); }
+function lanceCharge(x,y){ if(!live()||!gate('lanceC',350)) return; const P=place(x,y,1500); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.09,.25), d=1.35;
+  const v=ac.createGain(); v.gain.setValueAtTime(.001,t); v.gain.exponentialRampToValueAtTime(1,t+d); v.gain.linearRampToValueAtTime(0,t+d+.05); v.connect(o);
+  sweep(osc('sawtooth',170,t,d+.06,filt('bandpass',900,5,v)).frequency,170,1300,t,d); }
+function lanceFire(x,y){ if(!live()||!gate('lanceF',220)) return; const P=place(x,y,1800); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.26,.35), d=.6;
+  const f=filt('bandpass',600,1.1,vca(t,1,.01,d,o)); sweep(f.frequency,1900,280,t,d); nz(t,d,f);
+  sweep(osc('sawtooth',72,t,d,filt('lowpass',520,4,vca(t,.8,.005,d,o))).frequency,72,44,t,d); }
 function clank(x,y){ if(!live()||!gate('clank',80)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.2,.2);   // station hull struck
   for(const [f,a,d] of [[300,1,.26],[761,.5,.16],[1230,.3,.1]]) osc('triangle',f*R(.97,1.03),t,d,vca(t,a,.002,d,o));
   nz(t,.04,filt('bandpass',1800,2,vca(t,.5,.001,.04,o))); }
@@ -871,7 +882,8 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 // the game calls in here from its update loop — an audio hiccup must never throw and freeze the game
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
-           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash};
+           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash,
+           cannon,lanceCharge,lanceFire};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -928,6 +940,7 @@ const VR_CAST={
   matriarch:{name:'The Matriarch', face:'matriarch', side:'foe', v:{f:132,w:'sawtooth',fs:1.2,ring:38,vib:28,br:.3,lp:2400}},   // the mother of every clan (portrait painted in code)
   wing: {name:'Kite · Escort', face:'chief', side:'ally', v:{f:168,w:'sawtooth',fs:1.04,lp:2300,br:.12}},   // a fighter you rescued, flying on your wing
   flight:{name:'Home Guard', face:'chief', side:'ally', v:{f:184,w:'sawtooth',fs:1.07,lp:2400,br:.12}},   // Earth's three escort fighters
+  fleet:{name:'Home Fleet', face:'chief', side:'ally', v:{f:122,w:'sawtooth',fs:.98,lp:1900,br:.14}},     // the captains of Earth's warships, in the line
   hauler:{name:'Hauler', face:'chief', side:'post', v:{f:132,w:'square',fs:.96,lp:1800,br:.12}},   // whichever ore hauler is in trouble
   // reaver clan captains: each pack is led by one, and they all have something to say
   shard:   {name:'Shardlord Vex',      face:'shard',    v:{f:290,w:'triangle',fs:1.35,ring:150,lp:3000},
@@ -2058,7 +2071,7 @@ brief4:L(`
 That's Broodhome, Halcyon. Every clan in the sky was hatched down there.
 Your new ship hits like a hammer and soaks a lot. It also turns like a moon. Plan ahead.
 Six shield cells, a three-gun broadside and its own point defence. Use all of it.
-Their hordes will throw everything at you. Outlast them, and the Matriarch has to come out herself.
+Their hordes will throw everything at you. Outlast them, and we go for her ark.
 `),
 eBoss:L(`
 Flagship inbound! Same hull as the Cerebrant's, Halcyon. Don't kill it. Cripple it.
@@ -2105,6 +2118,95 @@ I will feed you to the hatchlings for that.
 mDeath:L(`
 No... my brood... my beautiful brood... AAAAH!
 The nest... is burning... my children... AAAAAH!
+`),
+// ---- the line: the fleets' running battle over Earth and over Broodhome ----
+lineStart3:L(`
+All ships, hold the line! Halcyon, leave the big guns to us. Keep the reavers off Skyhook.
+Earth's whole fleet is up here, pilot, and so is hers. Stay out of the lanes when the lances light up.
+That's the Home Fleet holding the line. The reavers are all yours, Halcyon. The big ships are ours.
+`),
+lineStart4:L(`
+Fleet's through the jump! We'll take their line, Halcyon. You keep the hordes off our hulls.
+Every carrier we have, right behind you. Their line is ours. The hordes are yours.
+The Home Fleet is here, pilot. Weave through it and keep the reavers busy.
+`),
+lineLane:L(`
+Halcyon, you're in the {ship}'s firing line! Clear the lane!
+Get out of that lane, pilot! The {ship} is about to fire!
+Lance charging and you're right in front of it! Move, Halcyon!
+`),
+lineLaneB:L(`
+Brood lance charging, and you're in its path! Move!
+Halcyon, that lit lane is a brood lance! Get clear!
+They're charging a lance right through you! Break off!
+`),
+lineLost:L(`
+We've lost the {ship}! Close the gap!
+The {ship} is breaking up! Get those crews off!
+The {ship} is gone. Hold the line, everyone. Hold it.
+`),
+lineKill:L(`
+Brood cruiser down! Keep pouring it on!
+That's one of theirs breaking up! Good shooting!
+Their line's buckling! Another one's gone!
+`),
+lineReinf:L(`
+The {ship} is jumping in to fill the gap.
+Fresh hull on the line: the {ship}. Welcome to the party.
+The {ship}, dropping out of warp. Where do you want her?
+`),
+lineBroodReinf:L(`
+More brood warships dropping in. Of course there are.
+Fresh brood hull on their line. She has plenty to spare.
+`),
+lineTaunt:L(`
+Your little warships burn so prettily.
+Every hull you lose is one less between me and your world.
+Look at them fall. Earth built them so carefully.
+My line does not break, little pilot. It grows.
+`),
+fleetHit:L(`
+The {ship} here! We're taking hits amidships! Still in the line!
+This is the {ship}, fires on three decks! We're holding!
+The {ship}, armour holding, barely. Keep that lance charged!
+`),
+lineStrip:L(`
+That's the last of the hordes! All ships, lances on her flagship! Strip that shield!
+Hordes are broken! Every lance in the line, on the flagship! Now!
+`),
+lineGuns:L(`
+Her shield's down! Halcyon, silence those four gun batteries. We want that ship dead in space, not destroyed.
+Shield's gone! Take out the batteries, Halcyon. Leave the hull in one piece. We're boarding it.
+`),
+lineGun:L(`
+Battery down! {n} to go.
+That's a battery gone. {n} left.
+Good hit! {n} more batteries.
+`),
+linePylons:L(`
+Her hordes are spent! See those three spore pylons round the ark? They're feeding her shield. Knock them out!
+That's the last horde! The pylons round the ark are powering its shield. Break them, Halcyon!
+`),
+linePylon:L(`
+Pylon down! {n} more.
+That's one. {n} pylons left!
+Her shield's flickering! {n} to go!
+`),
+lineFinish:L(`
+Her shield's gone! All ships, every lance you've got: fire on the ark!
+Shield down! Fleet, light her up! Halcyon, add your guns to it!
+`),
+lineBreak:L(`
+Her line is breaking! They're jumping out!
+Brood warships are running! The line held, everyone. The line held!
+`),
+eShield:L(`
+My shield? You will pay for every scratch.
+So you broke my shield. The guns remain, little pilot.
+`),
+mShield:L(`
+My pylons! You will be torn apart for this!
+No shield. No matter. I still have teeth.
 `),
 bigLost:L(`
 The flagship's breaking up! Halcyon, get out of there! We'll pull you out and go again!
@@ -2580,11 +2682,11 @@ const LEVELS=[
    jobs:[[.15,'rescue'],[.4,'beacon'],[.65,'drop']], fuse:2700, fleet:50},
   // Part Two. Earth: hordes again, but with a station to guard (guard), and the flagship to cripple (boardAt) and board, not kill.
   // Broodhome: you fly the captured flagship (big), and the Matriarch's ark comes out after the hordes. world = the planet in the sky
-  {name:'Earth Orbit', post:'Skyhook Station', guard:true, world:'earth', horde:[30,40,50], quota:120, start:0, cap:99, gap:[400,540], pack:[4,6], raid:.5, rocks:8, rogue:[9e9,9e9], fleeAt:0, boardAt:14, rock:0,
+  {name:'Earth Orbit', post:'Skyhook Station', guard:true, world:'earth', battle:'earth', horde:[30,40,50], quota:120, start:0, cap:99, gap:[400,540], pack:[4,6], raid:.5, rocks:8, rogue:[9e9,9e9], fleeAt:0, boardAt:14, rock:0,
    mix:['raider','raider','raider','interceptor','interceptor','interceptor','splitter','gunship','gunship','warden'],
    neb:['#1f4f8a','#2a2a6a','#1f6f8a'], far:[['#1f3f7a','#081428'],['#24508f','#09182c']],
    jobs:[], fuse:2700, fleet:45},
-  {name:'Broodhome', post:null, big:true, world:'brood', horde:[35,45], quota:80, start:0, cap:99, gap:[400,540], pack:[4,6], raid:0, rocks:6, rogue:[9e9,9e9], fleeAt:0, rock:2,
+  {name:'Broodhome', post:null, big:true, world:'brood', battle:'brood', horde:[35,45], quota:80, start:0, cap:99, gap:[400,540], pack:[4,6], raid:0, rocks:6, rogue:[9e9,9e9], fleeAt:0, rock:2,
    mix:['raider','raider','interceptor','interceptor','interceptor','splitter','gunship','gunship','warden','warden'],
    neb:['#4a0f3a','#1f5a3a','#5a1a4a'], far:[['#3a0f2a','#10040c'],['#1a3a2a','#06100a']],
    jobs:[], fuse:2700, fleet:45}
@@ -2601,7 +2703,8 @@ let chain=[], chainRun=0;   // ships caught touching a blast (going up a beat la
 let failT=0, levelStart={score:0,kills:0,bossHP:46}, retries=0;   // countdown to SECTOR LOST once the station falls; what a retry rewinds to
 let outpost=null, spawnPt={x:WORLD/2,y:WORLD/2}, rocks=[], pops=[], waveT=0, rogueT=0, fadeIn=0, lvlBanner=0;
 let bossPending=0, bossHP=46, bossFled=false, streak=0, streakT=-999, saidHalf=false, saidFew=false, tally=null, hinted={};
-const CAUSES={shot:'Hull breached by pirate fire', ram:'Rammed by a reaver', blast:'Caught in a death blast', rock:'Smashed into an asteroid', air:'Ran out of air on EVA'};
+const CAUSES={shot:'Hull breached by pirate fire', ram:'Rammed by a reaver', blast:'Caught in a death blast', rock:'Smashed into an asteroid', air:'Ran out of air on EVA',
+  shell:'Hit by a brood warship\'s gun', lance:'Cut down in a lance\'s lane'};
 
 // enemy archetypes
 const TYPES = {
@@ -2980,15 +3083,18 @@ function hereLabel(){
   if(state==='launch') return '▸ SKIP THE LAUNCH';
   if(state==='deck') return DK&&!DK.done&&!DK.lost?(DK.kind==='defend'?'▸ WIN THE DECK FIGHT':'▸ SEIZE THE HELM'):null;
   if(state!=='play') return null;
-  if(!levelDone) return LV.horde?'▸ FINISH THE HORDES · BRING ON '+(LV.big?'THE MATRIARCH':'THE FLAGSHIP'):'▸ CLEAR THE SECTOR · BRING ON THE FLAGSHIP';
+  if(!levelDone) return LV.battle?(LV.big?'▸ FINISH THE HORDES · GO FOR HER ARK':'▸ FINISH THE HORDES · STRIP HER FLAGSHIP\'S SHIELD'):
+    LV.horde?'▸ FINISH THE HORDES · BRING ON '+(LV.big?'THE MATRIARCH':'THE FLAGSHIP'):'▸ CLEAR THE SECTOR · BRING ON THE FLAGSHIP';
+  if(boss && boss.line) return boss.dying||boss.crippled?null:boss.ark?'▸ BREAK HER SHIELD · THE MATRIARCH TO HER LAST HIT':'▸ SILENCE ALL BUT ITS LAST BATTERY';
   if(boss && !boss.flee && !boss.dying && !boss.crippled) return LV.boardAt?'▸ CRIPPLE THE FLAGSHIP':boss.ark?'▸ THE MATRIARCH TO HER LAST HIT':'▸ FLAGSHIP TO ITS LAST HIT';
   return null;
 }
 function whereNow(){   // which button is "you are here"
   if(state==='menu' || cine) return '';
   if(DK) return DK.kind==='defend'?'d1':'d2';
-  if(LV.world==='earth') return boss||bossPending||levelDone?'gb':'g'+clamp(horde?horde.i:1,1,3);
-  if(LV.big) return boss||bossPending||levelDone?'b6':'s6';
+  const late=LV.battle?levelDone:(boss||bossPending||levelDone);   // (in a battle sector her ship is there from the start)
+  if(LV.world==='earth') return late?'gb':'g'+clamp(horde?horde.i:1,1,3);
+  if(LV.big) return late?'b6':'s6';
   return (boss||bossPending||levelDone?'b':'s')+(level+1);
 }
 function openJump(){
@@ -3009,6 +3115,7 @@ function jumpHere(){   // the green button
   else if(state==='play'){
     if(!levelDone){ for(const e of enemies) e.alive=false; levelKills=Math.max(levelKills,quota); fleet=null;
       if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; } }
+    else if(boss && boss.line) lineSkip();
     else if(boss && !boss.flee && !boss.dying && !boss.crippled){ boss.hp=Math.min(boss.hp,(LV.boardAt||boss.fleeAt)+1); boss.ghost=Math.min(boss.ghost,boss.hp); } }   // (even while it's still warping in)
 }
 function resetForJump(){   // clear whatever was going on, and start a fresh run's books
@@ -3263,6 +3370,7 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   if(escort) Object.assign(escort,{x:ship.x-46,y:ship.y+34,vx:0,vy:0,a:-Math.PI/2,cool:60});   // your escort jumps in with you
   failT=0; levelStart={score,kills,bossHP};
   waveT=ri(420,600); rogueT=ri(LV.rogue[0]*.5,LV.rogue[0]);
+  battle=LV.battle?makeBattle(LV.battle):null;   // Part Two: the fleets' running battle (and her own ship in her line)
   updateHUD();
 }
 function beginLevel(){
@@ -3279,12 +3387,14 @@ function beginLevel(){
     say('you','bigTip',null,2); });
   noteT=notes.length?290:0;
   say('cmd','brief'+(level+1)); say('cmd','brief'+(level+1)); if(Math.random()<.75) say('you','youBrief');
+  if(battle && battle.kind==='earth') say('cmd','lineStart3',null,1);   // (over Broodhome the fleet says its piece when it comes through the jump)
 }
 function sectorWon(){   // quota met: the packs scatter, and the flagship comes to see who's been killing its clans
   levelDone=true; doneT=0; cancelJob(); fleet=null;
   let k=0; for(const e of enemies) if(e.alive){ e.flee=20+k*9; k++; }
   comms.q=comms.q.filter(m=>m.pri>=2);   // the fight just changed: drop the small talk
   const a=anyCaptain(); if(a && Math.random()<.7) say(a,'retreat',null,2);
+  if(battle && boss && boss.line){ lineClimax(); return; }   // Part Two: her ship's already here, in her line. Now the fleet goes for it
   say('cmd','quota',null,2);
   bossPending=200;
 }
@@ -3784,7 +3894,15 @@ function buildHulks(){
       R(54,6,9,9,C.hull); R(54,6,9,1,C.lite); R(57,9,5,3,'#43f0ff'); R(58,9,2,1,'#eaffff'); // the cockpit
       R(63,10,3,5,C.dark); R(63,10,3,1,C.hull);                                           // the docking nose
       R(1,6,7,9,M.dark); R(1,6,7,1,M.base); R(0,8,1,5,M.deep); })};                      // drives
+  HULKS.destroyer={cx:68,cy:18, eng:[[-66,-6,4],[-66,2,4]], fl:['#c8fbff','#43f0ff'], img:paintHull(136,36,R=>{   // a destroyer of Earth's Home Fleet, nose to the right
+      R(20,3,28,5,C.hull); R(20,3,28,1,C.lite); R(20,7,28,1,C.dark); R(19,4,1,3,C.dark);   // sponsons out at the stern
+      plate(R,12,7,92,11,C,12); R(14,9,88,1,C.dark); for(let x=16;x<100;x+=6) R(x,9,1,1,C.trim);   // the hull, its trim lights
+      R(58,12,22,6,C.lite); R(58,12,22,1,'#d5e4f7'); R(70,14,6,2,'#43f0ff'); R(72,14,2,1,'#eaffff');   // the bridge
+      for(const x of [36,94]){ R(x,5,8,5,M.dark); R(x+1,5,6,1,M.base); }                    // turret rings
+      R(104,10,12,8,M.base); R(104,10,12,1,M.lite); R(116,13,10,5,M.base); R(116,13,10,1,M.lite); R(126,15,6,3,M.dark); R(132,16,3,2,M.base);   // the prow
+      R(2,9,10,9,M.dark); R(2,9,10,1,M.base); R(1,11,1,5,M.deep); })};                     // drives
   HULKS.hauler.burnt=scorch(HULKS.hauler.img);   // for the moment a lost hauler sits in its fireball
+  HULKS.carrier.burnt=scorch(HULKS.carrier.img); HULKS.destroyer.burnt=scorch(HULKS.destroyer.img);   // (and the line's warships, as they burn)
 }
 function drawHulk(px,py,A){
   const S=HULKS[A.kind], fl=(t>>1)&1;
@@ -3990,6 +4108,442 @@ function fire(){
   const laser=ship.weapon==='laser';
   muzzles.push({x:ship.x+nx*(ship.r+3),y:ship.y+ny*(ship.r+3),life:4,max:4,r:laser?7:11,col:laser?'#43f0ff':'#ffb347'});
 }
+
+// ======================================================================================================================
+// ---- THE LINE. Over Earth and over Broodhome, the war itself: a line of Earth's warships and a line of the Matriarch's slug
+// it out all sector long. Shells cross the gap; a heavy lance lights its lane, then fires down it; the human ships' flak picks
+// off reavers that stray close, and a brood hull's guns turn on you if you do. Ships burn, break up into drifting wrecks that
+// soak fire, and fresh ones jump in to fill the line. You weave through it: the reavers are yours, the big guns are theirs,
+// and either side's lance will cut you down if you sit in its lane. Over Earth her flagship anchors her line (the fleet strips
+// its shield once the hordes are done, you silence its guns, and it's yours to board); over Broodhome her ark waits behind
+// her line, shielded by three spore pylons ----
+// ======================================================================================================================
+let battle=null;
+const CAP={   // each class of warship: hull, collision capsule (half its length, half its beam, in world px), how big it's drawn,
+  // its guns (where they sit, in sprite px), its lance's muzzle (sprite px forward), frames between shells, and its side
+  carrier:  {hp:900, L:100, R:30, sc:1,   lance:116, gap:24, side:0, guns:[[60,-24],[60,24],[10,-26],[10,26],[-50,-24],[-50,24]]},
+  destroyer:{hp:520, L:62,  R:14, sc:1,   lance:66,  gap:34, side:0, guns:[[30,-9],[30,9],[-28,-9],[-28,9]]},
+  cruiser:  {hp:460, L:30,  R:34, sc:.74, lance:72,  gap:30, side:1, guns:[[-26,-34],[-26,34],[-4,-34],[-4,34],[28,-19],[28,19]]},   // one of her flagships, in the line
+  spitter:  {hp:340, L:42,  R:22, sc:1,   lance:38,  gap:38, side:1, guns:[[-12,-18],[-12,18],[12,-16],[12,16]]},                    // a brood gun-beast
+  flag:     {L:36, R:46, sc:1, lance:72,  gap:32, side:1, guns:[[-26,-34],[-26,34],[28,-19],[28,19]]},   // her flagship over Earth (the boss): these are its four batteries
+  ark:      {L:50, R:70, sc:1, lance:100, gap:26, side:1, guns:[[20,-40],[20,40],[-30,-60],[-30,60]]}    // her ark over Broodhome (the boss)
+};
+const LANCE_CH=84, LANCE_FIRE=30, LANCE_DMG=48, LANCE_GAP=[900,1400];   // frames its lane is lit before it fires, frames it burns, its damage, frames between
+const FLEET_NAMES=['Valiant','Bastion','Aurora','Defiance','Tempest','Sentinel','Vigilant','Endurance','Halberd','Meridian','Paladin','Corsair'];
+let SPIT=null;
+function spitter(){ if(SPIT) return SPIT;   // a brood gun-beast: a hunched carapace, a glowing maw, gun-boils on its back (painted small, then doubled)
+  const W=64, H=40, cx=32, cy=20, lo=document.createElement('canvas'); lo.width=W; lo.height=H; const q=lo.getContext('2d');
+  q.strokeStyle='#3d1239'; q.lineWidth=1.5;
+  for(const s of [-1,1]) for(let k=0;k<3;k++){ q.beginPath(); q.moveTo(cx-14,cy+s*(3+k*3)); q.quadraticCurveTo(cx-24,cy+s*(6+k*5),cx-31,cy+s*(4+k*6)); q.stroke(); }   // trailing tendrils
+  q.fillStyle='#2a0d27'; q.beginPath(); q.ellipse(cx-2,cy,22,13,0,0,TAU); q.fill(); q.strokeStyle='#4a1846'; q.lineWidth=1; q.stroke();   // the carapace
+  q.fillStyle='#3a1436'; q.beginPath(); q.ellipse(cx,cy,17,8,0,0,TAU); q.fill();
+  q.strokeStyle='#5a2258'; for(let k=-2;k<=2;k++){ q.beginPath(); q.moveTo(cx-12+k*5,cy-9); q.quadraticCurveTo(cx-9+k*5,cy,cx-12+k*5,cy+9); q.stroke(); }   // its plates
+  for(const s of [-1,1]){ q.fillStyle='#d8c8e8'; q.beginPath(); q.moveTo(cx+16,cy+s*3); q.lineTo(cx+28,cy+s*7); q.lineTo(cx+18,cy+s*8); q.closePath(); q.fill(); }   // mandibles
+  q.fillStyle='#1a0818'; q.beginPath(); q.ellipse(cx+17,cy,5,4,0,0,TAU); q.fill(); q.fillStyle='#3aff9a'; q.beginPath(); q.ellipse(cx+18,cy,3,2.2,0,0,TAU); q.fill();   // the maw
+  for(const [x,y] of [[-6,-9],[-6,9],[6,-8],[6,8]]){ q.fillStyle='#8a3aa0'; q.beginPath(); q.arc(cx+x,cy+y,2.4,0,TAU); q.fill(); q.fillStyle='#ff5ad8'; q.fillRect(cx+x-.5,cy+y-.5,1,1); }   // gun-boils
+  const c=document.createElement('canvas'); c.width=W*2; c.height=H*2; const g2=c.getContext('2d'); g2.imageSmoothingEnabled=false; g2.drawImage(lo,0,0,W*2,H*2);
+  return SPIT={cx:cx*2, cy:cy*2, img:c, burnt:scorch(c)};
+}
+let CRUISER=null;
+function cruiser(){ if(CRUISER) return CRUISER;   // one of her line flagships: the flagship's hull, grown over in brood purple (so hers and yours never look alike)
+  const S=SHIPS.boss, c=document.createElement('canvas'); c.width=S.img.width; c.height=S.img.height; const q=c.getContext('2d');
+  q.drawImage(S.img,0,0); q.globalCompositeOperation='source-atop'; q.fillStyle='rgba(58,16,74,.62)'; q.fillRect(0,0,c.width,c.height);
+  q.fillStyle='rgba(58,255,154,.5)'; for(const [x,y] of [[50,28],[72,28],[38,44],[58,44],[104,44]]){ q.fillRect(x,y,2,2); q.fillRect(x,c.height-y-2,2,2); }   // its growths glow
+  return CRUISER={cx:S.cx, cy:S.cy, img:c, burnt:scorch(c), eng:S.eng, fl:['#c8ffe4','#3aff9a']}; }
+const capSprite=kind=>kind==='carrier'||kind==='destroyer'?HULKS[kind]:kind==='spitter'?spitter():cruiser();
+const capOf=S=>CAP[S===boss?S.ck:S.kind];
+const capOn=S=>!!S && !S.dead && !S.dying && !(S.warp>0) && !(S.out>0);   // in the fight: there, whole, and not jumping in or out
+const bossOn=()=>!!boss && !!boss.line && !boss.dying && !boss.crippled;
+function capShip(kind,x,y,a,name){ const C=CAP[kind];
+  return {kind, side:C.side, name, x, y, ax:x, ay:y, vx:0, vy:0, a, face:a, hp:C.hp, maxhp:C.hp, cool:ri(10,70), lcool:ri(300,LANCE_GAP[1]), pd:ri(0,40),
+    tgt:null, tgtT:0, hit:0, fires:[], warp:0, out:0, dying:0, dead:false, dark:0, ph:rnd(0,TAU), gi:0, aim:a, lance:null, spin:0, strip:0}; }
+function makeBattle(kind){   // the two lines, facing each other across a gap of a screen and a half
+  const earth=kind==='earth', home=earth?outpost:spawnPt, nh=earth?430:300, nb=earth?1450:1380;
+  let best=null, bs=-1e9;
+  for(let k=0;k<36;k++){ const th=k/36*TAU, ux=Math.cos(th), uy=Math.sin(th), px=-uy, py=ux;   // the way from our line to theirs: clear of Earth and the Moon, inside the sector
+    const hc={x:home.x+ux*nh,y:home.y+uy*nh}, bc={x:home.x+ux*nb,y:home.y+uy*nb}, pts=[];
+    for(const o of [-520,0,520]) pts.push([hc.x+px*o,hc.y+py*o],[bc.x+px*o,bc.y+py*o]);
+    if(!earth) pts.push([bc.x+ux*500,bc.y+uy*500]);   // (the ark, behind her line)
+    let s=rnd(0,30)-Math.hypot(bc.x-WORLD/2,bc.y-WORLD/2)*.15;
+    for(const [x,y] of pts){ const m=Math.min(x,y,WORLD-x,WORLD-y); if(m<450) s-=(450-m)*10;
+      for(const p of planets){ const d=Math.hypot(p.x-x,p.y-y)-p.r-180; if(d<0) s+=d*8; } }
+    if(s>bs){ bs=s; best={ux,uy,px,py,hc,bc}; } }
+  const B=battle={kind, phase:'fight', ships:[], slots:[], shells:[], lances:[], wrecks:[], pylons:[], T:0, ni:0, climaxT:0, stripT:0, stripEnd:0, arrived:false,
+    names:[...FLEET_NAMES].sort(()=>Math.random()-.5), ...best};
+  const fa=Math.atan2(B.uy,B.ux);
+  // a place in a line: al toward the enemy, pe along the line. Ours face theirs and theirs face ours, each a little askew
+  const place=(side,kind,al,pe,o)=>{ const c=side?B.bc:B.hc, d=side?-1:1, x=c.x+B.ux*al*d+B.px*pe, y=c.y+B.uy*al*d+B.py*pe;
+    const s={side,kind,x,y,a:fa+(side?Math.PI:0)+(pe>0?1:pe<0?-1:0)*(side?-.22:.22),wait:0,ship:null,...o}; B.slots.push(s); return s; };
+  if(earth){
+    place(0,'carrier',-70,-150,{imm:1,name:'Resolute'}); place(0,'destroyer',20,-470); place(0,'destroyer',30,170); place(0,'destroyer',0,480);
+    place(1,'cruiser',0,-450); place(1,'cruiser',10,440); place(1,'spitter',110,-210); place(1,'spitter',100,230); }
+  else {   // Broodhome: her line is thicker (it's her home), and ours jumps in behind you a few seconds in
+    place(0,'carrier',-70,170,{imm:1,name:'Resolute',delay:560}); place(0,'destroyer',20,-170,{delay:590}); place(0,'destroyer',30,-480,{delay:620}); place(0,'destroyer',0,470,{delay:650});
+    place(1,'cruiser',0,-430); place(1,'cruiser',-20,0); place(1,'cruiser',0,430); place(1,'spitter',110,-220); place(1,'spitter',110,220); }
+  for(const s of B.slots){ if(s.delay) s.wait=s.delay; else capArrive(s,true); }
+  // her own ship, anchoring her line: the flagship over Earth, in the middle of it; the ark over Broodhome, behind it
+  const ark=!earth, bx=earth?B.bc.x:B.bc.x+B.ux*500, by=earth?B.bc.y:B.bc.y+B.uy*500, hp=ark?300:46;
+  boss={x:bx,y:by,vx:0,vy:0,a:fa+Math.PI,face:fa+Math.PI,r:ark?80:58,hp,maxhp:hp,ghost:hp,cool:60,mcool:200,pdCool:0,wob:0,warp:0,hit:0,
+    fleeAt:0,flee:0,inbound:false,ark,brood:600,line:true,side:1,ck:ark?'ark':'flag',shield:true,shieldHit:0,shA:0,ax:bx,ay:by,ph:0,gi:0,
+    lcool:ri(400,900),tgt:null,tgtT:0,aim:fa+Math.PI,lance:null,fires:[],
+    guns:ark?null:CAP.flag.guns.map(([x,y])=>({x,y,hp:6,max:6,dead:false,hit:0,cool:ri(40,90)}))};
+  if(ark) B.pylons=[0,1,2].map(i=>({a:i*TAU/3+.5,hp:12,max:12,dead:false,hit:0,cool:ri(40,90),x:bx,y:by}));
+  return B;
+}
+function capArrive(s,quiet){ const B=battle, name=s.name||(s.side?'':B.names[B.ni++%B.names.length]);
+  const S=capShip(s.kind,s.x,s.y,s.a,name); S.slot=s; S.immortal=!!s.imm; s.ship=S; B.ships.push(S);
+  if(!quiet){ S.warp=70; shockwaves.push({x:S.x,y:S.y,delay:0,r0:20,max:CAP[S.kind].L*1.6,life:0,maxlife:40,col:S.side?'#ff9ab0':'#9ff6ff'});
+    if(cool('capWarp',90)) VRAudio.sfx.warpIn(S.x,S.y);
+    if(s.delay && !B.arrived){ B.arrived=true; say('cmd','lineStart4',null,2);   // Broodhome: the fleet comes through the jump behind you
+      goodBanner('THE FLEET IS HERE','THE RESOLUTE AND THE HOME FLEET · THEY TAKE HER LINE · YOU TAKE THE HORDES',230); }
+    else if(!s.delay){ if(S.side===0){ if(cool('lineReinf',600)) say('cmd','lineReinf',{ship:name},1); } else if(cool('lineBroodReinf',1500)) say('cmd','lineBroodReinf',null,0); } }
+  return S; }
+function battleNow(){ for(const s of battle.slots) if(!s.ship && s.wait>0){ s.wait=0; s.delay=0; capArrive(s,true); } battle.arrived=true; }   // (the jump menu: the fleet's already here)
+// where things are on a hull: a gun, the lance's muzzle, and whether a point is inside it (a capsule along its length)
+function capGun(S,i){ const C=capOf(S), k=C.sc, [gx,gy]=C.guns[i], ca=Math.cos(S.a), sa=Math.sin(S.a); return [S.x+(gx*ca-gy*sa)*k, S.y+(gx*sa+gy*ca)*k]; }
+function capIn(S,x,y,pad){ const C=capOf(S), ca=Math.cos(S.a), sa=Math.sin(S.a), R=C.R+(pad||0); return segD2(S.x-ca*C.L,S.y-sa*C.L,S.x+ca*C.L,S.y+sa*C.L,x,y)<R*R; }
+function capPush(S,o,r){   // shove o out of the hull (no damage: a warship is just too big to fly through). Returns how hard it hit
+  const C=capOf(S), ca=Math.cos(S.a), sa=Math.sin(S.a), ax=S.x-ca*C.L, ay=S.y-sa*C.L, abx=ca*C.L*2, aby=sa*C.L*2, R=C.R+r;
+  const u=clamp(((o.x-ax)*abx+(o.y-ay)*aby)/(abx*abx+aby*aby),0,1), qx=ax+abx*u, qy=ay+aby*u, dx=o.x-qx, dy=o.y-qy, d=Math.hypot(dx,dy);
+  if(d>=R) return 0; const nx=d>.01?dx/d:-sa, ny=d>.01?dy/d:ca; o.x=qx+nx*R; o.y=qy+ny*R;
+  const vn=(o.vx||0)*nx+(o.vy||0)*ny; if(vn<0){ o.vx-=vn*nx*1.5; o.vy-=vn*ny*1.5; } return -vn; }
+function wreckAt(x,y,pad){ for(const w of battle.wrecks) if(w.life>120 && (w.x-x)**2+(w.y-y)**2<(w.r+(pad||0))**2) return w; return null; }
+function capScar(S,x,y){ if(S.fires.length>=6) return; const dx=x-S.x, dy=y-S.y, ca=Math.cos(-S.a), sa=Math.sin(-S.a);   // a fire takes hold where it was hit
+  S.fires.push({x:dx*ca-dy*sa, y:dx*sa+dy*ca, r:rnd(4,8)}); }
+function capBoom(x,y,kind,size){   // a blast out in the battle: its shake and flash fade with how far it is from what you're looking at
+  const sh=shake, fl=flash; boom(x,y,kind,size);
+  const d=Math.hypot(x-(camX+VW/2),y-(camY+VH/2)), k=clamp(1-(d-260)/700,0,1); shake=sh+(shake-sh)*k; flash=fl+(flash-fl)*k; }
+function capHit(T,dmg,x,y,big){
+  if(T===boss){ const b=boss;
+    if(b.shield){ b.shieldHit=10; b.shA=Math.atan2(y-b.y,x-b.x); return; }   // (it splashes off her shield)
+    if(b.ark && battle.phase==='finish'){ b.hp-=dmg; b.hit=6; if(big) capScar(b,x,y); if(b.hp<=0 && !b.dying) arkDown(); }
+    else if(big) capScar(b,x,y);
+    return; }
+  T.hp-=dmg; T.hit=Math.max(T.hit,big?8:3);
+  if(big || Math.random()<.1) capScar(T,x,y);
+  if(T.immortal){ T.hp=Math.max(T.hp,T.maxhp*.2); return; }   // (the Resolute burns, but she doesn't go down)
+  if(T.hp<=0) capDown(T);
+  else if(T.side===0 && T.hp<T.maxhp*.35 && !T.saidHit && cool('fleetHit',1500)){ T.saidHit=1; say('fleet','fleetHit',{ship:T.name},1); } }
+function capDown(S){ const B=battle; S.dying=170; S.spin=rnd(-.003,.003); if(S.lance) S.lance.t=LANCE_CH+LANCE_FIRE+99;   // (her lance dies with her)
+  if(S.side===0){ say('cmd','lineLost',{ship:S.name},2); if(Math.random()<.4) say('matriarch','lineTaunt',null,1); }
+  else { addScore(1000,S.x,S.y-CAP[S.kind].L,'#ffd27a'); if(cool('lineKill',600)) say('cmd','lineKill',null,1); } }
+function capBreak(S){   // the last blast: she breaks in two, and the halves drift apart burning
+  const B=battle, C=CAP[S.kind], P=capSprite(S.kind), k=C.sc, ca=Math.cos(S.a), sa=Math.sin(S.a), W=P.img.width, H=P.img.height;
+  S.dead=true; capBoom(S.x,S.y,'ship',C.L*.7);
+  for(const half of [0,1]){ const sx=half?P.cx:0, sw=half?W-P.cx:P.cx, off=(sx+sw/2-P.cx)*k, d=half?1:-1;
+    B.wrecks.push({img:P.burnt,sx,sw,sh:H,cy:P.cy,k,x:S.x+ca*off,y:S.y+sa*off,a:S.a,spin:d*rnd(.0006,.0018),
+      vx:S.vx+ca*d*.16+rnd(-.05,.05),vy:S.vy+sa*d*.16+rnd(-.05,.05),life:3000,max:3000,r:Math.min(sw,H)*k*.42,smoke:ri(0,9)}); }
+  if(B.wrecks.length>8) B.wrecks.splice(0,B.wrecks.length-8);
+  if(S.slot){ S.slot.ship=null; S.slot.wait=ri(1300,1900); S.slot.delay=0; } }
+function capPick(S){   // something on the other side of the gap, usually one of the nearer ones
+  const c=[]; for(const T of battle.ships) if(T.side!==S.side && capOn(T)) c.push(T);
+  const P=battle.phase;   // (her own ship too: now and then while the hordes are on, its shield taking the hits; never while you're at work on
+  // its batteries or pylons, so our lanes stay clear of you; and every gun we have once her shield is down for good)
+  if(S.side===0 && bossOn() && (P==='finish' || P==='strip' || !c.length || (P==='fight' && Math.random()<.15))) c.push(boss);
+  if(!c.length) return null;
+  c.sort((a,b)=>Math.hypot(a.x-S.x,a.y-S.y)-Math.hypot(b.x-S.x,b.y-S.y));
+  return c[Math.random()<.55?0:Math.random()<.6?Math.min(1,c.length-1):ri(0,c.length-1)]; }
+function capShell(S,T){ const C=capOf(S), [x,y]=capGun(S,S.gi++%C.guns.length), sp=S.side?4.3:5.2, R=capOf(T).R;
+  const dx=T.x+rnd(-R,R)*.7-x, dy=T.y+rnd(-R,R)*.7-y, d=Math.hypot(dx,dy)||1, a=Math.atan2(dy,dx)+rnd(-.018,.018);
+  battle.shells.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:Math.round(d/sp)+90,side:S.side});
+  muzzles.push({x,y,life:4,max:4,r:6,col:S.side?'#ff5ad8':'#9ff6ff'}); VRAudio.sfx.cannon(x,y,S.side===1); }
+function capLance(S,T,dmg){ const L={S,T,t:0,dmg:dmg==null?(S.side?LANCE_DMG*.85:LANCE_DMG):dmg,x0:S.x,y0:S.y,x1:T.x,y1:T.y,said:false};   // (hers burn a touch less: our line has to hold)
+  S.lance=L; battle.lances.push(L); lanceEnds(L); VRAudio.sfx.lanceCharge(L.x0,L.y0); return L; }
+function lanceEnds(L){ const S=L.S, C=capOf(S), m=C.lance*C.sc; L.x0=S.x+Math.cos(S.a)*m; L.y0=S.y+Math.sin(S.a)*m;
+  const T=L.T; if(T && (T===boss?!!boss&&!boss.dying:!T.dead)){ const dx=T.x-L.x0, dy=T.y-L.y0, d=Math.hypot(dx,dy)||1;
+    const R=T===boss&&boss.shield?boss.r+(boss.ark?26:22):capOf(T).R*.55; L.x1=T.x-dx/d*R; L.y1=T.y-dy/d*R; } }   // (a shield stops it at its edge)
+function enemyBolt(x,y,big){   // a bolt at you (or your flagship) from a brood gun, leading you a little
+  const d=Math.hypot(ship.x-x,ship.y-y), lead=d/2.7, a=Math.atan2(ship.y+ship.vy*lead-y,ship.x+ship.vx*lead-x)+rnd(-.06,.06);
+  efire.push({x,y,vx:Math.cos(a)*2.7,vy:Math.sin(a)*2.7,life:170,dmg:big?3:2,src:null});
+  muzzles.push({x,y,life:4,max:4,r:big?9:7,col:'#ff3b5c'}); VRAudio.sfx.eshot(x,y,!!big); }
+function capTick(S){ const B=battle, C=CAP[S.kind];
+  if(S.hit>0) S.hit--;
+  if(S.warp>0){ S.warp--; return; }
+  if(S.out>0){ S.vx+=Math.cos(S.a)*.06; S.vy+=Math.sin(S.a)*.06; S.x+=S.vx; S.y+=S.vy;   // jumping out: a burn, a flash, gone
+    if(--S.out===0){ S.dead=true; shockwaves.push({x:S.x,y:S.y,delay:0,r0:C.L,max:4,life:0,maxlife:22,col:'#ff9ab0'}); VRAudio.sfx.implode(S.x,S.y); } return; }
+  if(S.dying>0){ S.vx*=.99; S.vy*=.99; S.x+=S.vx; S.y+=S.vy; S.a+=S.spin;   // breaking up: blasts rippling along the hull
+    if(S.dying%7===0){ const ca=Math.cos(S.a), sa=Math.sin(S.a), u=rnd(-C.L,C.L), v=rnd(-C.R,C.R)*.7;
+      capBoom(S.x+ca*u-sa*v,S.y+sa*u+ca*v,S.dying%28===0?'big':'small',rnd(8,16)); S.hit=6; }
+    if(--S.dying===0) capBreak(S); return; }
+  // holding its place in the line, with a slow sway, and smoke from wherever it's burning
+  S.ph+=.005; const w=Math.sin(S.ph), tx=S.ax+B.px*w*24+B.ux*Math.sin(S.ph*1.6)*10, ty=S.ay+B.py*w*24+B.uy*Math.sin(S.ph*1.6)*10;
+  S.vx+=((tx-S.x)*.01-S.vx)*.04; S.vy+=((ty-S.y)*.01-S.vy)*.04; S.x+=S.vx; S.y+=S.vy;
+  S.a+=clamp(((S.face-S.a+Math.PI*3)%TAU)-Math.PI,-.003,.003);
+  if(S.fires.length && t%9===0){ const f=S.fires[ri(0,S.fires.length-1)], ca=Math.cos(S.a), sa=Math.sin(S.a);
+    particles.push({x:S.x+f.x*ca-f.y*sa,y:S.y+f.x*sa+f.y*ca,vx:rnd(-.3,.3),vy:rnd(-.3,.3),life:rnd(30,60),max:60,col:Math.random()<.35?'#ff9a3d':'#3b3346',r:rnd(1.5,3),grav:0}); }
+  if(B.phase==='over' || S.dark) return;   // the fight's done: guns quiet
+  // shells at whatever it's on, gun by gun, and now and then its lance
+  if(--S.tgtT<=0 || !(S.tgt===boss?bossOn():capOn(S.tgt))){ S.tgt=B.phase==='finish'&&S.side===0&&bossOn()?boss:capPick(S); S.tgtT=ri(200,320); }
+  const T=S.tgt;
+  if(T){ S.aim=Math.atan2(T.y-S.y,T.x-S.x);
+    if(--S.cool<=0){ S.cool=C.gap+ri(-4,6); capShell(S,T); }
+    if(S.strip>0){ if(--S.strip===0 && bossOn()) capLance(S,boss,0); }   // (over Earth, the moment the hordes are done: every lance on her flagship)
+    else if(--S.lcool<=0 && !S.lance){ const fin=B.phase==='finish' && S.side===0 && bossOn();
+      S.lcool=fin?ri(200,280):ri(LANCE_GAP[0],LANCE_GAP[1]); capLance(S,fin?boss:T,fin?16:null); } }
+  if(S.side===0){   // our flak: the nearest reaver close in, and any of her missiles
+    if(--S.pd<=0){ S.pd=26; let best=null, bd=240*240;
+      for(const e of enemies){ if(!e.alive||e.warp>0) continue; const d=(e.x-S.x)**2+(e.y-S.y)**2; if(d<bd){ bd=d; best=e; } }
+      if(best){ let gi=0, gd=1e9; for(let i=0;i<C.guns.length;i++){ const [x,y]=capGun(S,i), d=(x-best.x)**2+(y-best.y)**2; if(d<gd){ gd=d; gi=i; } }
+        const [x,y]=capGun(S,gi), lead=Math.sqrt(gd)/8, a=Math.atan2(best.y+best.vy*lead-y,best.x+best.vx*lead-x)+rnd(-.07,.07);
+        bullets.push({x,y,vx:Math.cos(a)*8,vy:Math.sin(a)*8,life:40,wing:'fleet'}); VRAudio.sfx.zap(x,y,false); }
+      else for(const m of emissiles){ if(m.life>0 && (m.x-S.x)**2+(m.y-S.y)**2<260*260){ m.life=0; pdFlashes.push({ax:S.x,ay:S.y,bx:m.x,by:m.y,life:7,max:7,col:'#43f0ff'}); sparks(m.x,m.y); break; } } } }
+  else if(--S.pd<=0){ S.pd=ri(64,84);   // theirs: come within reach of a brood hull, and its guns turn on you (not at the end: our line keeps them busy, and her own ship is the fight)
+    if(B.phase==='fight' && ship.alive && state==='play' && Math.hypot(ship.x-S.x,ship.y-S.y)<380){ let gi=0, gd=1e9;
+      for(let i=0;i<C.guns.length;i++){ const [x,y]=capGun(S,i), d=(x-ship.x)**2+(y-ship.y)**2; if(d<gd){ gd=d; gi=i; } }
+      const [x,y]=capGun(S,gi); enemyBolt(x,y,false); } }
+}
+// her own ship in the line: the flagship over Earth, the ark over Broodhome
+function lineBossTick(b){ const B=battle; if(!B) return;
+  if(b.shieldHit>0) b.shieldHit--;
+  const climax=B.phase==='guns'||B.phase==='pylons'||B.phase==='finish';
+  if(b.ark && climax){ const k=Math.min(1,(B.T-B.climaxT)/1500); b.ax+=((B.bc.x+B.ux*500-B.ux*360*k)-b.ax)*.02; b.ay+=((B.bc.y+B.uy*500-B.uy*360*k)-b.ay)*.02; }   // (the ark comes forward to fight for itself)
+  b.ph+=.004; const tx=b.ax+B.px*Math.sin(b.ph)*20, ty=b.ay+B.py*Math.sin(b.ph)*20;
+  b.vx+=((tx-b.x)*.01-b.vx)*.04; b.vy+=((ty-b.y)*.01-b.vy)*.04; b.x+=b.vx; b.y+=b.vy;
+  b.a+=clamp(((b.face-b.a+Math.PI*3)%TAU)-Math.PI,-.003,.003);
+  if(b.fires.length && t%7===0){ const f=b.fires[ri(0,b.fires.length-1)], ca=Math.cos(b.a), sa=Math.sin(b.a);
+    particles.push({x:b.x+f.x*ca-f.y*sa,y:b.y+f.x*sa+f.y*ca,vx:rnd(-.3,.3),vy:rnd(-.3,.3),life:rnd(30,60),max:60,col:Math.random()<.35?'#ff9a3d':'#3b3346',r:rnd(1.5,3),grav:0}); }
+  if(B.phase==='over') return;
+  const d=Math.hypot(ship.x-b.x,ship.y-b.y), near=ship.alive && state==='play' && d<(b.ark?640:580);
+  if(climax && near){ b.aim=Math.atan2(ship.y-b.y,ship.x-b.x);   // the end: its guns are on you
+    if(--b.cool<=0){ b.cool=b.ark?(B.phase==='finish'?74:84):96; const n=b.ark&&B.phase==='finish'?2:1;   // (the ark's spread widens once she's fighting for her life)
+      for(let k=-n;k<=n;k++){ const a=b.aim+k*(b.ark?.11:.13); efire.push({x:b.x+Math.cos(a)*b.r*.7,y:b.y+Math.sin(a)*b.r*.7,vx:Math.cos(a)*3,vy:Math.sin(a)*3,life:220}); }
+      muzzles.push({x:b.x+Math.cos(b.aim)*b.r*.75,y:b.y+Math.sin(b.aim)*b.r*.75,life:5,max:5,r:16,col:b.ark?'#3aff9a':'#ff3b5c'}); VRAudio.sfx.eshot(b.x,b.y,true); }
+    if(--b.mcool<=0){ b.mcool=b.ark?170:260;
+      for(const o of b.ark?[-.45,.45]:[0]){ const a=b.aim+o; emissiles.push({x:b.x+Math.cos(a)*b.r*.7,y:b.y+Math.sin(a)*b.r*.7,a,vx:Math.cos(a)*1.6,vy:Math.sin(a)*1.6,life:340}); }
+      VRAudio.sfx.bossMissile(b.x,b.y); } }
+  else if(B.phase!=='strip'){   // otherwise: shells and lances at our line, like the rest of hers
+    if(--b.tgtT<=0 || !capOn(b.tgt)){ b.tgt=capPick(b); b.tgtT=ri(200,320); }
+    if(b.tgt){ b.aim=Math.atan2(b.tgt.y-b.y,b.tgt.x-b.x);
+      if(--b.cool<=0){ b.cool=CAP[b.ck].gap+ri(-3,5); capShell(b,b.tgt); }
+      if(!climax && --b.lcool<=0 && !b.lance){ b.lcool=ri(LANCE_GAP[0],LANCE_GAP[1]); capLance(b,b.tgt); } } }
+  // point defence against your missiles (her flagship's goes down with its shield; the ark's never does)
+  if(b.ark || b.shield){ if(b.pdCool>0) b.pdCool--; else { let m=null, md=260*260;
+    for(const mm of missiles){ if(mm.life<=0) continue; const dd=(mm.x-b.x)**2+(mm.y-b.y)**2; if(dd<md){ md=dd; m=mm; } }
+    if(m){ m.life=0; pdFlashes.push({ax:b.x,ay:b.y,bx:m.x,by:m.y,life:7,max:7,col:b.ark?'#3aff9a':'#ff4d6d'}); sparks(m.x,m.y); b.pdCool=12; VRAudio.sfx.zap(m.x,m.y,true); } } }
+  if(b.ark && climax && --b.brood<=0){ b.brood=840; spawnGroup(b.x-Math.cos(b.a)*b.r,b.y-Math.sin(b.a)*b.r,3,'hunt'); }   // its brood, out of its bays
+  if(b.guns && B.phase==='guns') for(const G of b.guns){ if(G.dead) continue; if(G.hit>0) G.hit--;   // each battery left fights back
+    if(ship.alive && state==='play' && d<480 && --G.cool<=0){ G.cool=ri(96,120); const [x,y]=bossGun(G); enemyBolt(x,y,false); } }
+}
+function bossGun(G){ const ca=Math.cos(boss.a), sa=Math.sin(boss.a); return [boss.x+G.x*ca-G.y*sa, boss.y+G.x*sa+G.y*ca]; }
+// the climax. Over Earth: the hordes are done, so every lance in our line goes onto her flagship's shield, it fails, and you
+// silence its four gun batteries. Over Broodhome: you break the three pylons feeding the ark's shield, then the fleet burns it down
+function lineClimax(){ const B=battle, b=boss; B.climaxT=B.T; comms.q=comms.q.filter(m=>m.pri>=2);
+  if(!b.ark){ B.phase='strip'; say('cmd','lineStrip',null,2); let k=0;
+    for(const S of B.ships) if(S.side===0 && capOn(S)){ if(S.lance) S.lance.t=LANCE_CH+LANCE_FIRE+99; S.strip=20+k*28; k++; }
+    B.stripT=0; B.stripEnd=20+Math.max(0,k-1)*28+LANCE_CH+LANCE_FIRE+8; }
+  else { B.phase='pylons'; for(const P of B.pylons) P.cool=ri(40,90); for(const S of B.ships) if(S.side===0) S.tgtT=0;
+    say('cmd','linePylons',null,2); alarmBanner('BREAK HER SHIELD','THREE SPORE PYLONS FEED IT · KNOCK THEM OUT',230); } }
+function flagShieldDown(){ const B=battle, b=boss; b.shield=false; B.phase='guns';
+  for(const S of B.ships) if(S.side===0) S.tgtT=0;   // (our line turns onto her escorts: the batteries are yours)
+  shockwaves.push({x:b.x,y:b.y,delay:0,r0:b.r,max:b.r+130,life:0,maxlife:40,col:'#ff9ab0'},{x:b.x,y:b.y,delay:8,r0:b.r*.6,max:b.r+80,life:0,maxlife:34,col:'#ffffff'});
+  VRAudio.sfx.implode(b.x,b.y); VRAudio.sfx.zap(b.x,b.y,true); pops.push({x:b.x,y:b.y-b.r-14,txt:'SHIELD DOWN',col:'#ffd0d6',life:80});
+  say('cmd','lineGuns',null,2); say('matriarch','eShield',null,1);
+  alarmBanner('SILENCE ITS GUNS','FOUR GUN BATTERIES · LASERS OR MISSILES · LEAVE THE HULL IN ONE PIECE',240); }
+function gunDown(G){ const b=boss; G.dead=true; G.hp=0; const [x,y]=bossGun(G);
+  capBoom(x,y,'big',14); capScar(b,x,y); addScore(750,x,y-14,'#ffd27a');
+  const left=b.guns.filter(g=>!g.dead).length;
+  if(left) say('cmd','lineGun',{n:NUMW[left]||left},2);
+  else { bossCrippled(); battleOver(true); } }   // dead in space: the boarding comes next
+function pylonDown(P){ const B=battle, b=boss; P.dead=true; P.hp=0; capBoom(P.x,P.y,'big',16); addScore(1000,P.x,P.y-16,'#ffd27a');
+  shockwaves.push({x:P.x,y:P.y,delay:0,r0:8,max:70,life:0,maxlife:26,col:'#3aff9a'}); b.shieldHit=14;
+  const left=B.pylons.filter(p=>!p.dead).length;
+  if(left){ say('cmd','linePylon',{n:NUMW[left]||left},2); return; }
+  arkShieldDown(); }
+function arkShieldDown(){ const B=battle, b=boss; if(B.phase==='finish') return;
+  b.shield=false; B.phase='finish';   // her shield fails, and every lance in our line turns on her
+  shockwaves.push({x:b.x,y:b.y,delay:0,r0:b.r,max:b.r+150,life:0,maxlife:44,col:'#3aff9a'},{x:b.x,y:b.y,delay:8,r0:b.r*.6,max:b.r+90,life:0,maxlife:36,col:'#ffffff'});
+  VRAudio.sfx.implode(b.x,b.y); pops.push({x:b.x,y:b.y-b.r-14,txt:'SHIELD DOWN',col:'#d6ffe9',life:80});
+  say('cmd','lineFinish',null,2); say('matriarch','mShield',null,1);
+  goodBanner('HER SHIELD IS DOWN','EVERY LANCE IN THE FLEET IS ON HER ARK · ADD YOUR GUNS',220);
+  let k=0; for(const S of B.ships) if(S.side===0 && capOn(S)){ S.tgt=boss; S.lcool=20+k*45; k++; } }
+function arkDown(){ destroyBoss(); battleOver(false); }
+function lineSkip(){   // the jump menu's green button: straight to her ship's last hit
+  const B=battle, b=boss; if(!B || !b || b.dying || b.crippled) return;
+  if(!b.ark){ if(b.shield) flagShieldDown();
+    const live=b.guns.filter(G=>!G.dead); live.forEach((G,i)=>{ if(i<live.length-1){ G.dead=true; G.hp=0; } else G.hp=1; }); }
+  else { for(const P of B.pylons) if(!P.dead){ P.dead=true; P.hp=0; } arkShieldDown(); b.hp=Math.min(b.hp,1); b.ghost=Math.min(b.ghost,b.hp); } }
+function battleOver(earth){ const B=battle; if(!B || B.phase==='over') return; B.phase='over';
+  for(const L of B.lances) if(L.t<LANCE_CH) L.t=LANCE_CH+LANCE_FIRE+99;   // whatever was still charging dies away
+  let k=0; for(const S of B.ships) if(S.side===1 && capOn(S)){ if(earth) S.out=50+k*24; else S.dark=1; k++; }   // over Earth her line jumps away; over Broodhome it powers down
+  const n=B.ships.filter(S=>S.side===0 && capOn(S)).length;   // and a bonus for every one of our warships still in the line
+  if(n){ addScore(1000*n,ship.x,ship.y-30,'#4dffa6'); pops.push({x:ship.x,y:ship.y-44,txt:'THE LINE HELD · '+n+' SHIP'+(n>1?'S':''),col:'#4dffa6',life:100}); }
+  if(earth && k) say('cmd','lineBreak',null,1); }
+function battleTick(){ const B=battle; B.T++;
+  for(const s of B.slots) if(!s.ship && s.wait>0 && --s.wait===0 && B.phase!=='over') capArrive(s);   // a fresh hull jumps in to fill the gap
+  for(const S of B.ships) capTick(S);
+  B.ships=B.ships.filter(S=>!S.dead);
+  if(B.phase==='strip' && ++B.stripT>=B.stripEnd && boss && boss.line && !boss.dying) flagShieldDown();
+  // the pylons round the ark, and the tethers feeding its shield
+  if(B.pylons.length && boss && boss.ark) for(const P of B.pylons){ if(P.dead) continue; if(P.hit>0) P.hit--;
+    P.a+=.0035; P.x=boss.x+Math.cos(P.a)*(boss.r+74); P.y=boss.y+Math.sin(P.a)*(boss.r+74);
+    if(B.phase==='pylons' && ship.alive && state==='play' && Math.hypot(ship.x-P.x,ship.y-P.y)<480 && --P.cool<=0){ P.cool=ri(96,124); enemyBolt(P.x,P.y,false); } }
+  // shells across the gap: a hull on the other side, a wreck, then ours rip through reavers and theirs hit you
+  for(const s of B.shells){ s.x+=s.vx; s.y+=s.vy; if(--s.life<=0) continue;
+    let hit=null; for(const T of B.ships) if(T.side!==s.side && !T.dead && !(T.warp>0) && capIn(T,s.x,s.y,2)){ hit=T; break; }
+    if(!hit && s.side===0 && boss && boss.line && !boss.dying && capIn(boss,s.x,s.y,boss.shield?14:2)) hit=boss;
+    if(hit){ s.life=0; if(!hit.dying) capHit(hit,hit===boss?.4:1,s.x,s.y,false);   // (her ark's hide shrugs off most of a shell)
+      for(let i=0;i<4;i++) particles.push({x:s.x,y:s.y,vx:rnd(-1.4,1.4),vy:rnd(-1.4,1.4),life:rnd(8,16),max:16,col:s.side?'#ffb0ec':'#cffaff',r:1,grav:0}); continue; }
+    if(wreckAt(s.x,s.y)){ s.life=0; sparks(s.x,s.y); continue; }
+    if(s.side===0){ for(const e of enemies){ if(!e.alive||e.warp>0) continue;
+        if((e.x-s.x)**2+(e.y-s.y)**2<(e.r+3)**2){ s.life=0; sparks(s.x,s.y); if(e.shield) breakShield(e); else { e.hp-=2; e.flash=6; if(e.hp<=0) kill(e); else VRAudio.sfx.hit(e.x,e.y); } break; } } }
+    else if(ship.alive && ship.invuln<=0 && state==='play' && (ship.x-s.x)**2+(ship.y-s.y)**2<(ship.r*.55+3)**2){ s.life=0; if(!hitShip('shell')) sparks(s.x,s.y); } }   // (it has to hit you square: a near miss just flies on)
+  B.shells=B.shells.filter(s=>s.life>0&&s.x>0&&s.y>0&&s.x<WORLD&&s.y<WORLD);
+  // lances: the lane lights up, then it fires, and whatever's in the lane when it does is in trouble
+  for(const L of B.lances){ L.t++; const S=L.S;
+    if(L.t<=LANCE_CH && (S===boss?!bossOn():!capOn(S))){ L.t=LANCE_CH+LANCE_FIRE+99; continue; }   // its ship died before it could fire
+    if(L.t>LANCE_CH+LANCE_FIRE+20) continue;
+    lanceEnds(L);
+    if(L.t<LANCE_CH){ if(!L.said && L.t>12 && ship.alive && state==='play' && segD2(L.x0,L.y0,L.x1,L.y1,ship.x,ship.y)<44*44){ L.said=true;
+        if(cool('lane',S.side?700:1100)) say('cmd',S.side?'lineLaneB':'lineLane',{ship:S.name||'Resolute'},2); }
+      continue; }
+    if(L.t===LANCE_CH){ VRAudio.sfx.lanceFire(L.x0,L.y0); const d=Math.sqrt(segD2(L.x0,L.y0,L.x1,L.y1,camX+VW/2,camY+VH/2)); if(d<600) shake=Math.min(shake+5*(1-d/600),14); }
+    if(L.t<LANCE_CH+LANCE_FIRE){ const T=L.T;
+      if(T && (T===boss?!!boss&&!boss.dying:!T.dead && !T.dying)) capHit(T,L.dmg/LANCE_FIRE,L.x1,L.y1,L.t===LANCE_CH);
+      if((L.t-LANCE_CH)%7===0){ if(T===boss && boss.shield){ for(let i=0;i<6;i++) particles.push({x:L.x1,y:L.y1,vx:rnd(-2,2),vy:rnd(-2,2),life:rnd(10,20),max:20,col:boss.ark?'#c8ffe4':'#ffd0e0',r:1,grav:0}); }
+        else capBoom(L.x1+rnd(-8,8),L.y1+rnd(-8,8),'small',7); }   // (a shield throws off sparks; a hull burns)
+      if(ship.alive && state==='play' && ship.invuln<=0 && segD2(L.x0,L.y0,L.x1,L.y1,ship.x,ship.y)<(ship.r+5)**2) hitShip('lance');
+      for(const e of enemies) if(e.alive && e.warp<=0 && segD2(L.x0,L.y0,L.x1,L.y1,e.x,e.y)<(e.r+3)**2) kill(e); } }
+  B.lances=B.lances.filter(L=>{ const on=L.t<LANCE_CH+LANCE_FIRE+12; if(!on && L.S.lance===L) L.S.lance=null; return on; });
+  // the wrecks drift apart, burning
+  for(const w of B.wrecks){ w.x+=w.vx; w.y+=w.vy; w.vx*=.999; w.vy*=.999; w.a+=w.spin; w.life--;
+    if(w.life>200 && t%11===w.smoke){ const u=rnd(-.4,.4)*w.sw*w.k, ca=Math.cos(w.a), sa=Math.sin(w.a);
+      particles.push({x:w.x+ca*u,y:w.y+sa*u,vx:rnd(-.25,.25),vy:rnd(-.25,.25),life:rnd(40,70),max:70,col:Math.random()<.3?'#ff9a3d':'#3b3346',r:rnd(1.5,3),grav:0}); } }
+  B.wrecks=B.wrecks.filter(w=>w.life>0);
+  // and everything else out there meets the hulls: you and the reavers bump off them, your fire chips hers (ours lets it
+  // through), the reavers' bolts and missiles burst on ours, and the wrecks soak up everyone's
+  const hulls=B.ships.filter(S=>!S.dead && !(S.warp>0)); if(boss && boss.line && !boss.dying) hulls.push(boss);
+  if(ship.alive && (state==='play'||state==='winning')){ for(const S of hulls){ const v=capPush(S,ship,ship.r*.9); if(v>1.2 && cool('hullBump',20)) VRAudio.sfx.bump(); }
+    for(const w of B.wrecks) if(w.life>120){ const dx=ship.x-w.x, dy=ship.y-w.y, d=Math.hypot(dx,dy), R=w.r+ship.r*.9; if(d<R && d>.01){ ship.x=w.x+dx/d*R; ship.y=w.y+dy/d*R; const vn=ship.vx*dx/d+ship.vy*dy/d; if(vn<0){ ship.vx-=vn*dx/d*1.5; ship.vy-=vn*dy/d*1.5; } } } }
+  for(const e of enemies){ if(!e.alive||e.warp>0) continue; for(const S of hulls) capPush(S,e,e.r*.8); }
+  for(const R of rocks) for(const S of hulls) capPush(S,R,R.r*.8);
+  for(const bl of bullets){ if(bl.life<=0 || bl.wing==='fleet') continue;
+    for(const S of B.ships){ if(S.side!==1 || S.dead || S.warp>0) continue;
+      if(capIn(S,bl.x,bl.y,1)){ bl.life=0; sparks(bl.x,bl.y); if(!S.dying) capHit(S,.4,bl.x,bl.y,false); break; } }
+    if(bl.life>0 && wreckAt(bl.x,bl.y)){ bl.life=0; sparks(bl.x,bl.y); } }
+  for(const m of missiles){ if(m.life<=0) continue;
+    for(const S of B.ships){ if(S.side!==1 || S.dead || S.warp>0) continue; if(capIn(S,m.x,m.y,2)){ m.life=0; capBoom(m.x,m.y,'small',8); if(!S.dying) capHit(S,4,m.x,m.y,true); break; } }
+    if(m.life>0 && wreckAt(m.x,m.y)){ m.life=0; capBoom(m.x,m.y,'small',8); } }
+  for(const f of efire){ if(f.life<=0) continue; let hit=wreckAt(f.x,f.y);
+    if(!hit) for(const S of B.ships){ if(S.side!==0 || S.dead || S.warp>0) continue; if(capIn(S,f.x,f.y,1)){ hit=S; if(!S.dying) capHit(S,.25,f.x,f.y,false); break; } }
+    if(hit){ f.life=0; sparks(f.x,f.y); } }
+  for(const m of emissiles){ if(m.life<=0) continue; let hit=wreckAt(m.x,m.y,2);
+    if(!hit) for(const S of B.ships) if(S.side===0 && !S.dead && !(S.warp>0) && capIn(S,m.x,m.y,3)){ hit=S; if(!S.dying) capHit(S,3,m.x,m.y,true); break; }
+    if(hit){ m.life=0; capBoom(m.x,m.y,'small',8); } }
+  lineBossHits();
+}
+function lineBossHits(){   // your fire on her own ship: her shield soaks it, then the batteries (Earth) or the pylons and then the ark (Broodhome) take it
+  const B=battle, b=boss; if(!b || !b.line || b.dying || b.crippled) return;
+  // (the pylons and batteries are tested first, along the shot's whole last step, so the hull can't swallow a shot meant for them)
+  const pylonAt=(x0,y0,x,y,r)=>{ for(const P of B.pylons) if(!P.dead && segD2(x0,y0,x,y,P.x,P.y)<r*r) return P; return null; };
+  const gunAt=(x0,y0,x,y,r)=>{ if(!b.guns || b.shield) return null; for(const G of b.guns){ if(G.dead) continue; const [gx,gy]=bossGun(G); if(segD2(x0,y0,x,y,gx,gy)<r*r) return G; } return null; };
+  for(const bl of bullets){ if(bl.life<=0 || bl.wing==='fleet') continue;
+    const ox=bl.x-bl.vx, oy=bl.y-bl.vy, P=pylonAt(ox,oy,bl.x,bl.y,15);
+    if(P){ bl.life=0; sparks(bl.x,bl.y);
+      if(B.phase==='pylons'){ P.hp--; P.hit=6; VRAudio.sfx.bossHit(bl.x,bl.y,P.hp/P.max); if(P.hp<=0) pylonDown(P); } else P.hit=3;
+      continue; }
+    const G=B.phase==='guns'?gunAt(ox,oy,bl.x,bl.y,15):null;
+    if(G){ bl.life=0; sparks(bl.x,bl.y); G.hp--; G.hit=6; VRAudio.sfx.bossHit(bl.x,bl.y,G.hp/G.max); if(G.hp<=0) gunDown(G); continue; }
+    if(!capIn(b,bl.x,bl.y,b.shield?16:2)) continue;
+    bl.life=0;
+    if(b.shield){ b.shieldHit=10; b.shA=Math.atan2(bl.y-b.y,bl.x-b.x); VRAudio.sfx.deflect(bl.x,bl.y); continue; }
+    sparks(bl.x,bl.y);
+    if(B.phase==='guns'){ const G2=gunAt(bl.x,bl.y,bl.x+bl.vx*7,bl.y+bl.vy*7,16);   // (the hull's outline is rounder than the ship: a shot on its way into a battery counts)
+      if(G2){ G2.hp--; G2.hit=6; VRAudio.sfx.bossHit(bl.x,bl.y,G2.hp/G2.max); if(G2.hp<=0) gunDown(G2); }
+      continue; }   // (otherwise armour: aim for the batteries)
+    if(b.ark && B.phase==='finish'){ b.hp--; b.hit=6; VRAudio.sfx.bossHit(bl.x,bl.y,b.hp/b.maxhp);
+      if(b.hp<=0){ arkDown(); return; }
+      if(b.hp%12===0 && cool('bossHurt',360)) say('matriarch','mHurt'); } }
+  for(const m of missiles){ if(m.life<=0) continue;
+    const ox=m.x-m.vx, oy=m.y-m.vy, P=pylonAt(ox,oy,m.x,m.y,18);
+    if(P){ m.life=0; capBoom(m.x,m.y,'small',8); if(B.phase==='pylons'){ P.hp-=3; P.hit=6; if(P.hp<=0) pylonDown(P); } continue; }
+    const G=B.phase==='guns'?gunAt(ox,oy,m.x,m.y,22):null;
+    if(G){ m.life=0; capBoom(m.x,m.y,'small',8); G.hp-=3; G.hit=6; if(G.hp<=0) gunDown(G); continue; }
+    if(!capIn(b,m.x,m.y,b.shield?16:3)) continue;
+    m.life=0; capBoom(m.x,m.y,'small',8);
+    if(b.shield){ b.shieldHit=10; b.shA=Math.atan2(m.y-b.y,m.x-b.x); continue; }
+    if(B.phase==='guns'){ const G2=gunAt(m.x,m.y,m.x+m.vx*16,m.y+m.vy*16,22); if(G2){ G2.hp-=3; G2.hit=6; if(G2.hp<=0) gunDown(G2); } } }
+}
+// ---- drawing the line: the wrecks, the warships, the lanes lit for a lance (under the fighting); the shells; the lances as they
+// fire (over it); her shield, batteries and pylons; and the light of it all ----
+function capDraw(S,px,py){ const C=CAP[S.kind], k=C.sc, al=S.warp>0?clamp(1-S.warp/70,0,1):S.out>0?clamp(S.out/30,0,1):1;
+  g.save(); g.translate(px,py); g.rotate(S.a); g.globalAlpha=al;
+  if(S.warp>0) g.scale(1+S.warp/70*1.6,1);   // (stretched along its line of flight as it drops out of warp)
+  if(k!==1) g.scale(k,k);
+  const dmg=Math.max(clamp(1-S.hp/S.maxhp,0,1)*(S.dying?1:.8),S.dark?.65:0);   // (scorched as it's hurt; powered down, it goes dark)
+  { const P=capSprite(S.kind); g.drawImage(P.img,-P.cx,-P.cy);
+    if(dmg>.12){ g.globalAlpha=al*Math.min(.8,dmg); g.drawImage(P.burnt,-P.cx,-P.cy); g.globalAlpha=al; }
+    if(P.eng && !S.dying){ const fl=(t>>1)&1;   // engines
+      for(const [x,y,h] of P.eng){ const len=(S.kind==='carrier'?6:4)+fl*2; g.fillStyle=P.fl[0]; g.fillRect(x-len,y,len,h); g.fillStyle=P.fl[1]; g.fillRect(x-len-2,y+1,2,Math.max(1,h-2)); } }
+    if(S.kind==='carrier' && (t>>4)&1){ g.fillStyle='#ffffff'; g.fillRect(40,-38,2,2); g.fillRect(40,37,2,2); g.fillStyle='#ff4d6d'; g.fillRect(-80,-45,2,2); g.fillRect(-80,44,2,2); }   // nav strobes
+    if(S.side===0 && !S.dying){ const la=S.aim-S.a, c=Math.cos(la), s=Math.sin(la); g.globalAlpha=al;   // turrets, tracking whatever it's on
+      for(const [x,y] of C.guns){ g.fillStyle='#1f2c3f'; g.fillRect(x-2,y-2,4,4); g.strokeStyle='#8fa6c4'; g.lineWidth=1.5; g.beginPath(); g.moveTo(x,y); g.lineTo(x+c*6,y+s*6); g.stroke(); } } }
+  g.restore(); g.globalAlpha=1; }
+function drawBattle(toS){ const B=battle, on=(px,py,m)=>px>-m&&py>-m&&px<VW+m&&py<VH+m;
+  for(const w of B.wrecks){ const[px,py]=toS(w.x,w.y); if(!on(px,py,200)) continue;
+    g.save(); g.translate(px,py); g.rotate(w.a); g.scale(w.k,w.k); g.globalAlpha=Math.min(1,w.life/120)*.95;
+    g.drawImage(w.img,w.sx,0,w.sw,w.sh,-w.sw/2,-w.cy,w.sw,w.sh); g.restore(); }
+  g.globalAlpha=1;
+  for(const S of B.ships){ const[px,py]=toS(S.x,S.y); if(on(px,py,240)) capDraw(S,px,py); }
+  g.setLineDash([7,6]); g.lineDashOffset=-t*2;   // the lanes lighting up for a lance: get out of them
+  for(const L of B.lances){ if(L.t>=LANCE_CH) continue; const[x0,y0]=toS(L.x0,L.y0),[x1,y1]=toS(L.x1,L.y1), k=L.t/LANCE_CH;
+    if(Math.max(x0,x1)<-20||Math.min(x0,x1)>VW+20||Math.max(y0,y1)<-20||Math.min(y0,y1)>VH+20) continue;
+    g.globalAlpha=(.14+.6*k)*((t>>2)&1?1:.6); g.strokeStyle=L.S.side?'#ff5ad8':'#9ff6ff'; g.lineWidth=1+k*1.5;
+    g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke(); }
+  g.setLineDash([]); g.globalAlpha=1; }
+function drawShells(toS){ for(const s of battle.shells){ const[px,py]=toS(s.x,s.y); if(px<-10||py<-10||px>VW+10||py>VH+10) continue;
+    if(s.side===0){ g.save(); g.translate(px,py); g.rotate(Math.atan2(s.vy,s.vx)); g.fillStyle='#43f0ff'; g.fillRect(-7,-1.5,12,3); g.fillStyle='#eaffff'; g.fillRect(-1,-1,5,2); g.restore(); }   // ours: hot cyan slugs
+    else { g.fillStyle='rgba(255,90,216,.45)'; g.fillRect(Math.round(px-s.vx*1.8)-2,Math.round(py-s.vy*1.8)-2,4,4);   // theirs: globs of pink plasma
+      g.fillStyle='#ff5ad8'; g.beginPath(); g.arc(px,py,3.2,0,TAU); g.fill(); g.fillStyle='#ffe0f6'; g.fillRect(px-1,py-1,2,2); } } }
+function drawLances(toS){ g.lineCap='round';
+  for(const L of battle.lances){ if(L.t<LANCE_CH) continue; const f=L.t-LANCE_CH, w=f<LANCE_FIRE?1-f/LANCE_FIRE*.35:Math.max(0,1-(f-LANCE_FIRE)/12)*.5; if(w<=0) continue;
+    const[x0,y0]=toS(L.x0,L.y0),[x1,y1]=toS(L.x1,L.y1), col=L.S.side?'#ff5ad8':'#9ff6ff', j=1+.15*Math.sin(t*1.7);
+    if(Math.max(x0,x1)<-20||Math.min(x0,x1)>VW+20||Math.max(y0,y1)<-20||Math.min(y0,y1)>VH+20) continue;
+    const ln=(lw,a,c)=>{ g.globalAlpha=a; g.strokeStyle=c; g.lineWidth=lw; g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke(); };
+    ln(12*w*j,.3*w,col); ln(5*w*j,.9*w,col); ln(2*w,1,'#ffffff'); }
+  g.lineCap='butt'; g.globalAlpha=1; }
+function drawLineBoss(toS){ const b=boss, B=battle; if(b.dying) return; const[px,py]=toS(b.x,b.y);
+  for(const P of B.pylons){ if(P.dead) continue; const[qx,qy]=toS(P.x,P.y);   // the pylons, and while her shield's up the tethers feeding it
+    if(b.shield){ g.globalAlpha=.3+.25*Math.sin(t*.2+P.a*3); g.strokeStyle='#3aff9a'; g.lineWidth=1.5; g.beginPath(); g.moveTo(qx,qy); g.lineTo(px,py); g.stroke(); g.globalAlpha=1; }
+    for(let i=0;i<3;i++){ const a=P.a+i*2.1+t*.01; g.strokeStyle='#4a1846'; g.lineWidth=2; g.beginPath(); g.moveTo(qx,qy); g.quadraticCurveTo(qx+Math.cos(a)*8,qy+Math.sin(a)*8,qx+Math.cos(a+.6)*14,qy+Math.sin(a+.6)*14); g.stroke(); }   // its roots
+    g.fillStyle='#2a0d27'; g.beginPath(); g.arc(qx,qy,9,0,TAU); g.fill(); g.strokeStyle='#5a2258'; g.lineWidth=1; g.stroke();
+    g.fillStyle=P.hit>0?'#ffffff':'#3aff9a'; g.beginPath(); g.arc(qx,qy,4.5,0,TAU); g.fill();
+    if(B.phase==='pylons'){ const pr=(t%40)/40; g.strokeStyle=`rgba(255,77,109,${(1-pr)*.9})`; g.lineWidth=1.5; g.beginPath(); g.arc(qx,qy,14+pr*8,0,TAU); g.stroke(); } }   // a target, now
+  if(b.shield){ const R=b.r+(b.ark?26:22), col=b.ark?'58,255,154':'255,154,176', a=.15+.06*Math.sin(t*.07);   // her shield, and where it's being hit
+    g.strokeStyle=`rgba(${col},${a})`; g.lineWidth=2; g.beginPath(); g.arc(px,py,R,0,TAU); g.stroke();
+    if(b.shieldHit>0){ g.strokeStyle=`rgba(${col},${b.shieldHit/10*.9})`; g.lineWidth=3; g.beginPath(); g.arc(px,py,R,b.shA-.5,b.shA+.5); g.stroke(); } }
+  if(b.guns){ const ca=Math.cos(b.a), sa=Math.sin(b.a), live=B.phase==='guns', aim=live&&ship.alive?Math.atan2(ship.y-b.y,ship.x-b.x):b.aim;   // the flagship's four batteries
+    for(const G of b.guns){ const x=px+G.x*ca-G.y*sa, y=py+G.x*sa+G.y*ca;
+      if(G.dead){ g.fillStyle='#120608'; g.beginPath(); g.arc(x,y,4.5,0,TAU); g.fill(); continue; }
+      g.strokeStyle='#5a4a50'; g.lineWidth=2.5; g.beginPath(); g.moveTo(x,y); g.lineTo(x+Math.cos(aim)*9,y+Math.sin(aim)*9); g.stroke();
+      g.fillStyle='#3a1418'; g.beginPath(); g.arc(x,y,5,0,TAU); g.fill(); g.fillStyle=G.hit>0?'#ffffff':'#ff2a3a'; g.fillRect(x-1.5,y-1.5,3,3);
+      if(live){ const pr=(t%40)/40; g.strokeStyle=`rgba(255,77,109,${(1-pr)*.9})`; g.lineWidth=1.5; g.beginPath(); g.arc(x,y,10+pr*7,0,TAU); g.stroke(); } } } }
+function battleGlow(toS){ const B=battle, on=(px,py,m)=>px>-m&&py>-m&&px<VW+m&&py<VH+m;
+  for(const S of B.ships){ const[px,py]=toS(S.x,S.y); if(!on(px,py,240)) continue; const C=CAP[S.kind], ca=Math.cos(S.a), sa=Math.sin(S.a);
+    if(S.warp>0){ glow(px,py,C.L*(1+S.warp/50),S.side?'#ff9ab0':'#9ff6ff',.5*S.warp/70); continue; }
+    if(!S.dying && !S.dark){ const bk=(S.kind==='cruiser'?56:C.L)+8; glow(px-ca*bk,py-sa*bk,S.kind==='carrier'?26:16,S.side?'#3aff9a':'#43f0ff',.38); }   // its drives (hers burn brood green)
+    if(S.out>0) glow(px,py,C.L*(1+(50-S.out)/30),'#ff9ab0',.15+.4*(1-S.out/50));
+    if(S.hit>0) glow(px,py,C.L*.7,'#ffffff',S.hit/8*.2);
+    for(const f of S.fires){ glow(px+f.x*ca-f.y*sa,py+f.x*sa+f.y*ca,f.r*2.2,'#ff6a2a',.28+Math.random()*.22); }
+    if(S.dying) glow(px,py,C.L*.9,'#ff9a3d',.2+Math.random()*.2); }
+  if(boss && boss.line && !boss.dying){ const[px,py]=toS(boss.x,boss.y), ca=Math.cos(boss.a), sa=Math.sin(boss.a);
+    for(const f of boss.fires) glow(px+f.x*ca-f.y*sa,py+f.x*sa+f.y*ca,f.r*2.2,'#ff6a2a',.28+Math.random()*.22);
+    if(boss.shieldHit>0) glow(px+Math.cos(boss.shA)*(boss.r+20),py+Math.sin(boss.shA)*(boss.r+20),26,boss.ark?'#3aff9a':'#ff9ab0',boss.shieldHit/10*.6);
+    for(const P of B.pylons) if(!P.dead){ const[qx,qy]=toS(P.x,P.y); glow(qx,qy,16,'#3aff9a',.35+.15*Math.sin(t*.15+P.a)); }
+    if(boss.guns && B.phase==='guns') for(const G of boss.guns) if(!G.dead) glow(px+G.x*ca-G.y*sa,py+G.x*sa+G.y*ca,10,'#ff2a3a',.4+.2*((t>>3)&1)); }
+  for(const w of B.wrecks){ const[px,py]=toS(w.x,w.y); if(!on(px,py,200)) continue; const ca=Math.cos(w.a), u=w.sw*w.k*.25, k=Math.min(1,w.life/600);
+    glow(px+ca*u,py+Math.sin(w.a)*u,9,'#ff6a2a',(.2+Math.random()*.2)*k); glow(px-ca*u*.6,py-Math.sin(w.a)*u*.6,7,'#ff9a3d',(.15+Math.random()*.15)*k); }
+  for(const s of B.shells){ const[px,py]=toS(s.x,s.y); if(on(px,py,12)) glow(px,py,s.side?9:8,s.side?'#ff5ad8':'#43f0ff',.5); }
+  for(const L of B.lances){ const[x0,y0]=toS(L.x0,L.y0),[x1,y1]=toS(L.x1,L.y1), col=L.S.side?'#ff5ad8':'#9ff6ff';
+    if(Math.max(x0,x1)<-60||Math.min(x0,x1)>VW+60||Math.max(y0,y1)<-60||Math.min(y0,y1)>VH+60) continue;
+    if(L.t<LANCE_CH){ glow(x0,y0,4+16*L.t/LANCE_CH,col,.25+.4*L.t/LANCE_CH); continue; }   // charging
+    const f=L.t-LANCE_CH, w=f<LANCE_FIRE?1:Math.max(0,1-(f-LANCE_FIRE)/12); if(w<=0) continue;
+    glow(x0,y0,26,col,.7*w); glow(x1,y1,36,col,.8*w); glow(x1,y1,18,'#ffffff',.6*w);
+    const n=Math.min(24,Math.floor(Math.hypot(x1-x0,y1-y0)/70)); for(let i=1;i<n;i++){ const k=i/n; glow(x0+(x1-x0)*k,y0+(y1-y0)*k,20,col,.2*w); } } }
+function battleMap(mx,my,k,full){ const B=battle;   // the minimap: the two lines as dashes along their hulls, and the wrecks
+  for(const w of B.wrecks){ g.fillStyle='rgba(150,140,128,.55)'; const r=full?2:1; g.fillRect((mx+w.x*k)|0,(my+w.y*k)|0,r,r); }
+  for(const S of B.ships){ if(S.warp>0) continue; const w=full?6:3, h=full?2:1;
+    g.fillStyle=S.side?(S.dying?'#7a2a4a':'#ff5ad8'):(S.dying?'#2a5a6a':'#9ff6ff');
+    g.save(); g.translate(mx+S.x*k,my+S.y*k); g.rotate(S.a); g.fillRect(-w/2,-h/2,w,h); g.restore(); } }
 
 // ---- update ----
 function update(){
@@ -4257,9 +4811,10 @@ function update(){
   }
 
   if(boss) updateBoss();
+  if(battle && (state==='play'||state==='dying'||state==='winning')) battleTick();   // the fleets' battle, and everything that runs into it
 
   // laser vs enemy (swept along the bolt's last step: fired from a cutter going flat out, a bolt moves fast)
-  for(const b of bullets){
+  for(const b of bullets){ if(b.life<=0) continue;   // (one a warship's hull already stopped)
     for(const e of enemies){
       if(!e.alive)continue;
       if(segD2(b.x-b.vx,b.y-b.vy,b.x,b.y,e.x,e.y)<(e.r+2)**2){
@@ -4283,7 +4838,7 @@ function update(){
     }
   }
   // laser vs boss (missiles can't hurt it); in the Drift it runs once it's hurt enough
-  if(boss && boss.warp<=0 && !boss.flee && !boss.dying && !boss.crippled){
+  if(boss && !boss.line && boss.warp<=0 && !boss.flee && !boss.dying && !boss.crippled){   // (her ship in a battle line takes its hits in battleTick)
     for(const b of bullets){ if(b.life<=0)continue;
       if((b.x-boss.x)**2+(b.y-boss.y)**2<(boss.r*0.82)**2){ b.life=0; boss.hp--; boss.hit=6; VRAudio.sfx.bossHit(b.x,b.y,boss.hp/boss.maxhp);
         sparks(b.x,b.y);
@@ -4447,6 +5002,7 @@ function updateBoss(){
         col:k?(Math.random()<.5?'#5a4a5e':'#3b3346'):(Math.random()<.5?'#ff9a3d':'#ffd27a'),r:rnd(1.5,3.5),grav:0}); }
     if(--b.dying===0) bossFinale();
     return; }
+  if(b.line){ if(state==='play'||state==='dying'||state==='winning') lineBossTick(b); return; }   // Part Two: holding her place in her battle line (frozen with the rest of it otherwise)
   // battle damage: the more it has been cut up, the more it smokes and burns
   if(Math.random()<(1-b.hp/b.maxhp)*.6){
     const hx=rnd(-b.r*.8,b.r*.7), hy=rnd(-b.r*.45,b.r*.45), c=Math.cos(b.a), s=Math.sin(b.a), hot=Math.random()<.45;
@@ -5005,8 +5561,15 @@ function hudTick(){
   // top strip: sector progress, or the flagship's hull while it's here (the tick marks where it will run)
   let lab, cnt, fill, ghost=0, mark=0;
   const bn=LV.big?'The Matriarch':LV.boardAt?'Brood flagship':'The Cerebrant';
-  if(boss){ lab=bn+' · '+(boss.dying?'breaking up':boss.crippled?'crippled':boss.flee?'escaping':boss.fleeAt?'drive it off':LV.boardAt?'cripple it':'destroy it');
-    cnt=Math.ceil(boss.hp/boss.maxhp*100)+'%'; fill=boss.hp/boss.maxhp; ghost=boss.ghost/boss.maxhp; mark=(boss.fleeAt||LV.boardAt||0)/boss.maxhp; }
+  const lineB=!!(boss&&boss.line&&battle), inLine=lineB&&battle.phase==='fight';   // (her ship in her battle line gets its bar once the fleet goes for it)
+  if(boss && lineB && !inLine && !boss.dying){ const P=battle.phase;
+    if(boss.crippled){ lab=bn+' · crippled'; cnt='0 / '+boss.guns.length; fill=0; }
+    else if(P==='strip'){ lab=bn+' · the fleet is stripping its shield'; cnt='!'; fill=1; ghost=1; }
+    else if(P==='guns'){ const n=boss.guns.filter(G=>!G.dead).length; lab=bn+' · silence its guns'; cnt=n+' / '+boss.guns.length; fill=n/boss.guns.length; ghost=fill; }
+    else if(P==='pylons'){ const n=battle.pylons.filter(p=>!p.dead).length; lab=bn+' · break her shield'; cnt=n+' / '+battle.pylons.length; fill=n/battle.pylons.length; ghost=fill; }
+    else { lab=bn+' · the fleet\'s guns are on her'; cnt=Math.ceil(Math.max(0,boss.hp)/boss.maxhp*100)+'%'; fill=Math.max(0,boss.hp)/boss.maxhp; ghost=boss.ghost/boss.maxhp; } }
+  else if(boss && !inLine){ lab=bn+' · '+(boss.dying?'breaking up':boss.crippled?'crippled':boss.flee?'escaping':boss.fleeAt?'drive it off':LV.boardAt?'cripple it':'destroy it');
+    cnt=Math.ceil(boss.hp/boss.maxhp*100)+'%'; fill=boss.hp/boss.maxhp; ghost=boss.ghost/boss.maxhp; mark=lineB?0:(boss.fleeAt||LV.boardAt||0)/boss.maxhp; }
   else if(bossPending>0){ lab=LV.big?'The Matriarch is coming':'Flagship inbound'; cnt='!'; fill=1; }
   else if(bossFled){ lab='Flagship escaped · jumping'; cnt=''; fill=1; }
   else if(bossDead){ lab=bn+' · destroyed'; cnt='0%'; fill=0; }
@@ -5014,7 +5577,7 @@ function hudTick(){
   const key=lab+'|'+cnt+'|'+fill.toFixed(3)+'|'+ghost.toFixed(3);
   if(key!==hudKey){ hudKey=key; elM.level.textContent=lab; elM.count.textContent=cnt;
     elM.fill.style.transform=`scaleX(${clamp(fill,0,1).toFixed(3)})`; elM.ghost.style.transform=`scaleX(${clamp(ghost,0,1).toFixed(3)})`;
-    elM.mark.style.left=(mark*100).toFixed(1)+'%'; elM.mark.style.display=mark>0?'block':'none'; elM.box.classList.toggle('boss',!!boss); }
+    elM.mark.style.left=(mark*100).toFixed(1)+'%'; elM.mark.style.display=mark>0?'block':'none'; elM.box.classList.toggle('boss',!!boss&&!inLine); }
   // the weapon panel's status line only shows up on EVA (no cutter, no guns); the far objective gets its own row under the station
   // (it's also where the shield cells show, once the cutter has them)
   const evaNow=!!(ship.suit&&ship.alive), shNow=!evaNow&&ship.alive&&ship.cellMax>0, wk=evaNow?'eva':shNow?'s'+ship.cells:'';
@@ -5121,6 +5684,7 @@ function draw(){
 
   // the station you're guarding, then the asteroids (orange ring = on a collision course with it)
   if(outpost && !outpost.none){ const[sx,sy]=toS(outpost.x,outpost.y); if(sx>-80&&sy>-60&&sx<VW+80&&sy<VH+60) drawStation(sx,sy,outpost); }
+  if(battle && !cine) drawBattle(toS);   // Part Two: the fleets' warships and their wrecks, under the dogfight
   for(const R of rocks){ const[px,py]=toS(R.x,R.y), h=R.img.width/2;
     if(px<-h||py<-h||px>VW+h||py>VH+h) continue;
     g.save(); g.translate(px,py); g.rotate(R.a); g.drawImage(R.img,-h,-h); g.restore();
@@ -5138,6 +5702,7 @@ function draw(){
     g.fillStyle='#ffd23a'; g.fillRect(-2,-1,6,2);                      // hot core
     g.fillStyle='#ffffff'; g.fillRect(1,-1,3,2);                       // white-hot tip
     g.restore(); }
+  if(battle && !cine) drawShells(toS);
 
   for(const e of foes){ if(!e.alive)continue; const[px,py]=toS(e.x,e.y);
     if(px<-50||py<-50||px>VW+50||py>VH+50) continue; drawPirate(px,py,e); }
@@ -5147,6 +5712,7 @@ function draw(){
     if(px<-90||py<-90||px>VW+90||py>VH+90) continue; drawHusk(px,py,h); }
   drawWing(toS);
   if(boss){ const[bx,by]=toS(boss.x,boss.y); drawBoss(bx,by,boss); }
+  if(boss && boss.line && battle && !cine) drawLineBoss(toS);   // her shield, her flagship's batteries, the ark's pylons
   if(cine) drawCineActors(toS);
 
   for(const m of missiles){ const[px,py]=toS(m.x,m.y);
@@ -5191,6 +5757,7 @@ function draw(){
     g.fillStyle=(t>>1)&1?'#ffcf6a':'#ff6a2a'; g.fillRect(-1,-1,2,2);
     g.restore(); }
   g.globalAlpha=1;
+  if(battle && !cine) drawLances(toS);   // the warships' lances as they fire
 
   // shockwaves (expanding rings)
   for(const s of shockwaves){ if(s.delay>0) continue;
@@ -5201,6 +5768,7 @@ function draw(){
 
   // ---- light pass: additive glow on everything hot (engines, bolts, tracers, blasts) ----
   g.globalCompositeOperation='lighter';
+  if(battle && !cine) battleGlow(toS);
   for(const b of burning){ const[px,py]=toS(b.x,b.y); glow(px,py,b.r*1.5,'#ff6a2a',.3+Math.random()*.25); }   // wreck fires
   if(job){ const[px,py]=toS(job.x,job.y);   // the far objective's light: beacon core, the hauler's fires, the pod's glow
     if(job.kind==='beacon') glow(px,py,38,'#ff2a3a',.35+.25*((t>>3)&1));
@@ -5308,7 +5876,9 @@ function draw(){
     g.fillStyle='#43f0ff'; g.font='10px monospace'; g.fillText(`LEVEL ${level+1} / ${LEVELS.length}`,VW/2,VH*.3);
     g.fillStyle='#ffffff'; g.font='bold 24px monospace'; g.fillText(LV.name.toUpperCase(),VW/2,VH*.3+26);
     g.fillStyle='#cfe3ff'; g.font='9px monospace';
-    g.fillText(LV.big?'YOU FLY THE FLAGSHIP · SURVIVE '+LV.horde.length+' HORDES · THEN THE MATRIARCH':
+    g.fillText(LV.battle==='brood'?'YOU FLY HER FLAGSHIP · THE FLEET IS WITH YOU · SURVIVE '+LV.horde.length+' HORDES · THEN HER ARK':
+      LV.battle==='earth'?'THE FLEETS ARE AT WAR · DEFEND '+LV.post.toUpperCase()+' · SURVIVE '+LV.horde.length+' HORDES · THEN HER FLAGSHIP':
+      LV.big?'YOU FLY THE FLAGSHIP · SURVIVE '+LV.horde.length+' HORDES · THEN THE MATRIARCH':
       LV.guard?'DEFEND '+LV.post.toUpperCase()+' · SURVIVE '+LV.horde.length+' HORDES · THEN THE FLAGSHIP':
       LV.horde?'NO STATION · SURVIVE '+LV.horde.length+' HORDES · THEN THE FLAGSHIP':'DEFEND '+LV.post.toUpperCase()+' · CLEAR '+quota+' REAVERS',VW/2,VH*.3+42);
     g.globalAlpha=1; g.textAlign='left';
@@ -5385,7 +5955,7 @@ function drawIndicators(cx,cy,z=1){   // (z: world units per screen unit, for a 
     g.beginPath(); g.moveTo(sz,0); g.lineTo(-sz*.7,-sz*.75); g.lineTo(-sz*.25,0); g.lineTo(-sz*.7,sz*.75); g.closePath(); g.fill(); g.restore(); };
   for(const e of enemies){ if(!e.alive) continue; const d=Math.hypot(e.x-ship.x,e.y-ship.y);
     if(d<1000) mark(e.x,e.y,MAPCOL[e.type],4.5,.9-d/1600); else if(rem<=3) mark(e.x,e.y,MAPCOL[e.type],3.5,.4); }
-  if(boss) mark(boss.x,boss.y,'#ff4d6d',7,(t>>3)&1?1:.5);
+  if(boss && !(boss.line && battle && (battle.phase==='fight'||battle.phase==='over'))) mark(boss.x,boss.y,'#ff4d6d',7,(t>>3)&1?1:.5);   // (her ship in her line only gets its arrow once it's your target)
   for(const m of emissiles) mark(m.x,m.y,'#ffd23a',4,(t>>2)&1?1:.35);
   // your station (flashing red while it's taking hits) and any rock on a collision course with it
   if(outpost && outpost.alive){ const hot=outpost.hitT<180; mark(outpost.x,outpost.y,hot?'#ff4d6d':'#4dffa6',hot?6:4.5,hot?((t>>2)&1?1:.4):.75); }
@@ -5769,6 +6339,7 @@ function drawMap(){
   if(derelict){ const r=full?5:3; g.fillStyle=(t>>3)&1?'#4dffa6':'#ffffff'; g.fillRect((mx+derelict.x*k-(r>>1))|0,(my+derelict.y*k-(r>>1))|0,r,r); }
   if(escort){ const r=full?3:2; g.fillStyle='#4dffa6'; g.fillRect((mx+escort.x*k-(r>>1))|0,(my+escort.y*k-(r>>1))|0,r,r); }
   for(const L of lancers){ const r=full?3:2; g.fillStyle='#ffb347'; g.fillRect((mx+L.x*k-(r>>1))|0,(my+L.y*k-(r>>1))|0,r,r); }
+  if(battle) battleMap(mx,my,k,full);
   if(boss){ const r=full?6:5; g.fillStyle=(t>>2)&1?'#ff4d6d':'#ff9ab0';
     g.fillRect((mx+boss.x*k-(r>>1))|0,(my+boss.y*k-(r>>1))|0,r,r); }
   // viewport rectangle — roughly what you can see right now
@@ -7325,15 +7896,14 @@ function seizedShots(){
 function endingShots(){
   const H=clearSpot(ship.x,ship.y,200,700); let F, carrier;
   return [
-    { dur:430, lines:[['cmd',"Halcyon, this is the Resolute, dropping out of warp. Talk to me. What's left down there?"],
+    { dur:430, lines:[['cmd',"Halcyon, this is the Resolute, coming alongside. Talk to me. What's left down there?"],
         ['you',"The Matriarch's gone, Commander. Her ark with her."],
         ['cmd',"Every clan in the sky is powering down its guns. They're surrendering, pilot. All of them."],
         ['you',"Tell Kestrel I'm collecting on those drinks. All of them."],
         ['cmd',"Come home, Halcyon. Earth wants to say thank you. So do I."]],
       init(c){ c.white=1; c.actors=[]; F=actor('boss',H.x+40,H.y,-.2); F.ours=1; F.sc=.55; c.actors.push(F);
         carrier=hulk('carrier',H.x-560,H.y+70,.9); c.actors.push(carrier); c.cam={x:H.x-40,y:H.y+20};
-        c.title={main:'BROODHOME FALLS',sub:'THE MATRIARCH IS GONE · THE CLANS ARE BROKEN',life:300,t:0}; VRAudio.play('menu',0,1.2);
-        shockwaves.push({x:carrier.x,y:carrier.y,delay:0,r0:20,max:220,life:0,maxlife:50,col:'#9ff6ff'}); VRAudio.sfx.warpIn(carrier.x,carrier.y); },
+        c.title={main:'BROODHOME FALLS',sub:'THE MATRIARCH IS GONE · THE CLANS ARE BROKEN',life:300,t:0}; VRAudio.play('menu',0,1.2); },   // (the Resolute was in the line all along: she just comes alongside)
       tick(c,lt){ F.wob+=.03; carrier.vx*=.985; if(lt%36===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } },
     { dur:200, toBlack:true,
       init(c){ c.title=null; },
@@ -7348,10 +7918,12 @@ function partTwoJump(id){
   if(id==='t1'){ setupLevel(1); bossDead=true; cerT=0; VRAudio.play('menu',0,1); playCine(twistShots(),()=>startDeck('defend')); return; }
   if(id==='d1'){ setupLevel(1); startDeck('defend'); return; }
   if(id==='c4'){ setupLevel(1); playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
-  if(id[0]==='g'){ const n=+id[1]; at(2);   // an Earth horde: the ones before it are already broken
+  if(id[0]==='g' && id!=='gb'){ const n=+id[1]; at(2);   // an Earth horde: the ones before it are already broken ('gb', the flagship, is below)
     if(n>1){ lvlBanner=0; notes=[]; noteT=0; horde.i=n-1; horde.left=0; horde.rest=50; levelKills=LV.horde.slice(0,n-1).reduce((a,b)=>a+b,0); } return; }
   if(id==='gb'||id==='b6'){ at(id==='gb'?2:3); lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
-    horde.i=LV.horde.length; horde.left=0; horde.rest=0; commsReset(); sectorWon(); bossPending=70; return; }
+    horde.i=LV.horde.length; horde.left=0; horde.rest=0; commsReset();
+    if(battle) battleNow();   // (the fleet's already through the jump)
+    sectorWon(); if(!battle) bossPending=70; return; }   // (in a battle sector, sectorWon starts the fleet's go at her ship)
   if(id==='f1'){ setupLevel(2); levelDone=true; spawnBoss(); boss.warp=0; boss.inbound=false; boss.hp=LV.boardAt; boss.ghost=boss.hp; boss.crippled=true;
     boss.x=clamp(ship.x+500,600,WORLD-600); boss.y=clamp(ship.y-200,500,WORLD-500); commsReset(); bossBanner=0;
     playCine(boardShots(),()=>startDeck('assault')); return; }
@@ -7380,7 +7952,15 @@ window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bos
     foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt,wind:u.wind,stun:u.stun})),
     sys:DK.sys.map(S=>({k:S.k,hp:S.hp,dead:S.dead,cx:S.cx,cy:S.cy})), nodes:DK.nodes.map(n=>({cx:n.cx,cy:n.cy,hp:n.hp,dead:n.dead})), helm:DK.helm&&{cx:DK.helm.cx,cy:DK.helm.cy,prog:DK.helm.prog},
     map:{W:DK.W,H:DK.H,grid:DK.grid}, boom:DK.boom&&{t:DK.boom.t,end:DK.boom.end,out:DK.boom.out,next:DK.boom.next,far:DK.boom.far,speed:DK.boom.speed}},
-  planets:planets.map(p=>({name:p.name||null,x:Math.round(p.x),y:Math.round(p.y),r:p.r}))});
+  planets:planets.map(p=>({name:p.name||null,x:Math.round(p.x),y:Math.round(p.y),r:p.r})),
+  bullets:bullets.slice(0,8).map(b=>({x:Math.round(b.x),y:Math.round(b.y),life:b.life,wing:b.wing||null})),
+  battle:battle&&{kind:battle.kind,phase:battle.phase,T:battle.T,shells:battle.shells.length,wrecks:battle.wrecks.length,hc:battle.hc,bc:battle.bc,u:[battle.ux,battle.uy],
+    ships:battle.ships.map(S=>({kind:S.kind,side:S.side,name:S.name,x:Math.round(S.x),y:Math.round(S.y),hp:Math.round(S.hp),max:S.maxhp,warp:S.warp,dying:S.dying,out:S.out,dark:S.dark})),
+    lances:battle.lances.map(L=>({side:L.S.side,t:L.t,x0:Math.round(L.x0),y0:Math.round(L.y0),x1:Math.round(L.x1),y1:Math.round(L.y1)})),
+    slots:battle.slots.map(s=>({kind:s.kind,side:s.side,wait:s.wait,on:!!s.ship})),
+    boss:boss&&boss.line?{x:Math.round(boss.x),y:Math.round(boss.y),shield:boss.shield,hp:boss.hp,crippled:!!boss.crippled,dying:boss.dying||0,
+      guns:boss.guns&&boss.guns.map(G=>G.dead?0:G.hp),gunXY:boss.guns&&boss.guns.map(G=>bossGun(G).map(Math.round)),
+      pylons:battle.pylons.map(P=>P.dead?0:P.hp),pylonXY:battle.pylons.map(P=>[Math.round(P.x),Math.round(P.y)])}:null}});
 
 // ---- loop ----
 let last=performance.now(), acc=0; const STEP=1000/60;
