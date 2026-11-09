@@ -121,6 +121,8 @@
   body.eva #t-fire, body.eva #t-missile, body.eva #t-brake{opacity:.22}                       /* on EVA: no guns, no brakes */
   /* aboard ship (the deck fights): the weapon panel shows your health and the crew instead; no BRAKE or corner map, and MISSILE is DASH */
   body.deck .wsel, body.deck #reload, body.deck #hud-top .stat:first-child > .label, body.deck #t-brake, body.deck #t-mapzone{display:none}
+  body.deck #t-missile{border-color:rgba(159,246,255,.85); color:#dffcff; letter-spacing:1px}   /* aboard it's ROLL: cyan, like FIRE, so it reads as yours */
+  body.deck #t-missile.on{background:rgba(67,240,255,.38)}
   /* a phone aboard: the HUD down to one row along the top, and the radio a slim strip along the bottom */
   body.touch.deck #hud-top{flex-direction:row; align-items:flex-start}
   body.touch.deck #hud-mission .post-row, body.touch.deck #hud-mission .obj-row{display:none}
@@ -783,12 +785,15 @@ function arrive(x,y){ if(!live()||!gate('arrive',250)) return; const P=place(x,y
 function splat(x,y,up){ if(!live()||!gate('splat',35)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.32,.12), k=1+(up||0)*.09;   // a boarder popping: a wet bloop and a splash
   sweep(osc('sine',R(250,330)*k,t,.17,vca(t,1,.002,.15,o)).frequency,300*k,70*k,t,.13);   // (up: your kill streak, and each one in it pops a note higher)
   nz(t,.1,filt('bandpass',R(800,1300)*k,1.3,vca(t,.8,.001,.09,o))); }
-function dash(){ if(!live()||!gate('dash',80)) return; const t=ac.currentTime, o=out(ME,.2,.1);   // your dive aboard: a quick rush of air, and a lift under it
+function dash(land){ if(!live()||!gate(land?'dashL':'dash',80)) return; const t=ac.currentTime, o=out(ME,land?.34:.32,.1);   // your jump-and-roll aboard: a rush of air as you go up, and a thump as you land
+  if(land){ sweep(osc('sine',130,t,.12,vca(t,.8,.002,.1,o)).frequency,130,52,t,.09); nz(t,.07,filt('lowpass',700,null,vca(t,.5,.002,.06,o))); return; }
   const f=filt('bandpass',500,1.6,vca(t,1,.008,.16,o)); sweep(f.frequency,450,2600,t,.14); nz(t,.18,f);
   sweep(osc('sine',190,t,.12,vca(t,.35,.004,.1,o)).frequency,190,420,t,.1); }
+function charge(x,y,k){ if(!live()||!gate('chargeT',60)) return; const P=place(x,y,1000); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.075,.08), f0=900+k*900;   // a boarder's charge ticking down: a hard double blip that climbs as the fuse burns
+  for(const d of [0,.07]) osc('square',f0*(d?1.26:1),t+d,.04,filt('lowpass',3200,null,vca(t+d,1,.001,.035,o))); }
 // the capital ships' war: a gun firing out across the gap (a deep thud and a crack), a lance spooling up (a rising whine),
 // and a lance firing (a roar of light that falls away)
-function cannon(x,y,brood){ if(!live()||!gate('cannon',110)) return; const P=place(x,y,1500); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.15,.3), f0=brood?R(80,95):R(110,130);
+function cannon(x,y,brood){ if(!live()||!gate('cannon',160)) return; const P=place(x,y,1500); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.15,.3), f0=brood?R(80,95):R(110,130);
   sweep(osc('sine',f0,t,.3,vca(t,1,.003,.27,o)).frequency,f0,38,t,.24);
   nz(t,.1,filt('lowpass',brood?650:1100,null,vca(t,.55,.002,.1,o))); }
 function lanceCharge(x,y){ if(!live()||!gate('lanceC',350)) return; const P=place(x,y,1500); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.09,.25), d=1.35;
@@ -883,7 +888,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
            klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash,
-           cannon,lanceCharge,lanceFire};
+           cannon,lanceCharge,lanceFire,charge};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -2217,9 +2222,40 @@ I've never flown anything this big. Turning is going to take some getting used t
 Six shield cells and a broadside. I could get used to this.
 `),
 deckStart:L(`
-Boarders on every deck! Halcyon, hold the bridge, the reactor and the engines!
-They're cutting in through the hull. Keep them off the bridge, the reactor and the engines!
-All hands, repel boarders! Halcyon, you're on the core deck. Nothing touches the reactor.
+Boarding pods on the stern! Halcyon, you're in engineering. Hold the engines, then we work forward.
+They're cutting in aft, at engineering. Keep them off the engines, Halcyon!
+All hands, repel boarders! They're starting at the stern. Halcyon, nothing touches those engines.
+`),
+deckMove:L(`
+More pods latching on at {sec}! Move up, Halcyon, and bring the squad!
+They're cutting in at {sec} now. Get up there!
+Next lot's coming in at {sec}. Move forward, marine!
+`),
+deckSplit:L(`
+They're coming in everywhere! Bravo, back to the engines! Charlie, hold the reactor! Everyone else, with the Halcyon to the bridge!
+This is it, they're hitting the whole ship! Split up! Fire teams to the engines and the reactor. The rest of you, with the Halcyon!
+`),
+deckSplit1:L(`
+They're coming in everywhere! A fire team holds {a}. The rest of you, with the Halcyon to the bridge!
+Split up! Someone hold {a}! Everyone else, follow the Halcyon!
+`),
+deckSplit0:L(`
+They're coming in everywhere, and there aren't enough of us to split up. Stay with the Halcyon. Hold the bridge!
+`),
+deckCharge:L(`
+They've planted a charge on the {sys}! Shoot it off!
+Charge on the {sys}! Get it before it blows!
+Bomb on the {sys}, Halcyon! Burn it off!
+`),
+deckBomb:L(`
+The charge went off! The {sys} took a beating!
+That charge blew! The {sys} won't take many more of those!
+`),
+deckDefuse:L(`
+Charge is off!
+Got the charge!
+Not on my ship.
+That one's not going off.
 `),
 deckTipA:L(`
 {fire} fires your rifle, and it finds the nearest boarder for you.{mouse}{dash}
@@ -2303,8 +2339,8 @@ Abandon ship! All hands, abandon ship!
 Halcyon, get out of there! Get to a pod, now!
 `),
 aStart:L(`
-You're in. Three nerve nodes are holding the helm shut, Halcyon. Burn them out.
-Find the nerve nodes, pilot, and shoot them to pieces. The helm opens when they're gone.
+You're in at the stern. There's a nerve node in each chamber ahead, holding the helm shut. Burn them out as you go.
+Work your way forward, Halcyon. Every node you burn kills the brood pits it feeds, so nothing comes at you from behind.
 `),
 aNode:L(`
 Node's down! That leaves {n}.
@@ -6407,10 +6443,16 @@ const DFOE={   // the boarders: hit points, speed, size, frames between shots, b
   blob: {hp:2, sp:1.2, r:9,  cool:[56,86],  n:1, spread:0,   range:240, pts:150, goo:'#e0283a', mz:8},
   brute:{hp:7, sp:.8,  r:10, cool:[76,104], n:3, spread:.22, range:260, pts:400, goo:'#c42a52', mz:12}   // (drawn big, but its footing fits the narrow gaps)
 };
-const CREW_N=20, BOT_HP=3, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=360, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck)
-const DWAVES=[{n:30,at:4,mix:[.45,.45,.1]},{n:40,at:5,mix:[.35,.45,.2]},{n:46,at:6,mix:[.32,.46,.22]}];   // boarders, breaches, the share that are squid · blob · brute
+const CREW_N=20, BOT_HP=3, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=420, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck · DK_REST: the breather between waves, long enough to move up a section)
+// the waves come aboard section by section, stern to bow, so you clear the ship one way and never double back: the first at
+// engineering, the second amidships (the crew deck and the reactor), and the last everywhere at once, the bow first and the rest
+// a little after (that's when your squad splits up to hold them). go: [section, frames after the first pod, the system they're after]
+const DWAVES=[{n:30,at:4,mix:[.45,.45,.1],go:[[0,0,'E']]},{n:40,at:5,mix:[.35,.45,.2],go:[[1,0,'R'],[2,0,'R']]},
+  {n:46,at:6,mix:[.32,.46,.22],go:[[3,0,'B',3],[2,360,'R',2],[0,720,'E',1]],last:1}];   // boarders, breaches, the share that are squid · blob · brute (and go's 4th: most pods that section gets)
 const DK_SS=2;   // the deck is drawn at twice the world's resolution: smooth lines and light, and everyone moves in half-pixel steps
-const DASH_T=11, DASH_SP=4.6, DASH_CD=48, DK_TELL=14;   // your dive: its frames, its speed, the frames till the next · how long a boarder winds up before a volley
+const DASH_T=16, DASH_SP=3.6, DASH_CD=50, DK_TELL=14;   // your jump-and-roll: its frames, its speed, the frames till the next · how long a boarder winds up before a volley
+const DK_FUSE=420, DK_BOMB=24, DK_PLANT=40;   // a boarder's charge on a system: frames till it blows, the system's share it takes out, frames to plant it
+const DK_STRIKE={squid:24, blob:36, brute:50};   // frames between a boarder's blows at a system (a squid's jolts, a blob's acid, a brute's fists)
 const angD=(a,b)=>((a-b+Math.PI*3)%TAU)-Math.PI;   // (the turn from b to a, the short way round)
 let DK=null, downs=0, bigLost=false, bossBoardT=0, crewLeft=0, hintFly=null;
 const dkMouse={sx:0,sy:0,t:-1e9,down:false,dash:false};   // (a desktop's mouse: aim with it, hold the button to fire, right-click to dive)
@@ -6422,34 +6464,47 @@ const oct=(x0,y0,x1,y1,c)=>[x0+c,y0,x1-c,y0,x1,y0+c,x1,y1-c,x1-c,y1,x0+c,y1,x0,y
 const box=(x0,y0,x1,y1)=>[x0,y0,x1,y0,x1,y1,x0,y1];
 function inPoly(P,x,y){ let c=false; for(let i=0,j=P.length-2;i<P.length;j=i,i+=2){ const xi=P[i],yi=P[i+1],xj=P[j],yj=P[j+1];
   if((yi>y)!==(yj>y) && x<(xj-xi)*(y-yi)/(yj-yi)+xi) c=!c; } return c; }
-function mapResolute(){   // the Resolute's core deck: engines aft, the reactor amidships, the bridge in the bow
-  return {W:86, H:48, start:[45,17], thrusters:[[.2,16.5],[.2,31.5]],
-    polys:[oct(2,12,18,36,4), oct(21,4,36,18,3), oct(21,30,36,44,3), oct(38,13,53,35,4), oct(56,4,71,18,3), oct(56,30,71,44,3), oct(73,12,84,36,4),
-      box(16,22,75,26), box(27,17,31,31), box(62,17,66,31), box(8,7,23,10), box(8,7,11,13), box(8,38,23,41), box(8,35,11,41),
-      box(34,9,58,12), box(44,9,47,14), box(34,36,58,39), box(44,34,47,39), box(69,7,79,10), box(76,7,79,13), box(69,38,79,41), box(76,35,79,41)],
-    props:[{x:4,y:14,w:5,h:5,kind:'engine'},{x:4,y:29,w:5,h:5,kind:'engine'},{x:12,y:22,w:2,h:4,kind:'sys',k:'E'},{x:14,y:15,w:1,h:3,kind:'pipe'},{x:14,y:30,w:1,h:3,kind:'pipe'},
-      {x:43,y:21,w:5,h:6,kind:'sys',k:'R'},{x:40,y:16,w:1,h:3,kind:'pipe'},{x:50,y:16,w:1,h:3,kind:'pipe'},{x:40,y:29,w:1,h:3,kind:'pipe'},{x:50,y:29,w:1,h:3,kind:'pipe'},
-      {x:79,y:22,w:3,h:4,kind:'sys',k:'B'},{x:75,y:15,w:3,h:1,kind:'console'},{x:75,y:32,w:3,h:1,kind:'console'},{x:80,y:17,w:1,h:2,kind:'console'},{x:80,y:29,w:1,h:2,kind:'console'},
-      {x:23,y:6,w:3,h:1,kind:'bunk'},{x:23,y:9,w:3,h:1,kind:'bunk'},{x:23,y:12,w:3,h:1,kind:'bunk'},{x:32,y:6,w:3,h:1,kind:'bunk'},{x:32,y:9,w:3,h:1,kind:'bunk'},{x:32,y:12,w:3,h:1,kind:'bunk'},
-      {x:28,y:9,w:2,h:2,kind:'table'},{x:58,y:6,w:2,h:1,kind:'bed'},{x:58,y:9,w:2,h:1,kind:'bed'},{x:58,y:12,w:2,h:1,kind:'bed'},{x:67,y:6,w:2,h:3,kind:'locker'},{x:67,y:11,w:2,h:3,kind:'locker'},
-      {x:23,y:34,w:6,h:3,kind:'shuttle'},{x:32,y:32,w:2,h:2,kind:'crate'},{x:31,y:39,w:2,h:1,kind:'crate'},{x:23,y:40,w:1,h:1,kind:'crate'},
-      {x:58,y:32,w:2,h:2,kind:'crate'},{x:62,y:33,w:2,h:1,kind:'crate'},{x:67,y:32,w:2,h:2,kind:'crate'},{x:59,y:38,w:1,h:2,kind:'crate'},{x:66,y:38,w:2,h:2,kind:'crate'},{x:69,y:36,w:1,h:1,kind:'crate'},
-      {x:20,y:22,w:1,h:1,kind:'pillar'},{x:34,y:25,w:1,h:1,kind:'pillar'},{x:57,y:22,w:1,h:1,kind:'pillar'},{x:70,y:25,w:1,h:1,kind:'pillar'}],
-    windows:[[24,4,33,4,-1],[59,4,68,4,-1],[24,44,33,44,1],[59,44,68,44,1],[38,9,54,9,-1],[38,39,54,39,1]],   // x0,y,x1,y, which side is space
-    breaches:[[26,4,0,-1],[32,4,0,-1],[61,4,0,-1],[66,4,0,-1],[26,43,0,1],[32,43,0,1],[61,43,0,1],[66,43,0,1],[40,9,0,-1],[52,9,0,-1],[40,38,0,1],[52,38,0,1],
-      [2,20,-1,0],[2,27,-1,0],[83,19,1,0],[83,28,1,0]]};
+function mapResolute(){   // the Resolute's core deck, stern to bow (left to right): engineering and the engines, the crew deck, the reactor
+  // amidships, and command with the bridge in the bow. A spine corridor runs her whole length; the waves come aboard section by section
+  return {W:134, H:48, start:[24,24], thrusters:[[.2,16.5],[.2,31.5]],
+    sections:[{name:'ENGINEERING',x1:34,rally:[26,24]},{name:'THE CREW DECK',x1:66,rally:[50,24]},{name:'THE REACTOR',x1:98,rally:[70,24]},{name:'COMMAND',x1:134,rally:[110,24]}],
+    polys:[oct(2,12,22,36,4), oct(14,3,32,13,3), oct(14,35,32,45,3), box(16,10,20,14), box(16,34,20,38),   // engineering: the engine room and its two drive-control rooms
+      oct(36,4,62,18,3), oct(36,30,62,44,3), box(47,17,51,23), box(47,25,51,31),                         // the crew deck: the bunk rooms above, the shuttle bay below
+      oct(66,10,96,38,5), box(76,6,86,11),                                                               // the reactor hall, and its coolant bay
+      oct(100,4,116,18,3), oct(100,30,116,44,3), box(106,17,110,23), box(106,25,110,31), oct(118,12,132,36,4),   // command: the armoury, the briefing room, the bridge
+      box(20,22,122,26)],                                                                                // and the spine that runs her length
+    props:[{x:4,y:14,w:5,h:5,kind:'engine'},{x:4,y:29,w:5,h:5,kind:'engine'},{x:14,y:22,w:2,h:4,kind:'sys',k:'E'},{x:17,y:15,w:1,h:3,kind:'pipe'},{x:17,y:30,w:1,h:3,kind:'pipe'},
+      {x:20,y:5,w:3,h:1,kind:'console'},{x:26,y:5,w:3,h:1,kind:'console'},{x:20,y:42,w:3,h:1,kind:'console'},{x:26,y:42,w:3,h:1,kind:'console'},{x:29,y:8,w:2,h:3,kind:'locker'},{x:24,y:38,w:2,h:2,kind:'crate'},
+      {x:30,y:22,w:1,h:1,kind:'pillar'},
+      {x:39,y:6,w:3,h:1,kind:'bunk'},{x:39,y:9,w:3,h:1,kind:'bunk'},{x:39,y:12,w:3,h:1,kind:'bunk'},{x:55,y:6,w:3,h:1,kind:'bunk'},{x:55,y:9,w:3,h:1,kind:'bunk'},{x:55,y:12,w:3,h:1,kind:'bunk'},
+      {x:44,y:9,w:2,h:2,kind:'table'},{x:59,y:6,w:2,h:3,kind:'locker'},{x:59,y:11,w:2,h:3,kind:'locker'},
+      {x:39,y:34,w:6,h:3,kind:'shuttle'},{x:52,y:33,w:2,h:2,kind:'crate'},{x:55,y:38,w:2,h:1,kind:'crate'},{x:58,y:32,w:2,h:2,kind:'crate'},{x:41,y:40,w:1,h:1,kind:'crate'},
+      {x:44,y:25,w:1,h:1,kind:'pillar'},{x:58,y:22,w:1,h:1,kind:'pillar'},
+      {x:78,y:21,w:5,h:6,kind:'sys',k:'R'},{x:72,y:15,w:1,h:3,kind:'pipe'},{x:88,y:15,w:1,h:3,kind:'pipe'},{x:72,y:30,w:1,h:3,kind:'pipe'},{x:88,y:30,w:1,h:3,kind:'pipe'},
+      {x:78,y:7,w:1,h:2,kind:'pipe'},{x:83,y:7,w:1,h:2,kind:'pipe'},{x:69,y:33,w:2,h:2,kind:'crate'},{x:92,y:14,w:2,h:2,kind:'crate'},{x:92,y:32,w:1,h:2,kind:'crate'},
+      {x:100,y:25,w:1,h:1,kind:'pillar'},{x:114,y:22,w:1,h:1,kind:'pillar'},
+      {x:102,y:6,w:2,h:3,kind:'locker'},{x:102,y:11,w:2,h:3,kind:'locker'},{x:112,y:6,w:2,h:2,kind:'crate'},{x:107,y:5,w:3,h:1,kind:'console'},
+      {x:104,y:35,w:3,h:2,kind:'table'},{x:110,y:41,w:3,h:1,kind:'console'},{x:102,y:39,w:2,h:2,kind:'crate'},
+      {x:126,y:22,w:3,h:4,kind:'sys',k:'B'},{x:122,y:15,w:3,h:1,kind:'console'},{x:122,y:32,w:3,h:1,kind:'console'},{x:129,y:17,w:1,h:2,kind:'console'},{x:129,y:29,w:1,h:2,kind:'console'}],
+    windows:[[18,3,28,3,-1],[18,44,28,44,1],[38,4,58,4,-1],[38,43,58,43,1],[102,4,113,4,-1],[102,43,113,43,1]],   // x0,y,x1,y, which side is space
+    breaches:[[20,3,0,-1],[27,3,0,-1],[20,44,0,1],[27,44,0,1],[2,20,-1,0],[2,27,-1,0],   // engineering
+      [42,4,0,-1],[55,4,0,-1],[42,43,0,1],[55,43,0,1],                                     // the crew deck
+      [72,10,0,-1],[89,10,0,-1],[72,37,0,1],[89,37,0,1],[80,6,0,-1],                        // the reactor
+      [104,4,0,-1],[112,4,0,-1],[104,43,0,1],[112,43,0,1],[131,19,1,0],[131,28,1,0]]};      // command
 }
-function mapBroodship(){   // the flagship's insides: chambers like organs, its three nerve nodes, brood pits, and the helm behind a membrane
-  return {W:86, H:48, start:[6,24], dock:[2,24,-1,0], brood:true,   // (you come in through the west hull, where the personnel carrier clamps on)
-    polys:[oct(2,15,17,33,4), oct(19,3,35,17,4), oct(19,31,35,45,4), oct(37,13,53,35,5), oct(55,3,71,17,4), oct(55,31,71,45,4), oct(74,15,84,33,3),
-      box(10,9,22,12), box(10,9,13,16), box(10,36,22,39), box(10,32,13,39), box(16,22,39,26), box(34,9,57,12), box(43,9,46,15), box(34,36,57,39), box(43,33,46,39),
-      box(52,22,76,26), box(62,16,66,32)],
-    props:[{x:26,y:8,w:2,h:2,kind:'node'},{x:62,y:7,w:2,h:2,kind:'node'},{x:62,y:39,w:2,h:2,kind:'node'},{x:79,y:22,w:3,h:4,kind:'helm'},
-      {x:72,y:22,w:2,h:4,kind:'membrane'},
-      {x:5,y:18,w:2,h:2,kind:'growth'},{x:6,y:29,w:2,h:1,kind:'growth'},{x:30,y:6,w:1,h:2,kind:'growth'},{x:22,y:13,w:2,h:1,kind:'growth'},{x:30,y:41,w:2,h:1,kind:'growth'},
-      {x:40,y:17,w:2,h:2,kind:'growth'},{x:49,y:30,w:2,h:2,kind:'growth'},{x:41,y:29,w:1,h:2,kind:'growth'},{x:49,y:17,w:1,h:2,kind:'growth'},
-      {x:58,y:13,w:2,h:1,kind:'growth'},{x:68,y:5,w:1,h:2,kind:'growth'},{x:58,y:34,w:2,h:1,kind:'growth'},{x:68,y:41,w:1,h:2,kind:'growth'},{x:77,y:17,w:1,h:2,kind:'growth'},{x:77,y:30,w:1,h:2,kind:'growth'}],
-    pits:[[27,38],[45,31],[45,16],[67,13],[67,35],[30,13]], windows:[], breaches:[]};
+function mapBroodship(){   // the flagship's insides, stern to bow: the chamber the personnel carrier cuts you in at, three chambers each with a
+  // nerve node feeding its brood pits, and the helm behind a membrane in the bow. Burn a node and its chamber's pits go dead behind you
+  return {W:134, H:48, start:[7,24], dock:[2,24,-1,0], brood:true,   // (you come in through the stern, where the personnel carrier clamps on)
+    polys:[oct(2,15,20,33,4), oct(24,6,48,42,5), oct(52,4,80,44,6), oct(84,6,108,42,5), oct(114,14,132,34,3),
+      box(18,22,26,26), box(46,21,54,27), box(78,21,86,27), box(106,22,116,26)],
+    props:[{x:36,y:11,w:2,h:2,kind:'node'},{x:65,y:36,w:2,h:2,kind:'node'},{x:95,y:11,w:2,h:2,kind:'node'},{x:125,y:22,w:3,h:4,kind:'helm'},
+      {x:112,y:22,w:2,h:4,kind:'membrane'},
+      {x:6,y:18,w:2,h:2,kind:'growth'},{x:8,y:30,w:2,h:1,kind:'growth'},{x:27,y:30,w:2,h:2,kind:'growth'},{x:44,y:12,w:1,h:2,kind:'growth'},{x:33,y:36,w:2,h:1,kind:'growth'},
+      {x:56,y:30,w:2,h:2,kind:'growth'},{x:72,y:12,w:2,h:1,kind:'growth'},{x:76,y:30,w:1,h:2,kind:'growth'},{x:62,y:16,w:1,h:2,kind:'growth'},
+      {x:88,y:30,w:2,h:2,kind:'growth'},{x:104,y:16,w:1,h:2,kind:'growth'},{x:98,y:36,w:2,h:1,kind:'growth'},
+      {x:117,y:27,w:1,h:2,kind:'growth'},{x:129,y:16,w:1,h:2,kind:'growth'},{x:129,y:30,w:1,h:2,kind:'growth'}],
+    pits:[[30,14,0],[42,34,0],[58,10,1],[74,38,1],[90,14,2],[102,34,2],[116,16,3],[116,32,3]],   // x, y, and which node feeds it (3: the helm's chamber, alive once it opens, back by the membrane)
+    windows:[], breaches:[]};
 }
 
 function startDeck(kind){
@@ -6458,11 +6513,11 @@ function startDeck(kind){
   for(const p of M.props) for(let y=p.y;y<p.y+p.h;y++) for(let x=p.x;x<p.x+p.w;x++) if(grid[y*W+x]===0) grid[y*W+x]=2;
   const at=(p)=>({cx:(p.x+p.w/2)*DT, cy:(p.y+p.h/2)*DT});
   DK={kind, map:M, W, H, grid, t:0, open:false, units:[], bolts:[], beams:[], fx:[], pops:[], fields:{}, cam:{x:0,y:0,set:false}, banner:null, art:null, decal:null, mini:null,
-    sys:M.props.filter(p=>p.kind==='sys').map(p=>({...p,...at(p),name:{B:'BRIDGE',R:'REACTOR',E:'ENGINES'}[p.k],hp:100,max:100,dead:false,hackT:-999,low:false})),
-    nodes:M.props.filter(p=>p.kind==='node').map(p=>({...p,...at(p),hp:240,max:240,dead:false,r:22,hitT:-999})),
+    sys:M.props.filter(p=>p.kind==='sys').map(p=>({...p,...at(p),name:{B:'BRIDGE',R:'REACTOR',E:'ENGINES'}[p.k],hp:100,max:100,dead:false,hackT:-999,hitT:-999,low:false,scars:[]})),
+    nodes:M.props.filter(p=>p.kind==='node').sort((a,b)=>a.x-b.x).map((p,i)=>({...p,...at(p),hp:240,max:240,dead:false,r:22,hitT:-999,c:i})),   // (left to right: node 0 feeds the first chamber's pits)
     helm:M.props.filter(p=>p.kind==='helm').map(p=>({...p,...at(p),prog:0}))[0]||null,
-    pits:(M.pits||[]).map(([x,y])=>({x:(x+.5)*DT,y:(y+.5)*DT,t:0})), pods:[],
-    breaches:M.breaches.map(([x,y,nx,ny])=>({x,y,nx,ny,cx:(x+.5)*DT,cy:(y+.5)*DT})),
+    pits:(M.pits||[]).map(([x,y,c])=>({x:(x+.5)*DT,y:(y+.5)*DT,t:0,c:c||0})), pods:[], charges:[], sections:M.sections||null, split:null,
+    breaches:M.breaches.map(([x,y,nx,ny])=>({x,y,nx,ny,cx:(x+.5)*DT,cy:(y+.5)*DT,sec:M.sections?M.sections.findIndex(s=>x<s.x1):0})),
     wave:0, rest:kind==='defend'?DK_REST:0, q:[], killed:0, aboard:0, total:DWAVES.reduce((a,w)=>a+w.n,0), spawnT:0, done:0, doneT:0, lost:0, lostT:0, lostWhy:'',
     knock:0, checkpoint:null, score0:score, said:{}, sid:0, dmgMul:1, fireMul:1, preferBots:false, stars:[],
     stop:0, stopCd:0, kick:{x:0,y:0}, lead:{x:0,y:0}, hurtT:0, streak:0, streakT:-999, dashHeld:false, dashCool:null};   // (hit-stop, the view's kick and lead, your kill streak)
@@ -6474,14 +6529,15 @@ function startDeck(kind){
     const a=k*2.4, d=22+k*1.6, x=DK.you.x+Math.cos(a)*d, y=DK.you.y+Math.sin(a)*d;
     if(dkSolid(Math.floor(x/DT),Math.floor(y/DT)) || !dkLos(DK.you.x,DK.you.y,x,y)) continue;
     const b=dkUnit('bot',x,y); b.rank=i++; dkPush(b); }
-  if(kind==='assault') for(let i=0;i<14;i++){ const p=DK.pits[i%DK.pits.length]; dkSpawn(['squid','blob','squid','blob','brute'][i%5],p.x+rnd(-12,12),p.y+rnd(-12,12),20+i*6); }
+  if(kind==='assault'){ const near=DK.pits.filter(p=>p.c<2);   // (the first two chambers' crew come at you first)
+    for(let i=0;i<14;i++){ const p=near[i%near.length]; dkSpawn(['squid','blob','squid','blob','brute'][i%5],p.x+rnd(-12,12),p.y+rnd(-12,12),20+i*6); } }
   state='deck'; showMap=false; cine=null; fadeIn=40; flash=0; shake=0; heat=0; dkMouse.down=false;
   document.body.classList.remove('cine'); deckDom(true); touchReset(); for(const k in keys) keys[k]=false;
   commsReset(); VRAudio.setEngine(false,false,0); VRAudio.play(kind==='defend'?'play':'boss',0,.8);
   const v={fire:TOUCH?'FIRE':'Space',mouse:TOUCH?'':' Or aim it with the mouse and hold the button.',
-    dash:TOUCH?' Tap DASH to dodge.':' Shift or a right-click dives you clear of their bolts.'};   // (a phone's radio strip has room for one line)
-  if(kind==='defend'){ DK.banner={title:'REPEL BOARDERS',sub:'CARRIER RESOLUTE · KEEP THEM OFF THE BRIDGE, THE REACTOR AND THE ENGINES',t:0,life:300}; say('cmd','deckStart',null,2); }
-  else { DK.banner={title:'SEIZE THE FLAGSHIP',sub:'BURN OUT THE THREE NERVE NODES · THEN HOLD THE HELM',t:0,life:300}; say('cmd','aStart',null,2); }
+    dash:TOUCH?' Tap ROLL to jump and roll clear.':' Shift or a right-click: jump and roll clear of their bolts.'};   // (a phone's radio strip has room for one line)
+  if(kind==='defend'){ DK.banner={title:'REPEL BOARDERS',sub:'CARRIER RESOLUTE · THEY COME ABOARD STERN TO BOW · HOLD THE ENGINES, THE REACTOR, THE BRIDGE',t:0,life:300}; say('cmd','deckStart',null,2); }
+  else { DK.banner={title:'SEIZE THE FLAGSHIP',sub:'STERN TO BOW · BURN OUT A NERVE NODE IN EACH CHAMBER · THEN HOLD THE HELM',t:0,life:300}; say('cmd','aStart',null,2); }
   say('cmd','deckTipA',v,2); say('cmd','deckTipB',null,2);
 }
 function dkUnit(kind,x,y){ const crew=kind==='you'||kind==='bot', T=DFOE[kind];
@@ -6493,9 +6549,9 @@ function dkUnit(kind,x,y){ const crew=kind==='you'||kind==='bot', T=DFOE[kind];
 function deckDom(on){   // the HUD and the buttons switch between flying and fighting aboard
   document.body.classList.toggle('deck',on);
   const hb=document.querySelector('#hud-bottom span'); if(hintFly==null) hintFly=hb.innerHTML;
-  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>Shift</kbd>/right-click dive · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
+  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>Shift</kbd>/right-click jump and roll · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
   document.getElementById('t-fire').textContent=on?'FIRE':'LASER';
-  if(on){ tMissile.textContent='DASH'; tMissile.classList.remove('cool'); }   // (aboard, the MISSILE button is your dive; back in space it shows the rack again)
+  if(on){ tMissile.textContent='ROLL'; tMissile.classList.remove('cool'); }   // (aboard, the MISSILE button is your jump-and-roll; back in space it shows the rack again)
   lastMis=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
   if(!on) elWarn.classList.remove('shielded');
 }
@@ -6553,7 +6609,8 @@ function dkSeparate(){   // nobody stands inside anybody else (and the bots step
       const wa=a.kind==='you'?0:b.kind==='you'?1:.5; a.x-=dx*o*wa; a.y-=dy*o*wa; b.x+=dx*o*(1-wa); b.y+=dy*o*(1-wa); } }
   for(const u of U) dkPush(u);
 }
-function dkTarget(u,range,preferBots){   // the nearest enemy u can see (a boarder told to go for the bots looks past you)
+function dkTarget(u,range,preferBots){   // the nearest enemy u can see (a boarder told to go for the bots looks past you; a marine shoots a charge off first)
+  if(u.side===0 && DK.charges.length){ const ch=dkCharge(u,range); if(ch) return ch; }
   const c=[], r2=range*range;
   for(const v of DK.units){ if(v.side===u.side||v.dead||v.down||v.emerge>0) continue; let d2=(v.x-u.x)**2+(v.y-u.y)**2; if(d2>r2) continue;
     if(preferBots && v.kind==='you') d2+=r2*.6; c.push([d2,v]); }
@@ -6583,6 +6640,7 @@ function dkWallHit(x,y){ const K=DK, hy=y-LIFT;   // your shot burns into the wa
 function dkHurt(t,dmg,hx,hy,a){   // a: your shot's angle. Yours land hard: they knock a boarder back and leave it reeling
   const K=DK, you=a!=null;
   if(you) K.fx.push({flare:1,hit:1,x:hx,y:hy,a,life:4,max:4});   // a star of light where it hits
+  if(t.charge){ if(t.dead) return; t.hp-=dmg; t.hitT=K.t; dkSparks(hx,hy,'#e6a8ff',5); if(t.hp<=0) dkDefuse(t); return; }   // a charge on a machine
   if(t.max && t.cx!=null){ t.hp-=dmg; t.hitT=K.t; dkSparks(hx,hy,'#ff8ad8',you?6:4); if(t.hp<=0) dkNodeDown(t); return; }   // a nerve node
   const T=DFOE[t.kind]; t.hp-=dmg; t.flash=6; t.hitT=K.t; t.jv+=(you?.12:.05)*(t.kind==='brute'?.5:1);   // (a water balloon: it wobbles. A brute's a heavier one)
   if(you){ const kb=t.kind==='brute'?.9:t.kind==='blob'?1.9:2.4; t.vx+=Math.cos(a)*kb; t.vy+=Math.sin(a)*kb;
@@ -6629,8 +6687,9 @@ function dkHurtCrew(u,dmg,b){   // (b: the bolt that hit, if one did)
     if(b){ u.vx+=b.vx*.8; u.vy+=b.vy*.8; K.kick.x+=b.vx*.9; K.kick.y+=b.vy*.6; }   // (it knocks you back a step, and the view with you)
     if(u.hp<=0) dkYouDown(); else if(u.hp<=3 && cool('dkHurt',600)) say('you','deckHit',null,1); return; }
   const left=K.units.reduce((a,v)=>a+(v.kind==='bot'&&!v.dead?1:0),0);
-  u.hp-=dmg*K.dmgMul; u.flash=6; u.hitT=K.t;
-  if(u.hp<=0){ if(left<=2){ u.hp=.5; return; }   // (the last couple hang on, whatever happens)
+  u.hp-=dmg*K.dmgMul*(u.post?.6:1); u.flash=6; u.hitT=K.t;   // (a fire team holding a system is dug in: it takes less)
+  if(u.hp<=0){ const team=u.post?K.units.reduce((a,v)=>a+(v.kind==='bot'&&!v.dead&&v.post===u.post?1:0),0):0;
+    if(left<=2 || team===1){ u.hp=.5; return; }   // (the last couple hang on, whatever happens; and so does the last man holding a system)
     dkBotDown(u,left-1); }
 }
 function dkBotDown(u,left){ const K=DK; u.dead=true;
@@ -6659,10 +6718,10 @@ function dkPlayer(){
   const dv=keys['shift']||touchFire.rocket||dkMouse.dash; dkMouse.dash=false;   // the dive: Shift, a right-click, or DASH (it fires as it goes, too)
   if(dv && !K.dashHeld && P.dashCd<=0){ let dx=mx, dy=my; if(!dx&&!dy){ dx=Math.cos(P.a); dy=Math.sin(P.a); } const l=Math.hypot(dx,dy)||1;
     P.dash=DASH_T; P.dashCd=DASH_CD; P.dx=dx/l; P.dy=dy/l; if(P.aimT<=0) P.a=Math.atan2(P.dy,P.dx);
-    K.fx.push({ring:1,x:P.x,y:P.y-2,r0:4,r1:15,life:10,max:10,col:'#9ff6ff'}); VRAudio.sfx.dash(); }
+    dkDust(P.x,P.y,3); VRAudio.sfx.dash(); }   // (a kick of dust as you leave the deck)
   K.dashHeld=!!dv;
-  if(P.dash>0){ P.dash--; P.vx=P.dx*DASH_SP; P.vy=P.dy*DASH_SP; P.x+=P.vx; dkPush(P); P.y+=P.vy; dkPush(P); P.step+=.45;   // quick, low, and their bolts go by
-    if(P.dash%2===0){ const L=dkLook(P); K.fx.push({ghost:1,x:P.x,y:P.y,S:L.S,fl:L.fl,life:12,max:12}); } }   // (afterimages, where you were)
+  if(P.dash>0){ P.dash--; P.vx=P.dx*DASH_SP; P.vy=P.dy*DASH_SP; P.x+=P.vx; dkPush(P); P.y+=P.vy; dkPush(P); P.step+=.45;   // up and over in a roll, and their bolts go by
+    if(P.dash===0){ dkDust(P.x,P.y,4); P.vx*=.4; P.vy*=.4; VRAudio.sfx.dash(true); } }   // (and another as you land, with a thump)
   else dkMove(P,mx,my,P.sp);
   const mouse=!TOUCH && (dkMouse.down || K.t-dkMouse.t<150), firing=!K.boom && (keys[' ']||keys['j']||touchFire.laser||touchFire.rocket||dkMouse.down);
   const lw=K.t-P.shotT<24, lx=lw?Math.cos(P.a)*34:mx*24, ly=lw?Math.sin(P.a)*22:my*15;   // the view leads where you're shooting, or where you're going
@@ -6672,11 +6731,15 @@ function dkPlayer(){
       const [ex,ey]=dkRay(P.x,P.y,a,340), lim=Math.hypot(ex-P.x,ey-P.y); let hit=null, hd=lim; const ca=Math.cos(a), sa=Math.sin(a);
       for(const v of K.units){ if(v.side!==1||v.dead||v.emerge>0) continue; const ox=v.x-P.x, oy=v.y-P.y, t=ox*ca+oy*sa; if(t<0||t>hd) continue; if((ox-ca*t)**2+(oy-sa*t)**2<(v.r+3)**2){ hd=t; hit=v; } }
       for(const n of K.nodes){ if(n.dead) continue; const ox=n.cx-P.x, oy=n.cy-P.y, t=ox*ca+oy*sa; if(t<0||t-n.r>hd+2) continue; if((ox-ca*t)**2+(oy-sa*t)**2<n.r*n.r){ hd=Math.min(hd,Math.max(0,t-n.r*.6)); hit=n; } }
+      for(const c of K.charges){ if(c.dead) continue; const ox=c.x-P.x, oy=c.y-P.y, t=ox*ca+oy*sa; if(t<0||t>hd+12) continue; if((ox-ca*t)**2+(oy-sa*t)**2<81){ hd=Math.min(hd,t); hit=c; } }   // (a charge on a machine: right where it sits)
       dkBeam(P,P.x+ca*hd,P.y+sa*hd,hit,2); }
     else { const t=dkAutoTarget(P);   // or it finds the nearest one you can see, favouring the way you're facing
       if(t) dkBeam(P,t.cx??t.x,t.cy??t.y,t,2); else { const [ex,ey]=dkRay(P.x,P.y,P.a,340); dkBeam(P,ex,ey,null,0); } } }
 }
+function dkCharge(u,range){ let best=null, bd=range*range;   // the nearest charge ticking on a machine that u can see (it comes first: shoot those off)
+  for(const c of DK.charges){ if(c.dead) continue; const d=(c.x-u.x)**2+(c.y-u.y)**2; if(d<bd && dkLos(u.x,u.y,c.x,c.y-4,c.S)){ bd=d; best=c; } } return best; }
 function dkAutoTarget(P){ let best=null, bs=1e9;
+  const c=dkCharge(P,300); if(c) return c;
   for(const v of DK.units){ if(v.side!==1||v.dead||v.emerge>0) continue; const dx=v.x-P.x, dy=v.y-P.y, d=Math.hypot(dx,dy); if(d>320) continue;
     const off=Math.abs(((Math.atan2(dy,dx)-P.a+Math.PI*3)%TAU)-Math.PI), s=d*(1+off*.5); if(s<bs && dkLos(P.x,P.y,v.x,v.y)){ bs=s; best=v; } }
   if(!best) for(const n of DK.nodes) if(!n.dead && Math.hypot(n.cx-P.x,n.cy-P.y)<320 && dkLos(P.x,P.y,n.cx,n.cy,n)) return n;
@@ -6686,9 +6749,16 @@ function dkBot(u){
   if(u.cool>0) u.cool--; if(u.aimT>0) u.aimT--; if(u.flash>0) u.flash--;
   if(--u.tgtT<=0){ u.tgtT=10+ri(0,6); u.tgt=dkTarget(u,240,false); }
   if(u.tgt && (u.tgt.dead||u.tgt.down||u.tgt.emerge>0)) u.tgt=null;
-  if(u.tgt && u.cool<=0 && !K.boom){ u.cool=ri(34,52); const t=u.tgt, tx=t.cx??t.x, ty=t.cy??t.y;
-    if(Math.random()<.7) dkBeam(u,tx,ty,t,1); else { const [ex,ey]=dkRay(u.x,u.y,Math.atan2(ty-u.y,tx-u.x)+rnd(-.14,.14),300); dkBeam(u,ex,ey,null,0); }
+  if(u.tgt && u.cool<=0 && !K.boom){ u.cool=u.post?ri(24,36):ri(34,52); const t=u.tgt, tx=t.cx??t.x, ty=t.cy??t.y;   // (a fire team dug in at a system fires faster, and surer)
+    if(Math.random()<(u.post?.85:.7)) dkBeam(u,tx,ty,t,1); else { const [ex,ey]=dkRay(u.x,u.y,Math.atan2(ty-u.y,tx-u.x)+rnd(-.14,.14),300); dkBeam(u,ex,ey,null,0); }
     VRAudio.sfx.zap(u.x,u.y,false); }
+  if(u.post){ const S=u.post;   // the last wave: a fire team holding a system, round it, until it's lost (then they come and find you)
+    if(S.dead || K.done) u.post=null;
+    else { const d=Math.hypot(S.cx-u.x,S.cy-u.y), hold=Math.max(S.w,S.h)*DT*.5+DT*2.2;
+      let foe=null; if(!u.tgt && d<hold+80){ let bd=1e9; for(const f of K.units) if(f.side===1 && !f.dead && f.hack===S){ const fd=Math.hypot(f.x-u.x,f.y-u.y); if(fd<bd){ bd=fd; foe=f; } } }
+      const dir=foe?dkFollow(u,dkField('pf'+S.k,()=>[[Math.floor(foe.x/DT),Math.floor(foe.y/DT)]],20))   // one at the machine they can't see from here (it's round the far side): go round to it
+        :d>hold?dkFollow(u,dkField('sys'+S.k,()=>dkAround(S))):null;
+      dkMove(u,dir?dir[0]:0,dir?dir[1]:0,d>hold+150?2.05:1.45); return; } }
   // the squad sticks with you: the front rank close, the rest a step further out, and anyone left behind runs to catch up
   const d=Math.hypot(P.x-u.x,P.y-u.y), keep=22+(u.rank%10)*4+(u.rank>=10?16:0);
   let dir=null;
@@ -6698,7 +6768,7 @@ function dkBot(u){
 function dkFoe(f){
   const K=DK, T=DFOE[f.kind];
   if(f.emerge>0){ f.emerge--; return; }
-  if(f.aimT>0) f.aimT--; if(f.flash>0) f.flash--; if(f.stunCd>0) f.stunCd--;
+  if(f.aimT>0) f.aimT--; if(f.flash>0) f.flash--; if(f.stunCd>0) f.stunCd--; if(f.lunge>0) f.lunge--;
   if(f.stun>0){ f.stun--; dkMove(f,0,0,0); return; }   // knocked reeling by your shot: it slides back and does nothing for a moment
   if(--f.tgtT<=0){ f.tgtT=12+ri(0,8); f.tgt=dkTarget(f,T.range,K.preferBots); }
   if(f.tgt && (f.tgt.dead||f.tgt.down)) f.tgt=null;
@@ -6707,17 +6777,59 @@ function dkFoe(f){
     else { f.wind=0; f.cool=Math.round(ri(T.cool[0],T.cool[1])*K.fireMul); dkFire(f); } }
   else f.wind=0;
   let F=null;
-  if(f.goal==='sys' && !K.boom){ let S=f.sys; if(!S||S.dead){ const live=K.sys.filter(s=>!s.dead); S=f.sys=live.length?live[ri(0,live.length-1)]:null; }
-    if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.max(S.w,S.h)*DT*.5+DT*1.3){ f.hack=S; S.hp-=DK_HACK; S.hackT=K.t;   // at the system: tearing into it
-        if(K.t%8===0) dkSparks(S.cx+rnd(-12,12),S.cy+rnd(-12,12),'#ffd27a',1);
-        if(!S.low && S.hp<=S.max*.3){ S.low=true; say('cmd','deckLow',{sys:S.name.toLowerCase()},2); }
+  if(f.goal==='sys' && !K.boom){ let S=f.sys; if(!S||S.dead) S=f.sys=dkNearSys(f);
+    if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.max(S.w,S.h)*DT*.5+DT*1.3){ f.hack=S; S.hackT=K.t; if(f.aimT<=0) f.a=Math.atan2(S.cy-f.y,S.cx-f.x);   // at the system: going at it
         if(cool('hack'+S.k,720)){ say('cmd','deckHack',{sys:S.name.toLowerCase()},2); VRAudio.sfx.alarm(); }
-        if(S.hp<=0) dkSysDown(S); dkMove(f,0,0,0); return; }
+        if(f.sapper){ if(!f.plant) f.plant=DK_PLANT; if(--f.plant<=0){ dkPlant(f,S); f.sapper=false; f.goal='hunt'; f.hack=null; } dkMove(f,0,0,0); return; }   // a sapper plants its charge, then goes hunting
+        if(--f.strike<=0){ f.strike=Math.round(DK_STRIKE[f.kind]*rnd(.85,1.15)); dkStrike(f,S); }   // the rest go at it: a squid's jolts, a blob's acid, a brute's fists
+        dkMove(f,0,0,0); return; }
       f.hack=null; F=dkField('sys'+S.k,()=>dkAround(S)); } }
-  else if(f.goal==='guard'){ const n=K.nodes.find(n=>!n.dead)||K.helm; if(n){ const d=Math.hypot(n.cx-f.x,n.cy-f.y); F=d>110?dkField('guard'+(n.k||n.x),()=>dkAround(n)):null; } }
+  else if(f.goal==='guard'){ let n=null, nd=1e9; for(const m of K.nodes) if(!m.dead){ const d=Math.hypot(m.cx-f.x,m.cy-f.y); if(d<nd){ nd=d; n=m; } }   // (the node in its own chamber)
+    n=n||K.helm; if(n){ const d=Math.hypot(n.cx-f.x,n.cy-f.y); F=d>110?dkField('guard'+(n.k||n.x),()=>dkAround(n)):null; } }
   if(!F) F=dkYouField();
   const dir=dkFollow(f,F); dkMove(f,dir?dir[0]:0,dir?dir[1]:0,f.sp*(f.tgt?.65:1));
 }
+// ---- boarders at a system don't just stand there: a squid jolts it with arcs of current, a blob spits acid that eats into it, a brute
+// beats on it until the panels come off. Each blow leaves a wound on the machine that sparks (and smokes, once it's badly hurt) ----
+function dkSysPoint(S,f){ return [S.cx+clamp(f.x-S.cx,-S.w*DT/2+5,S.w*DT/2-5), clamp(f.y,S.y*DT+6,(S.y+S.h)*DT-2)]; }   // where on the machine it's going for
+function dkStrike(f,S){ const K=DK, T=DFOE[f.kind], [px,py]=dkSysPoint(S,f), mx=f.x+Math.cos(f.a)*f.r*.6, my=f.y-T.mz;
+  if(f.kind==='squid'){ K.fx.push({zap:1,x:mx,y:my,x1:px,y1:py-10,life:8,max:8,seed:ri(1,999)}); dkSparks(px,py-10,'#c8ffe0',5); VRAudio.sfx.zap(px,py,false); dkSysHit(S,DK_HACK*DK_STRIKE.squid,px,py); }
+  else if(f.kind==='blob'){ K.fx.push({glob:1,x:mx,y:my,x0:mx,y0:my,x1:px,y1:py-8,life:14,max:14,S}); VRAudio.sfx.eshot(f.x,f.y,false); }   // (the acid does its work when it lands)
+  else { f.lunge=8; dkSparks(px,py-12,'#ffd27a',8); dkSparks(px,py-12,'#ffffff',3);   // a brute's blow: sparks, and bits of the machine flying
+    for(let i=0;i<5;i++){ const a=rnd(-Math.PI,0), sp=rnd(.8,2.2); K.fx.push({x:px,y:py-12,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-.6,life:ri(20,34),max:34,col:Math.random()<.5?'#8a94a8':'#5a6478',r:2,drop:1,floor:py+rnd(2,10),bounce:1}); }
+    VRAudio.sfx.clank(px,py); if(Math.hypot(K.you.x-px,K.you.y-py)<300) shake=Math.min(shake+1.5,10);
+    dkSysHit(S,DK_HACK*DK_STRIKE.brute*1.25,px,py); } }
+function dkGlobHit(p){ const K=DK, S=p.S;   // the acid lands: a green splash, a hiss, a wound eaten into the machine
+  dkDroplets(p.x1,p.y1,'#9aff3a',7,1.3,p.y1+10); K.fx.push({smoke:1,acid:1,x:p.x1,y:p.y1-4,vx:rnd(-.2,.2),vy:-rnd(.2,.4),life:ri(30,46),max:46,r:5});
+  VRAudio.sfx.hit(p.x1,p.y1); if(S && !S.dead) dkSysHit(S,DK_HACK*DK_STRIKE.blob,p.x1,p.y1+8); }
+function dkSysHit(S,dmg,x,y){ const K=DK; if(S.dead) return;
+  S.hp-=dmg; S.hitT=K.t; S.hackT=K.t;
+  if(S.scars.length<8 && Math.random()<.4) S.scars.push({x:x-S.x*DT,y:Math.min(y-S.y*DT,S.h*DT-3)});   // (a wound: it'll spark from here on)
+  if(!S.low && S.hp<=S.max*.3){ S.low=true; say('cmd','deckLow',{sys:S.name.toLowerCase()},2); }
+  if(S.hp<=0) dkSysDown(S); }
+// ---- and some carry a charge: planted on the machine, it ticks down, faster and faster, then blows a chunk out of it. Shoot it off ----
+function dkPlant(f,S){ const K=DK, [x]=dkSysPoint(S,f), y=(S.y+S.h)*DT-2;
+  K.charges.push({S,x,y,t:0,fuse:DK_FUSE,hp:2,max:2,charge:1,hitT:-99,dead:false});
+  K.fx.push({ring:1,x,y:y-7,r0:3,r1:16,life:12,max:12,col:'#d36bff'}); VRAudio.sfx.clank(x,y);
+  if(cool('charge'+S.k,300)) say('cmd','deckCharge',{sys:S.name.toLowerCase()},2); }
+function dkCharges(){ const K=DK;
+  for(const c of K.charges){ if(c.dead) continue; if(c.S.dead){ c.dead=true; continue; }
+    c.t++; c.S.hackT=K.t; const left=c.fuse-c.t, every=left>240?40:left>100?20:8;   // (it ticks faster as it gets close)
+    if(left%every===0) VRAudio.sfx.charge(c.x,c.y,c.t/c.fuse);
+    if(left<=0) dkBlow(c); }
+  K.charges=K.charges.filter(c=>!c.dead); }
+function dkBlow(c){ const K=DK, S=c.S; c.dead=true;   // it goes off
+  K.fx.push({fire:1,x:c.x,y:c.y-8,life:30,max:30,r:22},{light:1,x:c.x,y:c.y-10,r:90,life:16,max:16,col:'#ff9a3d'});
+  for(let i=0;i<3;i++) K.fx.push({smoke:1,x:c.x+rnd(-8,8),y:c.y-14,vx:rnd(-.3,.3),vy:-rnd(.3,.7),life:ri(50,80),max:80,r:rnd(7,10)});
+  dkSparks(c.x,c.y-10,'#ffd27a',12); dkSparks(c.x,c.y-10,'#d36bff',8); dkSoot(c.x,c.y+4,16);
+  VRAudio.sfx.explode(c.x,c.y,'big',1); const d=Math.hypot(K.you.x-c.x,K.you.y-c.y); if(d<500) shake=Math.min(shake+10*(1-d/500),16);
+  for(const u of K.units) if(u.side===0 && !u.dead && !u.down && Math.hypot(u.x-c.x,u.y-c.y)<46) dkHurtCrew(u,2);   // (stand clear of one)
+  if(!S.dead){ dkSysHit(S,DK_BOMB,c.x,c.y); if(!S.dead) say('cmd','deckBomb',{sys:S.name.toLowerCase()},2); } }
+function dkDefuse(c){ const K=DK; c.dead=true; score+=250;   // shot off: it pops harmlessly, purple
+  K.pops.push({x:c.x,y:c.y-26,txt:'+250 CHARGE',col:'#e6a8ff',life:55});
+  dkDroplets(c.x,c.y-8,'#d36bff',12,2.2,c.y+6); K.fx.push({ring:1,x:c.x,y:c.y-8,r0:4,r1:18,life:12,max:12,col:'#d36bff'},{light:1,x:c.x,y:c.y-8,r:40,life:10,max:10,col:'#d36bff'});
+  VRAudio.sfx.splat(c.x,c.y,2); if(cool('defuse',500)) say('you','deckDefuse',null,1); }
+function dkDust(x,y,n){ for(let i=0;i<n;i++) DK.fx.push({smoke:1,dust:1,x:x+rnd(-6,6),y:y-2,vx:rnd(-.5,.5),vy:-rnd(.05,.25),life:ri(14,24),max:24,r:rnd(3,5)}); }   // a puff of dust off the deck
 function dkBolts(){ const K=DK;
   for(const b of K.bolts){ b.x+=b.vx; b.y+=b.vy; b.life--; b.h+=(LIFT-b.h)*.15;
     if(dkSolid(Math.floor(b.x/DT),Math.floor(b.y/DT))){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff6a5a',2); continue; }
@@ -6729,28 +6841,51 @@ function dkTurn(u){   // each frame: the way u is drawn facing turns round towar
   u.da+=angD(u.a,u.da)*(u.side===0?.3:.2); if(u.da>Math.PI) u.da-=TAU; else if(u.da<-Math.PI) u.da+=TAU;
   if(u.kick>0) u.kick=Math.max(0,u.kick-.4);
   if(u.jig||u.jv){ u.jv-=u.jig*.3+u.jv*.17; u.jig=clamp(u.jig+u.jv,-.24,.24); if(Math.abs(u.jig)<.003&&Math.abs(u.jv)<.003) u.jig=u.jv=0; } }
-function dkSpawn(kind,x,y,emerge){ const f=dkUnit(kind,x,y); f.emerge=emerge||0; f.cool=ri(8,30); /* (they come in shooting) */ f.goal=DK.kind==='defend'?(Math.random()<.45?'sys':'hunt'):(Math.random()<.45?'guard':'hunt'); dkPush(f); return f; }
+function dkSpawn(kind,x,y,emerge,sysK){ const f=dkUnit(kind,x,y), def=DK.kind==='defend'; f.emerge=emerge||0; f.cool=ri(8,30); /* (they come in shooting) */
+  f.goal=def?(Math.random()<.45?'sys':'hunt'):(Math.random()<.45?'guard':'hunt'); f.strike=ri(4,16);
+  if(def && f.goal==='sys'){ f.sys=DK.sys.find(S=>S.k===sysK&&!S.dead)||null; f.sapper=Math.random()<.28; }   // (the system its wave was sent for · some carry a charge to plant on it)
+  dkPush(f); return f; }
+const dkNearSys=f=>{ let best=null, bd=1e9; for(const S of DK.sys){ if(S.dead) continue; const d=Math.hypot(S.cx-f.x,S.cy-f.y); if(d<bd){ bd=d; best=S; } } return best; };   // (and if that one's gone, the nearest: never a run back across the ship)
 function dkMix(m){ const r=Math.random(); return r<m[0]?'squid':r<m[0]+m[1]?'blob':'brute'; }
 
 // ---- holding the Resolute: three waves cut in through the hull, a handful of breaches at a time ----
 function defendTick(){ const K=DK;
   for(let i=K.q.length-1;i>=0;i--){ const s=K.q[i]; if(K.t<s.at) continue; K.q.splice(i,1); const b=s.b;
-    dkSpawn(s.kind,b.cx+rnd(-6,6),b.cy+rnd(-6,6),18); K.aboard++; dkSparks(b.cx,b.cy,'#ffb347',6); VRAudio.sfx.clank(b.cx,b.cy); }
+    dkSpawn(s.kind,b.cx+rnd(-6,6),b.cy+rnd(-6,6),18,s.sys); K.aboard++; dkSparks(b.cx,b.cy,'#ffb347',6); VRAudio.sfx.clank(b.cx,b.cy); }
+  dkCharges(); dkWounds();
+  if(K.rally && K.rest<=0 && Math.hypot(K.rally.x-K.you.x,K.rally.y-K.you.y)<120) K.rally=null;   // (you've moved up: the marker's done its job)
   if(K.rest>0){ if(--K.rest===0) dkWave(); return; }
-  if(K.q.length || K.units.some(u=>u.side===1&&!u.dead)) return;
+  if(K.q.length || K.charges.length || K.units.some(u=>u.side===1&&!u.dead)) return;   // (a wave's not beaten while a charge is still ticking)
   if(K.wave>=DWAVES.length){ dkWin(); return; }
   K.rest=DK_REST; const bonus=1000*K.wave; score+=bonus;
-  for(const S of K.sys) if(!S.dead){ S.hp=Math.min(S.max,S.hp+35); S.low=S.hp<=S.max*.3; }
-  K.banner={title:'WAVE '+K.wave+' BEATEN',sub:'+'+bonus.toLocaleString('en-US')+' · DAMAGE CREWS PATCH THE SYSTEMS · MORE PODS ARE COMING',t:0,life:220,good:true};
+  for(const S of K.sys) if(!S.dead){ S.hp=Math.min(S.max,S.hp+35); S.low=S.hp<=S.max*.3; S.scars.splice(0,3); }
+  const N=DWAVES[K.wave], sec=K.sections[N.go[0][0]]; K.rally={x:(sec.rally[0]+.5)*DT,y:(sec.rally[1]+.5)*DT,name:sec.name};   // where to go next: the next section forward
+  K.banner={title:'WAVE '+K.wave+' BEATEN',sub:'+'+bonus.toLocaleString('en-US')+' · DAMAGE CREWS PATCH THE SYSTEMS · '+(N.last?'THEY\'RE COMING IN EVERYWHERE · YOUR SQUAD SPLITS UP':'MOVE UP TO '+sec.name),t:0,life:260,good:true};
   VRAudio.sfx.ready(); comms.q=comms.q.filter(m=>m.pri>=2); say('cmd','deckClear',null,2);
+  if(N.last) dkSplit(); else say('cmd','deckMove',{sec:sec.name.toLowerCase()},2);
 }
-function dkWave(){ const K=DK, W=DWAVES[K.wave++], B=[...K.breaches].sort(()=>Math.random()-.5).slice(0,W.at), per=Math.ceil(W.n/B.length);
-  for(const b of B) K.pods.push({b,t:0});
-  for(let i=0;i<W.n;i++){ const b=B[i%B.length]; K.q.push({kind:dkMix(W.mix),b,at:K.t+130+Math.floor(i/B.length)*44+(i%B.length)*7}); }
-  K.banner={title:'WAVE '+K.wave+' / '+DWAVES.length,sub:W.n+' BOARDERS · '+B.length+' HULL BREACHES',t:0,life:220};
+function dkWave(){ const K=DK, W=DWAVES[K.wave++];   // the next pods latch on, in this wave's sections (the last wave's later sections a little after the first)
+  const groups=W.go.map(([sec,delay,sys,most])=>({B:K.breaches.filter(b=>b.sec===sec).sort(()=>Math.random()-.5),delay,sys,most:most||9})), picks=[];
+  for(let i=0;picks.length<W.at && i<8;i++) for(const G of groups){ if(picks.length>=W.at) break; if(G.B[i] && i<G.most) picks.push({b:G.B[i],delay:G.delay,sys:G.sys}); }
+  for(const p of picks) K.pods.push({b:p.b,t:-p.delay});
+  for(let i=0;i<W.n;i++){ const p=picks[i%picks.length]; K.q.push({kind:dkMix(W.mix),b:p.b,sys:p.sys,at:K.t+130+p.delay+Math.floor(i/picks.length)*44+(i%picks.length)*7}); }
+  if(!W.last) K.rally=null;   // (the last wave keeps you pointed at the bridge)
+  const nm=i=>K.sections[W.go[i][0]].name;
+  K.banner={title:'WAVE '+K.wave+' / '+DWAVES.length,sub:W.n+' BOARDERS · '+(W.last?'EVERYWHERE AT ONCE · THE BOW FIRST':'CUTTING IN AT '+nm(0)+(W.go.length>1?' AND '+nm(1):'')),t:0,life:220};
   VRAudio.sfx.klaxon(); shake=Math.min(shake+6,16);
-  say('cmd',K.wave===DWAVES.length?'deckLast':'deckWave',{n:W.n},2); if(K.wave===2 && Math.random()<.8) say('matriarch','deckTaunt',null,1);
+  say('cmd',W.last?'deckLast':'deckWave',{n:W.n},2); if(K.wave===2 && Math.random()<.8) say('matriarch','deckTaunt',null,1);
 }
+function dkSplit(){   // the last wave comes in everywhere: fire teams peel off to hold the engines and the reactor, the rest stay with you
+  const K=DK, bots=K.units.filter(u=>u.kind==='bot'&&!u.dead).sort((a,b)=>a.x-b.x), n=bots.length;   // (the ones furthest aft go aft)
+  const E=K.sys.find(S=>S.k==='E'&&!S.dead), R=K.sys.find(S=>S.k==='R'&&!S.dead);
+  const nE=E&&n>=7?Math.max(3,Math.round(n*.28)):0, nR=R&&n>=5?Math.max(3,Math.round(n*.28)):0;
+  bots.slice(0,nE).forEach(u=>u.post=E); bots.slice(nE,nE+nR).forEach(u=>u.post=R);
+  K.split={E:nE,R:nR}; const sec=K.sections[K.sections.length-1]; K.rally={x:(sec.rally[0]+.5)*DT,y:(sec.rally[1]+.5)*DT,name:sec.name};
+  say('cmd',nE&&nR?'deckSplit':nE||nR?'deckSplit1':'deckSplit0',{a:nE?'the engines':'the reactor'},2); }
+function dkWounds(){ const K=DK;   // the wounds the boarders leave: they spark, and a badly hurt machine smokes
+  for(const S of K.sys){ if(S.dead) continue;
+    if(S.scars.length && K.t%17===(S.x*3)%17){ const w=S.scars[ri(0,S.scars.length-1)]; dkSparks(S.x*DT+w.x,S.y*DT+w.y-10,Math.random()<.5?'#ffd27a':'#9ff6ff',2); }
+    if(S.hp<S.max*.5 && K.t%10===0) K.fx.push({smoke:1,x:S.cx+rnd(-S.w*DT*.3,S.w*DT*.3),y:S.y*DT-12,vx:rnd(-.2,.2),vy:-rnd(.3,.6),life:ri(40,64),max:64,r:rnd(5,8)}); } }
 function dkSysDown(S){ const K=DK; S.dead=true; S.hp=0;
   for(let i=0;i<30;i++) dkSparks(S.cx+rnd(-20,20),S.cy+rnd(-20,20),Math.random()<.5?'#ff9a3d':'#ffd27a',1);
   K.fx.push({fire:1,x:S.cx,y:S.cy,life:30,max:30,r:40}); dkScorch(S.cx,S.cy);
@@ -6796,15 +6931,26 @@ function dkPuff(){ if(PUFF) return PUFF;   // a soft round puff of smoke (and, p
   PUFF=document.createElement('canvas'); PUFF.width=PUFF.height=32; const q=PUFF.getContext('2d'), gr=q.createRadialGradient(16,16,0,16,16,16);
   gr.addColorStop(0,'rgba(34,28,30,1)'); gr.addColorStop(.55,'rgba(34,28,30,.55)'); gr.addColorStop(1,'rgba(34,28,30,0)'); q.fillStyle=gr; q.fillRect(0,0,32,32); return PUFF; }
 function dkSoot(x,y,r){ const q=DK.decal.getContext('2d'); q.save(); q.globalAlpha=.5; q.drawImage(dkPuff(),x-r,y-r,r*2,r*2); q.restore(); }   // a burn left on the deck where the blast went through
+const PUFFS={};
+function dkPuffOf(k){ if(PUFFS[k]) return PUFFS[k];   // the same soft puff in another colour: dust off the deck, acid fumes
+  const c=document.createElement('canvas'); c.width=c.height=32; const q=c.getContext('2d'), gr=q.createRadialGradient(16,16,0,16,16,16), rgb=k==='dust'?'150,160,182':'120,210,70';
+  gr.addColorStop(0,`rgba(${rgb},1)`); gr.addColorStop(.55,`rgba(${rgb},.5)`); gr.addColorStop(1,`rgba(${rgb},0)`); q.fillStyle=gr; q.fillRect(0,0,32,32); return PUFFS[k]=c; }
+function dkDrawCharge(c,x,y,K){ const k=c.t/c.fuse, blink=(K.t>>(k>.75?1:k>.45?2:3))&1, py=y-7;   // a boarder's charge, gripping the machine: a sac with a blinking eye, and a ring of the time it has left
+  g.strokeStyle='#4a1846'; g.lineWidth=1.5; for(const s of [-1,1]){ g.beginPath(); g.moveTo(x+s*3,py+2); g.quadraticCurveTo(x+s*7,py+4,x+s*8,py-3); g.stroke(); }
+  g.fillStyle='#2a0d27'; g.beginPath(); g.ellipse(x,py,5,6,0,0,TAU); g.fill(); g.strokeStyle='#8a3aa0'; g.lineWidth=1; g.stroke();
+  g.fillStyle=K.t-c.hitT<4?'#ffffff':blink?'#ff2a4a':'#6a1020'; g.beginPath(); g.arc(x,py-1,2.3,0,TAU); g.fill();
+  g.strokeStyle=k>.7?'#ff4d6d':'#ffb347'; g.lineWidth=1.5; g.beginPath(); g.arc(x,py,9.5,-Math.PI/2,-Math.PI/2+TAU*(1-k)); g.stroke(); }
 function dkBurn(u){ const K=DK; u.dead=true;   // caught in it
   if(u.side===1){ const T=DFOE[u.kind]; dkDroplets(u.x,u.y-LIFT,T.goo,10,2.4); dkSplat(u.x,u.y,T.goo,u.r*1.4); }
   else { dkSparks(u.x,u.y-LIFT,'#ffd27a',8); dkScorch(u.x,u.y); }
   K.fx.push({fire:1,x:u.x,y:u.y-LIFT*.6,life:20,max:20,r:12}); }
 // ---- taking the flagship: its crew keeps climbing out of the brood pits; burn out the nerve nodes, then hold the helm ----
 function assaultTick(){ const K=DK, P=K.you, done=K.nodes.filter(n=>n.dead).length, alive=K.units.reduce((a,u)=>a+(u.side===1&&!u.dead?1:0),0);
-  if(--K.spawnT<=0){ K.spawnT=K.open?15:Math.max(15,30-done*5);   // (the ship throws everything it has at you once the helm's open)
-    if(alive<(K.open?46:36+done*4)){ const far=K.pits.filter(p=>Math.hypot(p.x-P.x,p.y-P.y)>180), set=far.length?far:K.pits, pt=set[ri(0,set.length-1)];
-      dkSpawn(dkMix([.42-done*.06,.42,.16+done*.06]),pt.x+rnd(-8,8),pt.y+rnd(-8,8),26); pt.t=26; } }
+  if(--K.spawnT<=0){ K.spawnT=K.open?26:Math.max(15,30-done*5);   // (the ship throws everything it has at you once the helm's open: out of the two pits left, in the helm's own chamber)
+    if(alive<(K.open?30:36+done*4)){   // out of a live pit near you, never one behind you that its node no longer feeds
+      const live=K.pits.filter(p=>!p.dead && (p.c<3||K.open)), d=p=>Math.hypot(p.x-P.x,p.y-P.y);
+      const far=live.filter(p=>d(p)>180).sort((a,b)=>d(a)-d(b)).slice(0,3), set=far.length?far:live;
+      if(set.length){ const pt=set[ri(0,set.length-1)]; dkSpawn(dkMix([.42-done*.06,.42,.16+done*.06]),pt.x+rnd(-8,8),pt.y+rnd(-8,8),26); pt.t=26; } } }
   for(const p of K.pits) if(p.t>0) p.t--;
   const H=K.helm;
   if(K.open && H){ const on=P.down<=0 && Math.hypot(P.x-H.cx,P.y-H.cy)<DT*3.6;
@@ -6816,6 +6962,7 @@ function dkNodeDown(n){ const K=DK; if(n.dead) return; n.dead=true; score+=1500;
   K.fx.push({light:1,x:n.cx,y:n.cy-20,r:110,life:22,max:22,col:'#d36bff'}); dkHalt(8);
   VRAudio.sfx.medal(); VRAudio.sfx.splat(n.cx,n.cy); shake=Math.min(shake+9,18);
   const fl=dkFloorNear(Math.floor(n.cx/DT),Math.floor(n.cy/DT)+2); K.checkpoint={x:(fl[0]+.5)*DT,y:(fl[1]+.5)*DT};   // (you'd come back in here, now)
+  for(const p of K.pits) if(p.c===n.c && !p.dead){ p.dead=true; K.fx.push({ring:1,x:p.x,y:p.y,r0:12,r1:30,life:18,max:18,col:'#3aff9a'}); dkSoot(p.x,p.y,16); }   // the pits it fed seal up, dead
   const left=K.nodes.filter(m=>!m.dead).length;
   if(left){ K.banner={title:'NODE BURNED OUT',sub:left+' MORE · THE SHIP IS FIGHTING BACK',t:0,life:180,good:true}; say('cmd','aNode',{n:NUMW[left]},2); return; }
   K.open=true; for(const p of K.map.props) if(p.kind==='membrane') for(let y=p.y;y<p.y+p.h;y++) for(let x=p.x;x<p.x+p.w;x++) K.grid[y*K.W+x]=0;
@@ -6826,7 +6973,8 @@ function dkNodeDown(n){ const K=DK; if(n.dead) return; n.dead=true; score+=1500;
 }
 function dkWin(){ const K=DK; if(K.done||K.lost) return; K.done=1; K.doneT=0; const def=K.kind==='defend';
   for(const u of K.units) if(u.side===1 && !u.dead){ u.dead=true; dkDroplets(u.x,u.y,DFOE[u.kind].goo,8,2); }
-  K.q=[]; K.bolts=[];
+  for(const c of K.charges) dkDroplets(c.x,c.y-8,'#d36bff',6,1.6);   // (any charges left fizzle out with them)
+  K.q=[]; K.bolts=[]; K.charges=[]; K.rally=null;
   crewLeft=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0);
   const bonus=def?Math.round(K.sys.reduce((a,S)=>a+Math.max(0,S.hp),0)*20)+crewLeft*500:6000+crewLeft*500; score+=bonus;
   K.banner={title:def?'THE RESOLUTE HOLDS':'FLAGSHIP SEIZED',sub:crewLeft+' OF '+CREW_N+' MARINES STILL STANDING · +'+bonus.toLocaleString('en-US'),t:0,life:9999,good:true};
@@ -6852,7 +7000,7 @@ function deckFail(){   // the card: hold the ship (or board the flagship) again,
   document.getElementById('o-brief').innerHTML=(def?
     ({ENGINES:'The boarders blew the engines, and the Resolute went up with them.',REACTOR:'The boarders breached the reactor, and the Resolute went up with it.'}[K.lostWhy]||
      `The boarders wrecked the ${sys.toLowerCase()}, and the Resolute went down with it.`)+` Command is giving you the ship to hold again, from the first wave.<br><br>`+
-    `Watch the systems: a boarder left alone at one tears it apart. The minimap shows where they're cutting in. Your marines go where you go, so take them to a system under attack.`
+    `They come aboard stern to bow, a section at a time, and the green arrow shows you where to move up to. Shoot off the charges they plant on the machines, and don't leave a system alone with them. On the last wave your squad splits up to hold the engines and the reactor while you hold the bridge.`
    :`The flagship's crew put you down three times. Command is sending you back in from the personnel carrier, with a fresh squad of marines.<br><br>`+
     `Stay with your marines: twenty rifles burn through a node much faster than one. Clear a chamber before you push on to the next.`)+
     `<br><br>Score back to <span class="mono">${K.score0.toLocaleString('en-US')}</span>.`;
@@ -6869,7 +7017,9 @@ function deckTick(){
   if(K.stopCd>0) K.stopCd--;
   K.t++;
   if(K.banner && ++K.banner.t>=K.banner.life) K.banner=null;
-  for(const p of K.fx){ p.life--; if(p.vx==null) continue;   // (sparks, goo and smoke move; the flashes, glows and rings stay put)
+  for(const p of K.fx){ p.life--;
+    if(p.glob){ const k=1-p.life/p.max; p.x=p.x0+(p.x1-p.x0)*k; p.y=p.y0+(p.y1-p.y0)*k-Math.sin(Math.PI*k)*14; if(p.life<=0) dkGlobHit(p); continue; }   // (a glob of acid, lobbed)
+    if(p.vx==null) continue;   // (sparks, goo and smoke move; the flashes, glows and rings stay put)
     p.x+=p.vx; p.y+=p.vy; p.vx*=p.drop?.9:.94; p.vy*=p.drop?.9:.94; if(p.drop) p.vy+=.16;
     if(p.floor!=null && p.y>=p.floor && p.vy>0){ if(p.bounce){ p.y=p.floor; p.vy*=-.45; p.vx*=.7; if(p.vy>-.3) p.life=Math.min(p.life,4); } else { dkLand(p); p.life=0; } } }   // (sparks bounce; goo lands, and stays)
   K.fx=K.fx.filter(p=>p.life>0); for(const b of K.beams) b.life--; K.beams=K.beams.filter(b=>b.life>0);
@@ -6882,7 +7032,7 @@ function deckTick(){
   if(K.t%30===0){   // the fight's director: by the end only two or three bots should still be standing
     const bots=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0), done=K.nodes.filter(n=>n.dead).length;
     const p=K.kind==='defend'?(K.killed+K.aboard)/K.total/2:Math.min(1,done*.25+(K.helm?K.helm.prog*.25:0));   // (aboard: the losses come while the boarders pour in)
-    const want=CREW_N-18*clamp(p/.88,0,1)**1.3; /* (most of the squad lasts most of the fight; the heavy losses come at the end) */ K.dmgMul=clamp(1+.35*(bots-want),.2,3); K.fireMul=clamp(1-.06*(bots-want),.5,1.3); K.preferBots=bots-want>1.5; }
+    const want=CREW_N-18*clamp(p/.88,0,1)**(K.kind==='defend'?1.8:1.3); /* (most of the squad lasts most of the fight; the heavy losses come at the end: aboard the Resolute, in the last wave, once they've split up) */ K.dmgMul=clamp(1+.35*(bots-want),.2,3); K.fireMul=clamp(1-.06*(bots-want),.5,1.3); K.preferBots=bots-want>1.5; }
   dkPlayer();
   for(const u of K.units){ if(u.dead) continue; if(u.kind==='bot') dkBot(u); else if(u.side===1) dkFoe(u); }
   dkSeparate(); dkBolts(); for(const u of K.units) if(!u.dead) dkTurn(u);
@@ -6904,8 +7054,10 @@ function deckHud(){   // the same HUD as the fight in space, saying what matters
   let lab,cnt,fill;
   if(K.kind==='defend'){ const left=K.q.length+foes, W=DWAVES[Math.max(0,K.wave-1)];
     if(K.done){ lab='Carrier Resolute · held'; cnt='✓'; fill=1; }
-    else if(K.rest>0){ lab=K.wave?'Wave '+K.wave+' beaten · more pods':'Boarders inbound'; cnt=Math.ceil(K.rest/60)+'s'; fill=1-K.rest/DK_REST; }
-    else { lab='Repel boarders · wave '+K.wave+' / '+DWAVES.length; cnt=left+' left'; fill=W?1-left/W.n:0; } }
+    else if(K.rest>0){ const N=DWAVES[K.wave]; lab=!K.wave?'Boarders inbound · engineering':N&&N.last?'Wave '+K.wave+' beaten · they\'re coming in everywhere':'Wave '+K.wave+' beaten · move up to '+(K.rally?K.rally.name.toLowerCase():'the next section');
+      cnt=Math.ceil(K.rest/60)+'s'; fill=1-K.rest/DK_REST; }
+    else { lab='Repel boarders · wave '+K.wave+' / '+DWAVES.length+' · '+(W.last?'everywhere':K.sections[W.go[0][0]].name.toLowerCase());
+      cnt=left+' left'+(K.charges.length?' · '+K.charges.length+' charge'+(K.charges.length>1?'s':''):''); fill=W?1-left/W.n:0; } }
   else { const n=K.nodes.filter(x=>x.dead).length;
     if(!K.open){ lab='Burn out the nerve nodes'; cnt=n+' / '+K.nodes.length; fill=n/K.nodes.length; }
     else { lab='Hold the helm'; cnt=Math.round(K.helm.prog*100)+'%'; fill=K.helm.prog; } }
@@ -7106,9 +7258,12 @@ function dkLook(u){   // which sprite u shows: the way it's facing (eight ways f
     :dkSpr('br'+f+fr,32,34,(px,R)=>paintBrute(px,R,f,fr)),fl:f===1&&c<0,fr}; }
 function dkDrawUnit(u,x,y){   // x,y: where u's feet are, on screen
   const L=dkLook(u), S=L.S, img=u.flash>3?S.f:S.c, ax=S.w>>1, ay=S.h-2, crew=u.side===0, mv=Math.hypot(u.vx,u.vy)>.25;
+  if(u.dash>0){ const k=1-u.dash/DASH_T, hop=Math.sin(Math.PI*k)*9, dir=Math.abs(u.dx)>.3?Math.sign(u.dx):(u.dy>0?1:-1);   // your jump-and-roll: up off the deck, over in a tumble, and down
+    g.save(); g.translate(x,y-hop-S.h*.45); g.rotate(easeOut(k)*TAU*dir); g.scale(L.fl?-1:1,1); g.drawImage(img,-ax,-S.h*.55,S.w,S.h); g.restore(); return; }
   let sx=1, sy=1;
   if(crew){ x-=Math.cos(u.da)*u.kick*.5; y-=Math.sin(u.da)*u.kick*.3+(mv&&(L.fr&1)?.5:0); }   // (the recoil shoves them back a touch; they bob as they step)
-  else { const w=mv?Math.sin(u.step*1.6)*.045:0; sx=1+u.jig+w; sy=1-u.jig*.85-w; }   // (water balloons: they wobble when they're hit, and squish as they go)
+  else { const w=mv?Math.sin(u.step*1.6)*.045:0; sx=1+u.jig+w; sy=1-u.jig*.85-w;   // (water balloons: they wobble when they're hit, and squish as they go)
+    if(u.lunge>0){ const lg=Math.sin(u.lunge/8*Math.PI)*6; x+=Math.cos(u.a)*lg; y+=Math.sin(u.a)*lg*.6; sy*=1-.08*Math.sin(u.lunge/8*Math.PI); } }   // (a brute's blow: it throws its whole weight forward)
   if(u.emerge>0) g.globalAlpha=clamp(1-u.emerge/20,0,1);
   if(crew && L.behind) dkRifle(x,y,u,L.look);   // aiming away: the rifle's behind them
   g.save(); g.translate(x,y); g.scale(L.fl?-sx:sx,sy); g.drawImage(img,-ax,-ay,S.w,S.h); g.restore();
@@ -7135,6 +7290,9 @@ function dkDrawSys(S,X,Y,K){   // one of the Resolute's systems: a machine stand
   if(S.k==='R'){ const pl=.5+.5*Math.sin(K.t*.1); g.strokeStyle=dead?'#4a2a20':'#4dffa6'; g.lineWidth=3; g.beginPath(); g.arc(X+W/2,T+H/2,Math.min(W,H)*.36,0,TAU); g.stroke();
     g.fillStyle=dead?'#3a1a10':`rgba(77,255,166,${.5+.4*pl})`; g.beginPath(); g.arc(X+W/2,T+H/2,Math.min(W,H)*.2,0,TAU); g.fill(); }
   else for(let i=0;i<S.h*2;i++){ g.fillStyle=dead?'#3a2026':((K.t>>4)+i)%3?'#43f0ff':'#9ff6ff'; g.fillRect(X+6,T+5+i*9,W-12,5); }
+  if(!dead) for(const w of S.scars){ const sx=X+w.x, sy=Y+w.y-8;   // where they've torn into it: dark wounds, glowing at the edges now and then
+    g.fillStyle='#0a080c'; g.fillRect(sx-2.5,sy-1.5,5,3.5); g.fillStyle=(K.t+(w.x|0)*7)%24<4?'#ffd27a':'#6a2a1a'; g.fillRect(sx-1,sy-.5,2,1.5); }
+  if(!dead && K.t-S.hitT<4){ g.strokeStyle='#ffffff'; g.lineWidth=2; g.strokeRect(X+1,T+1,W-2,H-2); }   // (it flashes as each blow lands)
   if(!dead){ const w=W+10, x=X-5, y=T-9; g.fillStyle='rgba(5,8,18,.85)'; g.fillRect(x-1,y-1,w+2,5); g.fillStyle=S.hp>60?'#4dffa6':S.hp>30?'#ffb347':'#ff4d6d'; g.fillRect(x,y,Math.max(1,w*S.hp/S.max),3); }
 }
 function dkDrawNode(n,x,y,K){   // a nerve node: a bulb on a fleshy stalk, rooted in the deck
@@ -7194,14 +7352,18 @@ function dkFrame(){
   for(const s of K.stars){ const x=((s.x*span-cx*.25)%span+span)%span-200, y=((s.y*(VH+300)-cy*.25)%(VH+300)+VH+300)%(VH+300)-150;
     g.globalAlpha=.25+.5*s.b; g.fillStyle=s.b>.85?'#ffffff':'#8fa2d8'; g.fillRect(x|0,y|0,1,1); }
   g.globalAlpha=1;
-  for(const p of K.pods) dkDrawPod(K,p.b,cx,cy);
+  for(const p of K.pods) if(p.t>=0) dkDrawPod(K,p.b,cx,cy);   // (a pod due later in the wave isn't there yet)
   if(K.map.dock) dkDrawDock(K,cx,cy);
   g.drawImage(K.art,-cx,-cy); g.drawImage(K.decal,-cx,-cy);
   const on=(x,y,m)=>x>cx-m&&y>cy-m&&x<cx+VW+m&&y<cy+VH+m;
-  for(const p of K.pods){ const b=p.b, x=b.cx-cx, y=b.cy-cy; if(!on(b.cx,b.cy,40)) continue;   // the breach, cut glowing through the wall
+  for(const p of K.pods){ const b=p.b, x=b.cx-cx, y=b.cy-cy; if(p.t<0 || !on(b.cx,b.cy,40)) continue;   // the breach, cut glowing through the wall
     const k=Math.min(1,p.t/120); g.strokeStyle=k<1?((K.t>>1)&1?'#fff1b0':'#ffb347'):'#ff6a3d'; g.lineWidth=2; g.beginPath(); g.arc(x+b.nx*12,y+b.ny*12,9,0,k*TAU); g.stroke(); }
-  for(const p of K.pits){ if(!on(p.x,p.y,30)) continue; g.fillStyle='#050208'; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.fill();   // the brood pits
-    g.strokeStyle=p.t>0?'#c8ffe4':'#3aff9a'; g.lineWidth=2; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.stroke(); }
+  for(const p of K.pits){ if(!on(p.x,p.y,30)) continue; const shut=p.dead||(p.c===3&&!K.open);   // the brood pits (sealed once the node that fed them is dead)
+    g.fillStyle=shut?'#140a12':'#050208'; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.fill();
+    g.strokeStyle=p.dead?'#2a2028':shut?'#1f5a3a':p.t>0?'#c8ffe4':'#3aff9a'; g.lineWidth=2; g.beginPath(); g.arc(p.x-cx,p.y-cy,12,0,TAU); g.stroke();
+    if(p.dead){ g.strokeStyle='#3a2a34'; g.lineWidth=1.5; g.beginPath(); g.moveTo(p.x-cx-8,p.y-cy-4); g.lineTo(p.x-cx+8,p.y-cy+4); g.moveTo(p.x-cx-6,p.y-cy+6); g.lineTo(p.x-cx+7,p.y-cy-5); g.stroke(); } }
+  if(K.rally && !K.done && !K.lost && on(K.rally.x,K.rally.y,70)){ const R=K.rally, pr=(K.t%50)/50, r=18+pr*24;   // where to move up to: a ring pulsing out on the deck
+    g.strokeStyle=`rgba(77,255,166,${(1-pr)*.75})`; g.lineWidth=1.5; g.beginPath(); g.ellipse(R.x-cx,R.y-cy,r,r*.5,0,0,TAU); g.stroke(); }
   if(K.helm && K.open && on(K.helm.cx,K.helm.cy,90)){ const H=K.helm;   // where you stand to take the helm
     g.strokeStyle='rgba(159,246,255,.35)'; g.lineWidth=1; g.setLineDash([4,4]); g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,0,TAU); g.stroke(); g.setLineDash([]);
     if(H.prog>0){ g.strokeStyle='#9ff6ff'; g.lineWidth=4; g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,-Math.PI/2,-Math.PI/2+H.prog*TAU); g.stroke(); } }
@@ -7213,9 +7375,11 @@ function dkFrame(){
   if(K.helm && on(K.helm.cx,K.helm.cy,100)) L.push({k:(K.helm.y+K.helm.h)*DT,H:K.helm});
   if(!K.open) for(const p of K.map.props) if(p.kind==='membrane' && on(p.x*DT,p.y*DT,90)) L.push({k:(p.y+p.h)*DT,m:p});
   for(const u of K.units) if(!u.dead && on(u.x,u.y,44)) L.push({k:u.y,u});
+  for(const c of K.charges) if(!c.dead && on(c.x,c.y,40)) L.push({k:(c.S.y+c.S.h)*DT+.5,c});   // (a charge sits on the machine's face, just in front of it)
   L.sort((a,b)=>a.k-b.k);
   g.fillStyle='rgba(0,0,0,.34)';   // their shadows
-  for(const it of L){ const u=it.u; if(!u || u.emerge>0 || u.down>0) continue; const x=h2(u.x-cx), y=h2(u.y-cy), w=u.kind==='brute'?15:u.kind==='blob'?10:8;
+  for(const it of L){ const u=it.u; if(!u || u.emerge>0 || u.down>0) continue; const x=h2(u.x-cx), y=h2(u.y-cy);
+    let w=u.kind==='brute'?15:u.kind==='blob'?10:8; if(u.dash>0) w=Math.round(w*(1-.35*Math.sin(Math.PI*(1-u.dash/DASH_T))));   // (smaller while you're up in the air)
     g.fillRect(x-w,y-1,w*2,3); g.fillRect(x-w+2,y-2,w*2-4,5); }
   g.globalCompositeOperation='lighter';
   for(const p of K.fx) if(p.ghost){ const S=p.S; if(!S.cy){ S.cy=document.createElement('canvas'); S.cy.width=S.c.width; S.cy.height=S.c.height; const q=S.cy.getContext('2d');   // your dive's afterimages, in light
@@ -7231,6 +7395,7 @@ function dkFrame(){
     else if(it.n) dkDrawNode(it.n,it.n.cx-cx,it.n.cy-cy,K);
     else if(it.H) dkDrawHelm(it.H,it.H.x*DT-cx,it.H.y*DT-cy,K);
     else if(it.m) dkDrawMembrane(it.m,it.m.x*DT-cx,it.m.y*DT-cy,K);
+    else if(it.c) dkDrawCharge(it.c,h2(it.c.x-cx),h2(it.c.y-cy),K);
     else { const u=it.u, x=h2(u.x-cx), y=h2(u.y-cy);
       if(u.kind!=='you') dkDrawUnit(u,x,y); else if(u.down>0) dkDrawDowned(x,y,K); else if(!(u.inv>0 && (K.t>>2)&1)) dkDrawUnit(u,x,y); } }
   for(const b of K.bolts){ const x=b.x-cx, y=b.y-b.h-cy, sp=Math.hypot(b.vx,b.vy)||1, ux=b.vx/sp, uy=b.vy/sp, R=(b.big?3.2:2.5)*(1+.22*Math.sin((K.t+b.ph)*.7));   // their bolts: hot red slugs, pulsing, with a tail
@@ -7254,7 +7419,12 @@ function dkFrame(){
     if(p.ghost||p.light) continue;   // (drawn elsewhere)
     if(p.ring){ g.globalAlpha=a*.9; g.strokeStyle=p.col; g.lineWidth=2; g.beginPath(); g.arc(x,y,p.r0+(p.r1-p.r0)*(1-a),0,TAU); g.stroke(); }
     else if(p.fire){ g.globalAlpha=a; g.fillStyle=a>.5?'#ffd27a':'#ff6a2a'; g.beginPath(); g.arc(x,y,p.r*(1.4-a),0,TAU); g.fill(); }
-    else if(p.smoke){ const r=p.r*(2.2-a); g.globalAlpha=a*.55; g.imageSmoothingEnabled=true; g.drawImage(dkPuff(),x-r,y-r,r*2,r*2); g.imageSmoothingEnabled=false; }
+    else if(p.smoke){ const r=p.r*(p.dust?1.7-a*.7:2.2-a); g.globalAlpha=a*(p.dust?.5:.55); g.imageSmoothingEnabled=true;   // (smoke; a kick of dust off the deck; acid fumes)
+      g.drawImage(p.dust?dkPuffOf('dust'):p.acid?dkPuffOf('acid'):dkPuff(),x-r,y-r,r*2,r*2); g.imageSmoothingEnabled=false; }
+    else if(p.zap){ const x1=p.x1-cx, y1=p.y1-cy, l=Math.hypot(x1-x,y1-y)||1, nx=-(y1-y)/l, ny=(x1-x)/l;   // a squid's jolt: a crooked arc of current, flickering
+      g.globalAlpha=Math.min(1,a*1.6); g.strokeStyle='#c8ffe0'; g.lineWidth=1.4; g.beginPath(); g.moveTo(x,y);
+      for(let i=1;i<5;i++){ const k=i/5, j=(((p.seed*31+i*17+K.t*7)%13)-6)*.7; g.lineTo(x+(x1-x)*k+nx*j,y+(y1-y)*k+ny*j); } g.lineTo(x1,y1); g.stroke(); }
+    else if(p.glob){ g.globalAlpha=1; g.fillStyle='#9aff3a'; g.beginPath(); g.arc(x,y,2.6,0,TAU); g.fill(); g.fillStyle='#eaffd0'; g.fillRect(x-1.2,y-1.6,1.5,1.5); }   // a blob's acid, lobbed
     else if(p.flare){ const r=p.hit?7:6.5; g.globalAlpha=a; g.fillStyle='#ffffff'; g.save(); g.translate(x,y); g.rotate(p.a);   // a star of light: long along the shot, short across it (a hit's is even)
       g.beginPath(); g.moveTo(p.hit?-r:-r*.4,0); g.lineTo(0,-1.3); g.lineTo(r*1.3,0); g.lineTo(0,1.3); g.closePath(); g.fill();
       g.beginPath(); g.moveTo(0,p.hit?-r:-r*.6); g.lineTo(1.1,0); g.lineTo(0,p.hit?r:r*.6); g.lineTo(-1.1,0); g.closePath(); g.fill(); g.restore(); }
@@ -7278,10 +7448,13 @@ function dkFrame(){
     if(p.fire) glow(p.x-cx,p.y-cy,p.r*2.4,'#ff9a3d',.5*k);
     else if(p.light) glow(p.x-cx,p.y-cy,p.r*(.7+.3*k),p.col,.55*k);   // a pop's splash of light, in its colour
     else if(p.hot) glow(p.x-cx,p.y-cy,8,'#ffb347',.7*k);
-    else if(p.flare) glow(p.x-cx,p.y-cy,p.hit?16:12,'#bff9ff',.8*k); }
+    else if(p.flare) glow(p.x-cx,p.y-cy,p.hit?16:12,'#bff9ff',.8*k);
+    else if(p.zap){ glow(p.x1-cx,p.y1-cy,12,'#9affc8',.7*k); glow(p.x-cx,p.y-cy,7,'#9affc8',.5*k); }
+    else if(p.glob) glow(p.x-cx,p.y-cy,7,'#9aff3a',.5); }
+  for(const c of K.charges) if(!c.dead && on(c.x,c.y,40)){ const k=c.t/c.fuse; glow(c.x-cx,c.y-7-cy,10+8*k,'#ff2a4a',(.25+.35*k)*(.6+.4*((K.t>>(k>.75?1:2))&1))); }   // a charge's eye, hotter as it gets close
   for(const S of K.sys) if(!S.dead && on(S.cx,S.cy,80)) glow(S.cx-cx,S.cy-cy-14,S.k==='R'?60:30,K.t-S.hackT<8?'#ff4d6d':S.k==='R'?'#4dffa6':'#43f0ff',.3);
   for(const n of K.nodes) if(!n.dead && on(n.cx,n.cy,60)) glow(n.cx-cx,n.cy-cy-20,40,'#d36bff',.35+.15*Math.sin(K.t*.1));
-  for(const p of K.pods){ const b=p.b; if(p.t<130 && on(b.cx,b.cy,40)) glow(b.cx+b.nx*12-cx,b.cy+b.ny*12-cy,24,'#ffb347',.45+.2*Math.random()); }
+  for(const p of K.pods){ const b=p.b; if(p.t>=0 && p.t<130 && on(b.cx,b.cy,40)) glow(b.cx+b.nx*12-cx,b.cy+b.ny*12-cy,24,'#ffb347',.45+.2*Math.random()); }
   for(const [x,y] of K.map.thrusters||[]) glow(x*DT-cx,y*DT-cy,70,'#ff9a3d',.35+.08*Math.sin(K.t*.3));   // the drives, burning out past the stern
   if(P.down<=0) glow(P.x-cx,P.y-cy-10,22,'#43f0ff',.12);
   g.globalCompositeOperation='source-over';
@@ -7303,16 +7476,22 @@ function dkFrame(){
   if(hv>0){ if(!DKVIG){ DKVIG=document.createElement('canvas'); DKVIG.width=160; DKVIG.height=90; const q=DKVIG.getContext('2d'), gr=q.createRadialGradient(80,45,26,80,45,96);
       gr.addColorStop(0,'rgba(255,30,50,0)'); gr.addColorStop(.55,'rgba(255,30,50,.22)'); gr.addColorStop(1,'rgba(255,30,50,.85)'); q.fillStyle=gr; q.fillRect(0,0,160,90); }
     const sm=g.imageSmoothingEnabled; g.imageSmoothingEnabled=true; g.globalAlpha=clamp(hv,0,1); g.drawImage(DKVIG,0,0,VW,VH); g.globalAlpha=1; g.imageSmoothingEnabled=sm; }
-  const ms=TOUCH?.78:1.6, mw=K.W*ms, mh=K.H*ms, mx=VW-mw-8-SAFE.r, my=8+SAFE.t;   // the minimap
+  const ms=Math.min(TOUCH?.78:1.6,(TOUCH?96:150)/K.W), mw=K.W*ms, mh=K.H*ms, mx=VW-mw-8-SAFE.r, my=8+SAFE.t;   // the minimap (scaled to fit a long ship)
   g.fillStyle='rgba(5,8,18,.72)'; g.fillRect(mx-2,my-2,mw+4,mh+4); g.strokeStyle='rgba(67,240,255,.5)'; g.lineWidth=1; g.strokeRect(mx-1.5,my-1.5,mw+3,mh+3);
   g.save(); g.imageSmoothingEnabled=false; g.drawImage(K.mini,mx,my,mw,mh); g.restore();
   const dot=(x,y,col,r)=>{ g.fillStyle=col; g.fillRect(Math.round(mx+x/DT*ms-r/2),Math.round(my+y/DT*ms-r/2),r,r); };
   for(const S of K.sys) dot(S.cx,S.cy,S.dead?'#5a2a33':K.t-S.hackT<8&&(K.t>>2)&1?'#ff4d6d':'#4dffa6',TOUCH?3:4);
   for(const n of K.nodes) if(!n.dead) dot(n.cx,n.cy,(K.t>>3)&1?'#d36bff':'#ffffff',TOUCH?3:4);
   if(K.helm) dot(K.helm.cx,K.helm.cy,K.open?'#9ff6ff':'#7a2a6a',TOUCH?3:4);
-  for(const p of K.pods) if(p.t<400) dot(p.b.cx,p.b.cy,'#ffb347',2);
+  for(const p of K.pods) if(p.t>=0 && p.t<400) dot(p.b.cx,p.b.cy,'#ffb347',2);
   for(const u of K.units){ if(u.dead||u.emerge>0) continue; if(u.side===1) dot(u.x,u.y,'#ff4d6d',TOUCH?1:2); else if(u.kind==='bot') dot(u.x,u.y,'#e8742a',TOUCH?1:2); }
+  for(const c of K.charges) if(!c.dead) dot(c.x,c.y,(K.t>>2)&1?'#ff2a4a':'#ffd0d6',TOUCH?2:3);
+  if(K.rally) dot(K.rally.x,K.rally.y,(K.t>>3)&1?'#4dffa6':'#d6ffe9',TOUCH?2:3);
   dot(P.x,P.y,(K.t>>3)&1?'#43f0ff':'#ffffff',TOUCH?3:4);
+  if(K.rally && !K.done && !K.lost && P.down<=0 && Math.hypot(K.rally.x-P.x,K.rally.y-P.y)>260){ const R=K.rally, sx=(R.x-cx)/z, sy=(R.y-cy)/z;   // an arrow on to the next section
+    const a=Math.atan2(sy-VH/2,sx-VW/2), inside=sx>30&&sy>30&&sx<VW-30&&sy<VH-30, ex=inside?sx:clamp(VW/2+Math.cos(a)*VW,26,VW-26), ey=inside?sy-18:clamp(VH/2+Math.sin(a)*VH,34,VH-26);
+    g.save(); g.translate(ex,ey); g.rotate(inside?Math.PI/2:a); g.fillStyle=(K.t>>3)&1?'#4dffa6':'#d6ffe9'; g.beginPath(); g.moveTo(9,0); g.lineTo(-6,-6); g.lineTo(-6,6); g.closePath(); g.fill(); g.restore();
+    g.fillStyle='#d6ffe9'; g.font='8px monospace'; g.textAlign='center'; g.fillText('MOVE UP · '+R.name,inside?ex:ex-Math.cos(a)*30,inside?ey-10:ey-Math.sin(a)*30+3); g.textAlign='left'; }
   for(const S of K.sys){ if(S.dead || K.t-S.hackT>=8) continue; const sx=(S.cx-cx)/z, sy=(S.cy-cy)/z; if(sx>0&&sy>0&&sx<VW&&sy<VH) continue;   // an arrow to a system under attack, off screen
     const a=Math.atan2(sy-VH/2,sx-VW/2), ex=clamp(VW/2+Math.cos(a)*VW,24,VW-24), ey=clamp(VH/2+Math.sin(a)*VH,30,VH-24);
     g.save(); g.translate(ex,ey); g.rotate(a); g.fillStyle=(K.t>>3)&1?'#ff4d6d':'#ffd0d6'; g.beginPath(); g.moveTo(9,0); g.lineTo(-6,-6); g.lineTo(-6,6); g.closePath(); g.fill(); g.restore();
@@ -7948,8 +8127,10 @@ window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bos
   deck:DK&&{kind:DK.kind,t:DK.t,wave:DK.wave,rest:DK.rest,q:DK.q.length,open:DK.open,knock:DK.knock,done:DK.done,lost:DK.lost,banner:DK.banner&&DK.banner.title,
     killed:DK.killed,total:DK.total,dmgMul:+DK.dmgMul.toFixed(2),preferBots:DK.preferBots,cam:{...DK.cam},bolts:DK.bolts.length,beams:DK.beams.length,
     you:{x:DK.you.x,y:DK.you.y,hp:DK.you.hp,down:DK.you.down,inv:DK.you.inv,a:DK.you.a,da:DK.you.da,dash:DK.you.dash,dashCd:DK.you.dashCd}, stop:DK.stop, streak:DK.streak, fx:DK.fx.length,
-    bots:DK.units.filter(u=>u.kind==='bot'&&!u.dead).map(u=>({x:u.x,y:u.y,hp:+u.hp.toFixed(2),tgt:!!u.tgt})),
-    foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt,wind:u.wind,stun:u.stun})),
+    bots:DK.units.filter(u=>u.kind==='bot'&&!u.dead).map(u=>({x:u.x,y:u.y,hp:+u.hp.toFixed(2),tgt:!!u.tgt,post:u.post?u.post.k:null})),
+    charges:DK.charges.map(c=>({x:c.x,y:c.y,t:c.t,fuse:c.fuse,hp:c.hp,sys:c.S.k})), rally:DK.rally||null, split:DK.split, dash:DK.you.dash,
+    pods:DK.pods.map(p=>({sec:p.b.sec,t:p.t})), pits:DK.pits.map(p=>({c:p.c,dead:!!p.dead})),
+    foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt,wind:u.wind,stun:u.stun,sys:u.sys?u.sys.k:null,sapper:!!u.sapper})),
     sys:DK.sys.map(S=>({k:S.k,hp:S.hp,dead:S.dead,cx:S.cx,cy:S.cy})), nodes:DK.nodes.map(n=>({cx:n.cx,cy:n.cy,hp:n.hp,dead:n.dead})), helm:DK.helm&&{cx:DK.helm.cx,cy:DK.helm.cy,prog:DK.helm.prog},
     map:{W:DK.W,H:DK.H,grid:DK.grid}, boom:DK.boom&&{t:DK.boom.t,end:DK.boom.end,out:DK.boom.out,next:DK.boom.next,far:DK.boom.far,speed:DK.boom.speed}},
   planets:planets.map(p=>({name:p.name||null,x:Math.round(p.x),y:Math.round(p.y),r:p.r})),
