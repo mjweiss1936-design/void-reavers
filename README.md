@@ -24,7 +24,7 @@ Win and you're awarded the Star of Theta-9 on the carrier's command deck. Then t
 
 The Cerebrant was only a steward. Partway through the medal ceremony, a whole fleet of flagships drops out of warp, and their boarding vessels latch onto the carrier.
 
-- **Boarders:** a fight on foot across the Resolute's core deck, seen from above at a slight angle. You have a rifle and twenty marines, and they move and fight as one squad around you. Three waves of boarders cut in through the hull and go for the bridge, the reactor and the engines. Lose any one of them and the ship is lost. Your squad's lasers hit instantly; the boarders' bolts are slower and can be dodged, and the boarders pop like water balloons. Expect only two or three of your marines to make it to the end. If the boarders destroy the engines or the reactor, the Resolute blows up around you, and then you watch her go from outside.
+- **Boarders:** a fight on foot across the Resolute's core deck, seen from above at a slight angle. You have a rifle and twenty marines, and they move and fight as one squad around you. Three waves of boarders cut in through the hull and go for the bridge, the reactor and the engines. Lose any one of them and the ship is lost. Your squad's lasers hit instantly; the boarders' bolts are slower, and you can dive clear of them. Your own rifle hits hard: it knocks boarders back, and they wobble and pop like water balloons. Expect only two or three of your marines to make it to the end. If the boarders destroy the engines or the reactor, the Resolute blows up around you, and then you watch her go from outside.
 - **Earth:** Earth sits just below Skyhook Station with the Moon beyond it, and the rest of the solar system's planets are out across the sector. Defend the station through three hordes, with half of each horde going for the station. Then cripple the flagship. Don't destroy it.
 - **Boarding:** Skyhook's personnel carrier brings a fresh squad of marines and clamps onto the crippled flagship's hull. Take them through it. Burn out its three nerve nodes, and the membrane over the helm opens. Then hold the helm while the ship throws everything it has at you. Get knocked down three times and the boarding fails.
 - **Broodhome:** fly the captured flagship to the clans' homeworld. It has six shield cells, a three-gun broadside and its own point defence, but it turns slowly. Survive two hordes, then destroy the Matriarch's ark.
@@ -40,7 +40,7 @@ Touch screens get a touch mode, played in landscape:
 - **Corner map:** tap it for the full sector map, and tap anywhere to put it away.
 - **☰:** the menu (see below).
 - **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight. On a short screen, like Safari's under its toolbar and tab bar, the buttons and the cutscene radio get smaller still.
-- **On foot:** push the left thumb the way you want to run, and hold **FIRE** to shoot. Your rifle finds the nearest boarder for you.
+- **On foot:** push the left thumb the way you want to run, and hold **FIRE** to shoot. Your rifle finds the nearest boarder for you. Tap **DASH** (where MISSILE is in space) to dive the way you're running, clear of their bolts. Slide your thumb onto it from FIRE and you keep shooting as you go.
 - **Cutscenes:** tap to move the dialogue on, or **SKIP** to jump ahead.
 
 Holding the phone upright pauses the game and asks you to turn it sideways. On iPhone, Share → Add to Home Screen plays it full screen, without Safari's toolbar and tab bar; in Safari, the title card says so under the title. The game keeps the page from zooming, but if it ever does get zoomed in, the game pauses and asks you to pinch back out. Sound needs the silent switch off.
@@ -67,6 +67,6 @@ The green button at the top finishes the part you're in. It skips the scene, cle
 
 ## On foot
 
-Arrows or **WASD** move. Hold **Space** to fire: your rifle finds the nearest boarder you can see. Or aim with the mouse and hold the button. Your marines follow you, so take them where the fight is.
+Arrows or **WASD** move. Hold **Space** to fire: your rifle finds the nearest boarder you can see. Or aim with the mouse and hold the button. **Shift** or a right-click dives you the way you're running, and their bolts go straight past you while you're in it. It needs a moment to recharge. A boarder about to fire at you swells a red bolt in its mouth first. Your marines follow you, so take them where the fight is.
 
 **F** calls in a 45-ship fleet.

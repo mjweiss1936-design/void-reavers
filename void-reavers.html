@@ -119,12 +119,11 @@
   #t-brake{width:40px; height:40px; font-size:8px; right:calc(24px + env(safe-area-inset-right,0px)); bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   #t-brake.lit{background:rgba(255,179,71,.3); border-color:var(--rocket); color:#ffe0b0}   /* a tap-stop under way */
   body.eva #t-fire, body.eva #t-missile, body.eva #t-brake{opacity:.22}                       /* on EVA: no guns, no brakes */
-  /* aboard ship (the deck fights): the weapon panel shows your health and the crew instead; no MISSILE, BRAKE or corner map */
+  /* aboard ship (the deck fights): the weapon panel shows your health and the crew instead; no BRAKE or corner map, and MISSILE is DASH */
   body.deck .wsel, body.deck #reload, body.deck #hud-top .stat:first-child > .label, body.deck #t-brake, body.deck #t-mapzone{display:none}
   /* a phone aboard: the HUD down to one row along the top, and the radio a slim strip along the bottom */
   body.touch.deck #hud-top{flex-direction:row; align-items:flex-start}
   body.touch.deck #hud-mission .post-row, body.touch.deck #hud-mission .obj-row{display:none}
-  body.deck #t-missile{display:none}
   body.touch.deck:not(.cine) #comms{width:min(520px,72vw); padding:2px 8px 3px; bottom:calc(3px + env(safe-area-inset-bottom,0px))}
   body.touch.deck:not(.cine) #comms .cface{display:none}
   body.touch.deck:not(.cine) .cbody{display:flex; gap:6px; align-items:baseline}
@@ -781,9 +780,12 @@ function arrive(x,y){ if(!live()||!gate('arrive',250)) return; const P=place(x,y
   const g=ac.createGain(); g.gain.setValueAtTime(.001,t); g.gain.exponentialRampToValueAtTime(1,t+d); g.gain.exponentialRampToValueAtTime(.001,t+d+.3); g.connect(o);
   const f=filt('bandpass',260,2,g); sweep(f.frequency,240,2800,t,d); nz(t,d+.35,f);
   sweep(osc('sine',84,t+d,.5,vca(t+d,.7,.003,.45,o)).frequency,84,32,t+d,.4); }
-function splat(x,y){ if(!live()||!gate('splat',35)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.32,.12);   // a boarder popping: a wet bloop and a splash
-  sweep(osc('sine',R(250,330),t,.17,vca(t,1,.002,.15,o)).frequency,300,70,t,.13);
-  nz(t,.1,filt('bandpass',R(800,1300),1.3,vca(t,.8,.001,.09,o))); }
+function splat(x,y,up){ if(!live()||!gate('splat',35)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.32,.12), k=1+(up||0)*.09;   // a boarder popping: a wet bloop and a splash
+  sweep(osc('sine',R(250,330)*k,t,.17,vca(t,1,.002,.15,o)).frequency,300*k,70*k,t,.13);   // (up: your kill streak, and each one in it pops a note higher)
+  nz(t,.1,filt('bandpass',R(800,1300)*k,1.3,vca(t,.8,.001,.09,o))); }
+function dash(){ if(!live()||!gate('dash',80)) return; const t=ac.currentTime, o=out(ME,.2,.1);   // your dive aboard: a quick rush of air, and a lift under it
+  const f=filt('bandpass',500,1.6,vca(t,1,.008,.16,o)); sweep(f.frequency,450,2600,t,.14); nz(t,.18,f);
+  sweep(osc('sine',190,t,.12,vca(t,.35,.004,.1,o)).frequency,190,420,t,.1); }
 function clank(x,y){ if(!live()||!gate('clank',80)) return; const P=place(x,y); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.2,.2);   // station hull struck
   for(const [f,a,d] of [[300,1,.26],[761,.5,.16],[1230,.3,.1]]) osc('triangle',f*R(.97,1.03),t,d,vca(t,a,.002,d,o));
   nz(t,.04,filt('bandpass',1800,2,vca(t,.5,.001,.04,o))); }
@@ -869,7 +871,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 // the game calls in here from its update loop — an audio hiccup must never throw and freeze the game
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
-           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat};
+           klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -2118,7 +2120,7 @@ They're cutting in through the hull. Keep them off the bridge, the reactor and t
 All hands, repel boarders! Halcyon, you're on the core deck. Nothing touches the reactor.
 `),
 deckTipA:L(`
-{fire} fires your rifle, and it finds the nearest boarder for you.{mouse}
+{fire} fires your rifle, and it finds the nearest boarder for you.{mouse}{dash}
 `),
 deckTipB:L(`
 Twenty marines are with you, Halcyon. They go where you go, so take them where the fight is.
@@ -5836,8 +5838,11 @@ const DFOE={   // the boarders: hit points, speed, size, frames between shots, b
 };
 const CREW_N=20, BOT_HP=3, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=360, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck)
 const DWAVES=[{n:30,at:4,mix:[.45,.45,.1]},{n:40,at:5,mix:[.35,.45,.2]},{n:46,at:6,mix:[.32,.46,.22]}];   // boarders, breaches, the share that are squid · blob · brute
+const DK_SS=2;   // the deck is drawn at twice the world's resolution: smooth lines and light, and everyone moves in half-pixel steps
+const DASH_T=11, DASH_SP=4.6, DASH_CD=48, DK_TELL=14;   // your dive: its frames, its speed, the frames till the next · how long a boarder winds up before a volley
+const angD=(a,b)=>((a-b+Math.PI*3)%TAU)-Math.PI;   // (the turn from b to a, the short way round)
 let DK=null, downs=0, bigLost=false, bossBoardT=0, crewLeft=0, hintFly=null;
-const dkMouse={sx:0,sy:0,t:-1e9,down:false};   // (a desktop's mouse: aim with it, hold the button to fire)
+const dkMouse={sx:0,sy:0,t:-1e9,down:false,dash:false};   // (a desktop's mouse: aim with it, hold the button to fire, right-click to dive)
 const NUMW=['no','one','two','three'];
 
 // ---- the two ships, drawn as floor shapes in tiles: rooms with their corners cut, and the corridors between them. Props stand on
@@ -5888,7 +5893,8 @@ function startDeck(kind){
     pits:(M.pits||[]).map(([x,y])=>({x:(x+.5)*DT,y:(y+.5)*DT,t:0})), pods:[],
     breaches:M.breaches.map(([x,y,nx,ny])=>({x,y,nx,ny,cx:(x+.5)*DT,cy:(y+.5)*DT})),
     wave:0, rest:kind==='defend'?DK_REST:0, q:[], killed:0, aboard:0, total:DWAVES.reduce((a,w)=>a+w.n,0), spawnT:0, done:0, doneT:0, lost:0, lostT:0, lostWhy:'',
-    knock:0, checkpoint:null, score0:score, said:{}, sid:0, dmgMul:1, fireMul:1, preferBots:false, stars:[]};
+    knock:0, checkpoint:null, score0:score, said:{}, sid:0, dmgMul:1, fireMul:1, preferBots:false, stars:[],
+    stop:0, stopCd:0, kick:{x:0,y:0}, lead:{x:0,y:0}, hurtT:0, streak:0, streakT:-999, dashHeld:false, dashCool:null};   // (hit-stop, the view's kick and lead, your kill streak)
   for(let i=0;i<160;i++) DK.stars.push({x:Math.random(),y:Math.random(),b:Math.random()});
   DK.art=dkArt(); DK.decal=document.createElement('canvas'); DK.decal.width=W*DT; DK.decal.height=H*DT;
   DK.props=M.props.filter(p=>DK_PH[p.kind]).map(p=>({img:dkPropSprite(p),x:p.x*DT,y:p.y*DT-DK_PH[p.kind],w:p.w*DT,key:(p.y+p.h)*DT}));   // (standing up off the deck)
@@ -5901,7 +5907,8 @@ function startDeck(kind){
   state='deck'; showMap=false; cine=null; fadeIn=40; flash=0; shake=0; heat=0; dkMouse.down=false;
   document.body.classList.remove('cine'); deckDom(true); touchReset(); for(const k in keys) keys[k]=false;
   commsReset(); VRAudio.setEngine(false,false,0); VRAudio.play(kind==='defend'?'play':'boss',0,.8);
-  const v={fire:TOUCH?'FIRE':'Space',mouse:TOUCH?'':' Or aim it with the mouse and hold the button.'};
+  const v={fire:TOUCH?'FIRE':'Space',mouse:TOUCH?'':' Or aim it with the mouse and hold the button.',
+    dash:TOUCH?' Tap DASH to dodge.':' Shift or a right-click dives you clear of their bolts.'};   // (a phone's radio strip has room for one line)
   if(kind==='defend'){ DK.banner={title:'REPEL BOARDERS',sub:'CARRIER RESOLUTE · KEEP THEM OFF THE BRIDGE, THE REACTOR AND THE ENGINES',t:0,life:300}; say('cmd','deckStart',null,2); }
   else { DK.banner={title:'SEIZE THE FLAGSHIP',sub:'BURN OUT THE THREE NERVE NODES · THEN HOLD THE HELM',t:0,life:300}; say('cmd','aStart',null,2); }
   say('cmd','deckTipA',v,2); say('cmd','deckTipB',null,2);
@@ -5909,17 +5916,20 @@ function startDeck(kind){
 function dkUnit(kind,x,y){ const crew=kind==='you'||kind==='bot', T=DFOE[kind];
   const u={id:++DK.sid, kind, side:crew?0:1, x, y, vx:0, vy:0, a:-Math.PI/2, r:kind==='you'?8:kind==='bot'?7:T.r,
     hp:kind==='you'?YOU_HP:kind==='bot'?BOT_HP:T.hp, sp:kind==='you'?1.9:kind==='bot'?1.45:T.sp*rnd(.9,1.1),
-    cool:ri(20,60), tgt:null, tgtT:ri(0,12), flash:0, step:rnd(0,9), dead:false, down:0, inv:kind==='you'?120:0, hitT:-999, aimT:0, emerge:0};
+    cool:ri(20,60), tgt:null, tgtT:ri(0,12), flash:0, step:rnd(0,9), dead:false, down:0, inv:kind==='you'?120:0, hitT:-999, aimT:0, emerge:0,
+    da:-Math.PI/2, kick:0, jig:0, jv:0, stun:0, stunCd:0, dash:0, dashCd:0, dx:0, dy:0, shotT:-999, wind:0};   // (da: the way it's drawn facing, easing round to a · kick: the rifle's recoil · jig: a boarder's wobble)
   DK.units.push(u); return u; }
 function deckDom(on){   // the HUD and the buttons switch between flying and fighting aboard
   document.body.classList.toggle('deck',on);
   const hb=document.querySelector('#hud-bottom span'); if(hintFly==null) hintFly=hb.innerHTML;
-  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
+  hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>Shift</kbd>/right-click dive · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
   document.getElementById('t-fire').textContent=on?'FIRE':'LASER';
+  if(on){ tMissile.textContent='DASH'; tMissile.classList.remove('cool'); }   // (aboard, the MISSILE button is your dive; back in space it shows the rack again)
   lastMis=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
   if(!on) elWarn.classList.remove('shielded');
 }
-function endDeck(){ if(!DK) return; DK=null; deckDom(false); touchReset(); for(const k in keys) keys[k]=false; flash=0; shake=0; dkMouse.down=false; }
+function endDeck(){ if(!DK) return; DK=null; deckDom(false); touchReset(); for(const k in keys) keys[k]=false; flash=0; shake=0; dkMouse.down=false; dkMouse.dash=false;
+  if(TOUCH) selectWeapon('laser'); }   // (a thumb that was on DASH when the fight ended mustn't leave the missiles selected)
 
 // ---- the deck's tiles: what's solid, how far everything is from a goal (for walking there), and what can see what ----
 const dkSolid=(tx,ty)=>tx<0||ty<0||tx>=DK.W||ty>=DK.H||DK.grid[ty*DK.W+tx]!==0;
@@ -5983,34 +5993,56 @@ function dkTarget(u,range,preferBots){   // the nearest enemy u can see (a board
 }
 
 // ---- shooting: the crew's lasers are instant lines; the boarders' bolts fly, and can be dodged ----
-function dkBeam(u,x1,y1,tgt,dmg){   // a laser line from u's rifle to (x1,y1), hurting tgt if there is one
-  const a=Math.atan2(y1-u.y,x1-u.x), c=Math.cos(a), s=Math.sin(a); u.a=a; u.aimT=18;
+function dkMuzzle(u){ const c=Math.cos(u.da), s=Math.sin(u.da), k=u.kick; return [u.x+c*(11-k*1.5), u.y-LIFT+s*(6-k*.9)]; }   // where u's rifle points from, as it's drawn (recoil and all)
+function dkBeam(u,x1,y1,tgt,dmg){   // a laser from u's rifle to (x1,y1), hurting tgt if there is one. The hit is instant: what lingers is only the light
+  const K=DK, a=Math.atan2(y1-u.y,x1-u.x), c=Math.cos(a), s=Math.sin(a), you=u.kind==='you'; u.a=a; u.aimT=18; u.da+=angD(a,u.da)*(you?1:.75);
   const hy=tgt&&tgt.cx!=null?20:LIFT;   // (drawn from the rifle's muzzle to the target's chest, or a nerve node's bulb: the deck is seen from a little in front)
-  DK.beams.push({x0:u.x+c*11,y0:u.y-10+s*6,x1,y1:y1-hy,life:u.kind==='you'?7:9,max:u.kind==='you'?7:9,you:u.kind==='you'});
-  if(tgt) dkHurt(tgt,dmg,x1,y1-hy); else dkSparks(x1,y1-LIFT,'#9ff6ff',3);
+  u.kick=you?1.6:1; const [mx,my]=dkMuzzle(u);   // (u: the beam keeps to the muzzle as the shooter moves)
+  if(you){ u.shotT=K.t; K.beams.push({u,x0:mx,y0:my,x1,y1:y1-hy,life:9,max:9,you:1});   // yours: a heavy bolt of light that burns down to nothing
+    K.fx.push({flare:1,x:mx,y:my,a:Math.atan2(y1-hy-my,x1-mx),life:3,max:3});   // the muzzle flash
+    K.kick.x-=c*1.8; K.kick.y-=s*1.2; }   // (the view kicks back as it fires)
+  else { const tt=clamp(Math.round(Math.hypot(x1-mx,y1-hy-my)/55),2,5); K.beams.push({u,x0:mx,y0:my,x1,y1:y1-hy,life:tt+2,max:tt+2,tt}); }   // the marines': tracers that streak down the line
+  if(tgt) dkHurt(tgt,dmg,x1,y1-hy,you?a:null);
+  else if(you) dkWallHit(x1,y1);
+  else dkSparks(x1,y1-LIFT,'#9ff6ff',3);
 }
-function dkHurt(t,dmg,hx,hy){
-  if(t.max && t.cx!=null){ t.hp-=dmg; t.hitT=DK.t; dkSparks(hx,hy,'#ff8ad8',4); if(t.hp<=0) dkNodeDown(t); return; }   // a nerve node
-  t.hp-=dmg; t.flash=6;
-  if(t.hp<=0) dkPop(t); else { dkDroplets(t.x,t.y-LIFT,DFOE[t.kind].goo,5,1.6); VRAudio.sfx.hit(t.x,t.y); }
+function dkWallHit(x,y){ const K=DK, hy=y-LIFT;   // your shot burns into the wall: a white-hot mark that cools to red, and sparks that bounce off the deck
+  K.fx.push({hot:1,x,y:hy,life:46,max:46}); dkSoot(x,hy,rnd(3,4.5));
+  for(let i=0;i<5;i++){ const a=rnd(0,TAU), sp=rnd(.8,2.4); K.fx.push({x,y:hy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.4,life:ri(16,28),max:28,col:Math.random()<.5?'#ffffff':'#ffd27a',r:1,drop:1,floor:y+rnd(-3,5),bounce:1}); } }
+function dkHurt(t,dmg,hx,hy,a){   // a: your shot's angle. Yours land hard: they knock a boarder back and leave it reeling
+  const K=DK, you=a!=null;
+  if(you) K.fx.push({flare:1,hit:1,x:hx,y:hy,a,life:4,max:4});   // a star of light where it hits
+  if(t.max && t.cx!=null){ t.hp-=dmg; t.hitT=K.t; dkSparks(hx,hy,'#ff8ad8',you?6:4); if(t.hp<=0) dkNodeDown(t); return; }   // a nerve node
+  const T=DFOE[t.kind]; t.hp-=dmg; t.flash=6; t.hitT=K.t; t.jv+=(you?.12:.05)*(t.kind==='brute'?.5:1);   // (a water balloon: it wobbles. A brute's a heavier one)
+  if(you){ const kb=t.kind==='brute'?.9:t.kind==='blob'?1.9:2.4; t.vx+=Math.cos(a)*kb; t.vy+=Math.sin(a)*kb;
+    if(t.stunCd<=0){ t.stun=t.kind==='brute'?9:6; t.stunCd=t.kind==='brute'?40:12; } }   // (a brute staggers, then it's had enough of that for a while)
+  if(t.hp<=0) dkPop(t,you); else { dkDroplets(t.x,t.y-LIFT,T.goo,you?7:5,1.6,t.y); VRAudio.sfx.hit(t.x,t.y); }
 }
 function dkFire(u){   // a boarder's volley: bolts at whoever it's after, spat from its mouth
   const T=DFOE[u.kind], t=u.tgt, lead=t.kind==='bot'?Math.hypot(t.x-u.x,t.y-u.y)/BOLT_SP:0;   // (they lead the bots a little; you, they just shoot at)
   const a0=Math.atan2(t.y+t.vy*lead-u.y,t.x+t.vx*lead-u.x)+rnd(-.08,.08); u.a=a0; u.aimT=20;
   for(let k=0;k<T.n;k++){ const a=a0+(k-(T.n-1)/2)*T.spread;
-    DK.bolts.push({x:u.x+Math.cos(a)*(u.r+3),y:u.y+Math.sin(a)*(u.r+3),h:T.mz,vx:Math.cos(a)*BOLT_SP,vy:Math.sin(a)*BOLT_SP,life:110}); }
+    DK.bolts.push({x:u.x+Math.cos(a)*(u.r+3),y:u.y+Math.sin(a)*(u.r+3),h:T.mz,vx:Math.cos(a)*BOLT_SP,vy:Math.sin(a)*BOLT_SP,life:110,big:u.kind==='brute',ph:ri(0,20)}); }
   DK.fx.push({ring:1,x:u.x+Math.cos(a0)*(u.r+2),y:u.y-T.mz+Math.sin(a0)*(u.r+2)*.6,r0:2,r1:8,life:7,max:7,col:'#ff4d6d'});   // a spit of red light as it fires
   VRAudio.sfx.eshot(u.x,u.y,u.kind==='brute');
 }
-function dkPop(f){   // and they pop like water balloons
-  const K=DK, T=DFOE[f.kind]; f.dead=true; K.killed++; kills++; score+=T.pts;
-  K.pops.push({x:f.x,y:f.y-24,txt:'+'+T.pts,col:'#ffd27a',life:50});
-  dkDroplets(f.x,f.y-LIFT,T.goo,f.kind==='brute'?34:20,f.kind==='brute'?3.6:2.8);
+function dkPop(f,you){   // and they pop like water balloons. Yours with a beat of hit-stop, a flash of their colour, and a streak if you keep it up
+  const K=DK, T=DFOE[f.kind], big=f.kind==='brute'; f.dead=true; K.killed++; kills++;
+  let pts=T.pts, n=0;
+  if(you){ K.streak=K.t-K.streakT<=80?K.streak+1:1; K.streakT=K.t; n=K.streak; if(n>1) pts+=20*Math.min(n-1,10); }   // (each kill within a second and a bit of the last: +20 more, up to +200)
+  score+=pts; K.pops.push({x:f.x,y:f.y-24,txt:'+'+pts+(n>1?'  ×'+n:''),col:n>1?'#9ff6ff':'#ffd27a',life:50,big:n>2});
+  const L=dkLook(f); K.fx.push({swell:1,x:f.x,y:f.y,S:L.S,fl:L.fl,life:5,max:5});   // the balloon swells, white, as it bursts
+  dkDroplets(f.x,f.y-LIFT,T.goo,big?34:20,big?3.6:2.8,f.y);
   K.fx.push({ring:1,x:f.x,y:f.y-LIFT*.6,r0:f.r,r1:f.r*2.6,life:14,max:14,col:T.goo});
-  dkSplat(f.x,f.y,T.goo,f.r*(f.kind==='brute'?1.9:1.5));
-  VRAudio.sfx.splat(f.x,f.y);
+  K.fx.push({light:1,x:f.x,y:f.y-LIFT,r:big?70:44,life:12,max:12,col:T.goo});
+  dkSplat(f.x,f.y,T.goo,f.r*(big?1.9:1.5));
+  VRAudio.sfx.splat(f.x,f.y,n?Math.min(n-1,8):0);   // (the pop climbs in pitch as the streak goes on)
+  if(you){ dkHalt(big?6:3); shake=Math.min(shake+(big?6:2.5),14); }
 }
-function dkDroplets(x,y,col,n,sp){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.3,1)*sp; DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,life:rnd(14,30),max:30,col,r:rnd(1.5,3.2),drop:1}); } }   // (thrown up a little, then they fall)
+function dkHalt(n){ const K=DK; if(n<5 && K.stopCd>0) return; K.stop=Math.max(K.stop,n); K.stopCd=n+20; }   // hit-stop: the fight holds still for a beat (not on every kill in a burst, or it stutters)
+function dkDroplets(x,y,col,n,sp,gy){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.3,1)*sp;   // (thrown up a little, then they fall: given gy, where the deck is, they land on it and stay)
+  DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-.6,life:rnd(14,30),max:30,col,r:rnd(1.5,3.2),drop:1,floor:gy!=null?gy+rnd(-6,10):null}); } }
+function dkLand(p){ const q=DK.decal.getContext('2d'); q.globalAlpha=.7; q.fillStyle=p.col; q.beginPath(); q.ellipse(p.x,p.y,p.r*.9,p.r*.5,0,0,TAU); q.fill(); q.globalAlpha=1; }   // a drop of goo, splashed on the deck
 function dkSparks(x,y,col,n){ for(let i=0;i<n;i++){ const a=rnd(0,TAU), s=rnd(.5,2.2); DK.fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:rnd(6,14),max:14,col,r:1}); } }
 function dkSplat(x,y,col,R){   // a stain left on the floor for good (painted into the deck's decal layer)
   const q=DK.decal.getContext('2d'); q.save(); q.globalAlpha=.78; q.fillStyle=col;
@@ -6020,9 +6052,10 @@ function dkSplat(x,y,col,R){   // a stain left on the floor for good (painted in
 }
 function dkScorch(x,y){ const q=DK.decal.getContext('2d'); q.save(); q.globalAlpha=.6; q.fillStyle='#0b0d12'; q.beginPath(); q.arc(x,y,9,0,TAU); q.fill();
   q.fillStyle='#3a404c'; for(let i=0;i<7;i++) q.fillRect(x+rnd(-11,11),y+rnd(-11,11),2,2); q.restore(); }
-function dkHurtCrew(u,dmg){
+function dkHurtCrew(u,dmg,b){   // (b: the bolt that hit, if one did)
   const K=DK;
-  if(u.kind==='you'){ if(u.inv>0) return; u.hp-=dmg; u.hitT=K.t; u.flash=6; shake=Math.min(shake+4,14); flash=Math.max(flash,.18); VRAudio.sfx.shieldHit();
+  if(u.kind==='you'){ if(u.inv>0||u.dash>0) return; u.hp-=dmg; u.hitT=K.t; u.flash=6; shake=Math.min(shake+5,16); K.hurtT=24; VRAudio.sfx.shieldHit();
+    if(b){ u.vx+=b.vx*.8; u.vy+=b.vy*.8; K.kick.x+=b.vx*.9; K.kick.y+=b.vy*.6; }   // (it knocks you back a step, and the view with you)
     if(u.hp<=0) dkYouDown(); else if(u.hp<=3 && cool('dkHurt',600)) say('you','deckHit',null,1); return; }
   const left=K.units.reduce((a,v)=>a+(v.kind==='bot'&&!v.dead?1:0),0);
   u.hp-=dmg*K.dmgMul; u.flash=6; u.hitT=K.t;
@@ -6046,14 +6079,23 @@ function dkRespawn(){ const K=DK, P=K.you, c=K.checkpoint; P.x=c.x; P.y=c.y; P.v
 function dkPlayer(){
   const K=DK, P=K.you;
   if(P.down>0){ if(--P.down===0) dkRespawn(); return; }
-  if(P.inv>0) P.inv--; if(P.cool>0) P.cool--; if(P.aimT>0) P.aimT--; if(P.flash>0) P.flash--;
+  if(P.inv>0) P.inv--; if(P.cool>0) P.cool--; if(P.aimT>0) P.aimT--; if(P.flash>0) P.flash--; if(P.dashCd>0) P.dashCd--;
   if(K.t-P.hitT>150 && P.hp<YOU_HP && K.t%60===0) P.hp++;   // patched up when you're out of the fire
   let mx=0, my=0;
   if(stick.on && stick.mag>.15){ const m=Math.min(1,stick.mag*1.3); mx=Math.cos(stick.ang)*m; my=Math.sin(stick.ang)*m; }
   else { mx=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0); my=(keys['s']||keys['arrowdown']?1:0)-(keys['w']||keys['arrowup']?1:0);
     const l=Math.hypot(mx,my); if(l){ mx/=l; my/=l; } }
-  dkMove(P,mx,my,P.sp);
-  const mouse=!TOUCH && (dkMouse.down || K.t-dkMouse.t<150), firing=!K.boom && (keys[' ']||keys['j']||touchFire.laser||dkMouse.down);
+  const dv=keys['shift']||touchFire.rocket||dkMouse.dash; dkMouse.dash=false;   // the dive: Shift, a right-click, or DASH (it fires as it goes, too)
+  if(dv && !K.dashHeld && P.dashCd<=0){ let dx=mx, dy=my; if(!dx&&!dy){ dx=Math.cos(P.a); dy=Math.sin(P.a); } const l=Math.hypot(dx,dy)||1;
+    P.dash=DASH_T; P.dashCd=DASH_CD; P.dx=dx/l; P.dy=dy/l; if(P.aimT<=0) P.a=Math.atan2(P.dy,P.dx);
+    K.fx.push({ring:1,x:P.x,y:P.y-2,r0:4,r1:15,life:10,max:10,col:'#9ff6ff'}); VRAudio.sfx.dash(); }
+  K.dashHeld=!!dv;
+  if(P.dash>0){ P.dash--; P.vx=P.dx*DASH_SP; P.vy=P.dy*DASH_SP; P.x+=P.vx; dkPush(P); P.y+=P.vy; dkPush(P); P.step+=.45;   // quick, low, and their bolts go by
+    if(P.dash%2===0){ const L=dkLook(P); K.fx.push({ghost:1,x:P.x,y:P.y,S:L.S,fl:L.fl,life:12,max:12}); } }   // (afterimages, where you were)
+  else dkMove(P,mx,my,P.sp);
+  const mouse=!TOUCH && (dkMouse.down || K.t-dkMouse.t<150), firing=!K.boom && (keys[' ']||keys['j']||touchFire.laser||touchFire.rocket||dkMouse.down);
+  const lw=K.t-P.shotT<24, lx=lw?Math.cos(P.a)*34:mx*24, ly=lw?Math.sin(P.a)*22:my*15;   // the view leads where you're shooting, or where you're going
+  K.lead.x+=(lx-K.lead.x)*.045; K.lead.y+=(ly-K.lead.y)*.045;
   if(firing && P.cool<=0){ P.cool=9; VRAudio.sfx.laser();
     if(mouse){ const k=VW/Math.max(1,innerWidth), wx=K.cam.x+dkMouse.sx*k, wy=K.cam.y+dkMouse.sy*k+LIFT, a=Math.atan2(wy-P.y,wx-P.x);   // aimed: the first thing along the line (you point at their bodies, a little above their feet)
       const [ex,ey]=dkRay(P.x,P.y,a,340), lim=Math.hypot(ex-P.x,ey-P.y); let hit=null, hd=lim; const ca=Math.cos(a), sa=Math.sin(a);
@@ -6085,10 +6127,14 @@ function dkBot(u){
 function dkFoe(f){
   const K=DK, T=DFOE[f.kind];
   if(f.emerge>0){ f.emerge--; return; }
-  if(f.cool>0) f.cool--; if(f.aimT>0) f.aimT--; if(f.flash>0) f.flash--;
+  if(f.aimT>0) f.aimT--; if(f.flash>0) f.flash--; if(f.stunCd>0) f.stunCd--;
+  if(f.stun>0){ f.stun--; dkMove(f,0,0,0); return; }   // knocked reeling by your shot: it slides back and does nothing for a moment
   if(--f.tgtT<=0){ f.tgtT=12+ri(0,8); f.tgt=dkTarget(f,T.range,K.preferBots); }
   if(f.tgt && (f.tgt.dead||f.tgt.down)) f.tgt=null;
-  if(f.tgt && f.cool<=0 && !K.boom){ f.cool=Math.round(ri(T.cool[0],T.cool[1])*K.fireMul); dkFire(f); }
+  if(f.cool>0) f.cool--;
+  if(f.tgt && f.cool<=0 && !K.boom){ if(f.tgt.kind==='you' && f.wind<DK_TELL) f.wind++;   // a volley at you: it winds up first, its mouth glowing, so you can see it coming
+    else { f.wind=0; f.cool=Math.round(ri(T.cool[0],T.cool[1])*K.fireMul); dkFire(f); } }
+  else f.wind=0;
   let F=null;
   if(f.goal==='sys' && !K.boom){ let S=f.sys; if(!S||S.dead){ const live=K.sys.filter(s=>!s.dead); S=f.sys=live.length?live[ri(0,live.length-1)]:null; }
     if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.max(S.w,S.h)*DT*.5+DT*1.3){ f.hack=S; S.hp-=DK_HACK; S.hackT=K.t;   // at the system: tearing into it
@@ -6104,9 +6150,14 @@ function dkFoe(f){
 function dkBolts(){ const K=DK;
   for(const b of K.bolts){ b.x+=b.vx; b.y+=b.vy; b.life--; b.h+=(LIFT-b.h)*.15;
     if(dkSolid(Math.floor(b.x/DT),Math.floor(b.y/DT))){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff6a5a',2); continue; }
-    for(const u of K.units){ if(u.side!==0||u.dead||u.down) continue; if((u.x-b.x)**2+(u.y-b.y)**2<(u.r+2)**2){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff8a7a',3); dkHurtCrew(u,1); break; } } }
+    for(const u of K.units){ if(u.side!==0||u.dead||u.down||u.dash>0) continue;   // (diving clear: they go by)
+      if((u.x-b.x)**2+(u.y-b.y)**2<(u.r+2)**2){ b.life=0; dkSparks(b.x,b.y-b.h,'#ff8a7a',3); dkHurtCrew(u,1,b); break; } } }
   K.bolts=K.bolts.filter(b=>b.life>0);
 }
+function dkTurn(u){   // each frame: the way u is drawn facing turns round toward its aim, the rifle's recoil eases off, a boarder's wobble settles
+  u.da+=angD(u.a,u.da)*(u.side===0?.3:.2); if(u.da>Math.PI) u.da-=TAU; else if(u.da<-Math.PI) u.da+=TAU;
+  if(u.kick>0) u.kick=Math.max(0,u.kick-.4);
+  if(u.jig||u.jv){ u.jv-=u.jig*.3+u.jv*.17; u.jig=clamp(u.jig+u.jv,-.24,.24); if(Math.abs(u.jig)<.003&&Math.abs(u.jv)<.003) u.jig=u.jv=0; } }
 function dkSpawn(kind,x,y,emerge){ const f=dkUnit(kind,x,y); f.emerge=emerge||0; f.cool=ri(8,30); /* (they come in shooting) */ f.goal=DK.kind==='defend'?(Math.random()<.45?'sys':'hunt'):(Math.random()<.45?'guard':'hunt'); dkPush(f); return f; }
 function dkMix(m){ const r=Math.random(); return r<m[0]?'squid':r<m[0]+m[1]?'blob':'brute'; }
 
@@ -6148,7 +6199,7 @@ function dkMeltdown(S){ const K=DK, F=dkField('boom',()=>dkAround(S)), P=K.you;
 function dkBoomTick(){ const K=DK, B=K.boom, P=K.you, W=K.W; B.t++;
   dkPlayer();   // (you can still run. It won't help)
   for(const u of K.units){ if(u.dead) continue; if(u.kind==='bot') dkBot(u); else if(u.side===1) dkFoe(u); }
-  dkSeparate();
+  dkSeparate(); for(const u of K.units) if(!u.dead) dkTurn(u);
   const front=B.speed*B.t;
   while(B.next<=Math.min(front,B.far)){ const L=B.buckets[B.next++]; if(!L) continue;   // the next ring of deck goes up
     for(const i of L){ const x=(i%W+.5)*DT, y=((i/W|0)+.5)*DT; B.burnt.push(i);
@@ -6190,8 +6241,9 @@ function assaultTick(){ const K=DK, P=K.you, done=K.nodes.filter(n=>n.dead).leng
     else H.prog=Math.max(0,H.prog-1/900); }
 }
 function dkNodeDown(n){ const K=DK; if(n.dead) return; n.dead=true; score+=1500; K.pops.push({x:n.cx,y:n.cy-40,txt:'+1,500',col:'#4dffa6',life:60});
-  dkDroplets(n.cx,n.cy-20,'#d36bff',30,3.4); dkSplat(n.cx,n.cy,'#a0479a',30); K.fx.push({ring:1,x:n.cx,y:n.cy,r0:16,r1:70,life:24,max:24,col:'#d36bff'});
-  VRAudio.sfx.medal(); VRAudio.sfx.splat(n.cx,n.cy); shake=Math.min(shake+6,16);
+  dkDroplets(n.cx,n.cy-20,'#d36bff',30,3.4,n.cy+4); dkSplat(n.cx,n.cy,'#a0479a',30); K.fx.push({ring:1,x:n.cx,y:n.cy,r0:16,r1:70,life:24,max:24,col:'#d36bff'});
+  K.fx.push({light:1,x:n.cx,y:n.cy-20,r:110,life:22,max:22,col:'#d36bff'}); dkHalt(8);
+  VRAudio.sfx.medal(); VRAudio.sfx.splat(n.cx,n.cy); shake=Math.min(shake+9,18);
   const fl=dkFloorNear(Math.floor(n.cx/DT),Math.floor(n.cy/DT)+2); K.checkpoint={x:(fl[0]+.5)*DT,y:(fl[1]+.5)*DT};   // (you'd come back in here, now)
   const left=K.nodes.filter(m=>!m.dead).length;
   if(left){ K.banner={title:'NODE BURNED OUT',sub:left+' MORE · THE SHIP IS FIGHTING BACK',t:0,life:180,good:true}; say('cmd','aNode',{n:NUMW[left]},2); return; }
@@ -6241,10 +6293,16 @@ function retryDeck(){ const kind=DK?DK.kind:'defend', s0=DK?DK.score0:score;
   document.getElementById('overlay').classList.add('hidden'); score=s0; retries++; endDeck(); startDeck(kind); }
 
 function deckTick(){
-  const K=DK, P=K.you; K.t++;
+  const K=DK, P=K.you;
+  if(K.stop>0){ K.stop--; return; }   // a hit-stop: everything holds still for a beat
+  if(K.stopCd>0) K.stopCd--;
+  K.t++;
   if(K.banner && ++K.banner.t>=K.banner.life) K.banner=null;
-  for(const p of K.fx){ p.life--; if(!p.ring && !p.fire){ p.x+=p.vx; p.y+=p.vy; p.vx*=p.drop?.9:.94; p.vy*=p.drop?.9:.94; if(p.drop) p.vy+=.16; } }
+  for(const p of K.fx){ p.life--; if(p.vx==null) continue;   // (sparks, goo and smoke move; the flashes, glows and rings stay put)
+    p.x+=p.vx; p.y+=p.vy; p.vx*=p.drop?.9:.94; p.vy*=p.drop?.9:.94; if(p.drop) p.vy+=.16;
+    if(p.floor!=null && p.y>=p.floor && p.vy>0){ if(p.bounce){ p.y=p.floor; p.vy*=-.45; p.vx*=.7; if(p.vy>-.3) p.life=Math.min(p.life,4); } else { dkLand(p); p.life=0; } } }   // (sparks bounce; goo lands, and stays)
   K.fx=K.fx.filter(p=>p.life>0); for(const b of K.beams) b.life--; K.beams=K.beams.filter(b=>b.life>0);
+  K.kick.x*=.7; K.kick.y*=.7; if(K.hurtT>0) K.hurtT--;
   for(const p of K.pops) p.life--; K.pops=K.pops.filter(p=>p.life>0);
   for(const p of K.pods) p.t++;
   if(K.done){ if(++K.doneT===260) deckOver(); else deckHud(); return; }
@@ -6256,7 +6314,7 @@ function deckTick(){
     const want=CREW_N-18*clamp(p/.88,0,1)**1.3; /* (most of the squad lasts most of the fight; the heavy losses come at the end) */ K.dmgMul=clamp(1+.35*(bots-want),.2,3); K.fireMul=clamp(1-.06*(bots-want),.5,1.3); K.preferBots=bots-want>1.5; }
   dkPlayer();
   for(const u of K.units){ if(u.dead) continue; if(u.kind==='bot') dkBot(u); else if(u.side===1) dkFoe(u); }
-  dkSeparate(); dkBolts();
+  dkSeparate(); dkBolts(); for(const u of K.units) if(!u.dead) dkTurn(u);
   K.units=K.units.filter(u=>!u.dead||u.kind==='you');
   if(DK!==K || K.lost || K.done) { deckHud(); return; }
   if(K.kind==='defend') defendTick(); else assaultTick();
@@ -6298,6 +6356,7 @@ function deckHud(){   // the same HUD as the fight in space, saying what matters
   const hp=Math.max(0,Math.ceil(P.hp)), pips='▮'.repeat(hp)+'▯'.repeat(YOU_HP-hp);
   const wt=TOUCH?(P.down>0?'⚠ DOWN · CREW '+bots:'♥'+hp+' · CREW '+bots):(P.down>0?'⚠ DOWN · MEDICS ON THE WAY · CREW '+bots+' / '+CREW_N:'◈ '+pips+' · CREW '+bots+' / '+CREW_N);
   if(wt!==lastShield){ lastShield=wt; elWarn.textContent=wt; elWarn.style.display=''; elWarn.classList.toggle('shielded',P.down<=0&&hp>3); elWarn.parentElement.classList.remove('nowarn'); }
+  const dc=P.dashCd>0||P.down>0; if(dc!==K.dashCool){ K.dashCool=dc; tMissile.classList.toggle('cool',dc); }   // (DASH dims while it recharges)
 }
 
 // ---- drawing the deck, seen from a little in front: the floor plan lies flat, but the walls show you their faces, and everyone
@@ -6388,19 +6447,26 @@ function dkPaintMini(){ const K=DK, c=document.createElement('canvas'); c.width=
 
 // ---- the people and creatures on the deck: pixel sprites seen from a little in front, painted once for each facing and step ----
 const DKSPR={};
-function dkSpr(key,w,h,paint){
-  const have=DKSPR[key]; if(have) return have;
-  const c=document.createElement('canvas'); c.width=w; c.height=h; const q=c.getContext('2d'), img=q.createImageData(w,h), D=img.data;
+function dkSpr(key,w,h,paint){   // a w×h sprite, painted pixel by pixel and outlined, then doubled with Scale2x so its curves come out round
+  const have=DKSPR[key]; if(have) return have;   // (it's drawn at w×h in the world, which is pixel for pixel in the deck's double-size view)
+  const img=new ImageData(w,h), D=img.data;
   const px=(x,y,col)=>{ x=Math.round(x); y=Math.round(y); if(x<0||y<0||x>=w||y>=h||!col) return; const o=(y*w+x)*4, v=hexRGB(col); D[o]=v[0]; D[o+1]=v[1]; D[o+2]=v[2]; D[o+3]=255; };
   paint(px,(x,y,ww,hh,col)=>{ for(let j=0;j<hh;j++) for(let i=0;i<ww;i++) px(x+i,y+j,col); });
   const A=new Uint8Array(w*h); for(let i=0;i<w*h;i++) A[i]=D[i*4+3];   // a dark outline round it all, so it stands out on the deck
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x; if(A[i]) continue;
     if((x>0&&A[i-1])||(x<w-1&&A[i+1])||(y>0&&A[i-w])||(y<h-1&&A[i+w])){ D[i*4]=6; D[i*4+1]=7; D[i*4+2]=11; D[i*4+3]=255; } }
-  q.putImageData(img,0,0);
-  const f=document.createElement('canvas'); f.width=w; f.height=h; const fq=f.getContext('2d');   // and a white one, for the frame it's hit
-  fq.drawImage(c,0,0); fq.globalCompositeOperation='source-atop'; fq.fillStyle='rgba(255,240,240,.85)'; fq.fillRect(0,0,w,h);
+  const c=dkScale2x(img,w,h);
+  const f=document.createElement('canvas'); f.width=w*2; f.height=h*2; const fq=f.getContext('2d');   // and a white one, for the frames it's hit
+  fq.drawImage(c,0,0); fq.globalCompositeOperation='source-atop'; fq.fillStyle='rgba(255,240,240,.85)'; fq.fillRect(0,0,w*2,h*2);
   return DKSPR[key]={c,f,w,h};
 }
+function dkScale2x(img,w,h){   // Scale2x: each pixel becomes four, and where its neighbours agree across a corner, that corner takes their colour
+  const S=new Uint32Array(img.data.buffer), W=w*2, out=new ImageData(W,h*2), O=new Uint32Array(out.data.buffer);
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=y*w+x, P=S[i], A=y>0?S[i-w]:0, B=x<w-1?S[i+1]:0, C=x>0?S[i-1]:0, D=y<h-1?S[i+w]:0;
+    let e0=P, e1=P, e2=P, e3=P;
+    if(A!==D && C!==B){ if(C===A) e0=C; if(A===B) e1=B; if(C===D) e2=C; if(D===B) e3=B; }
+    const o=y*2*W+x*2; O[o]=e0; O[o+1]=e1; O[o+W]=e2; O[o+W+1]=e3; }
+  const c=document.createElement('canvas'); c.width=W; c.height=h*2; c.getContext('2d').putImageData(out,0,0); return c; }
 function dkBall(px,cx,cy,rx,ry,P,tex){   // a shaded ellipse of pixels, lit from the upper left (tex can swap in a colour, for folds and spots)
   for(let y=Math.floor(cy-ry);y<=Math.ceil(cy+ry);y++) for(let x=Math.floor(cx-rx);x<=Math.ceil(cx+rx);x++){
     const nx=(x+.5-cx)/rx, ny=(y+.5-cy)/ry, d=nx*nx+ny*ny; if(d>1) continue;
@@ -6408,16 +6474,18 @@ function dkBall(px,cx,cy,rx,ry,P,tex){   // a shaded ellipse of pixels, lit from
 const DK_LOOK={   // the marines in orange helmets; you in black and copper, with a blue visor
   bot:{armor:'#3d4554',armorL:'#5d6880',armorD:'#272c36',leg:'#2c323e',boot:'#14161c',trim:'#e8742a',trimL:'#ffa860',helm:'#f08a3a',helmL:'#ffc480',helmD:'#b0561c',visor:'#43d6ff',visorD:'#1a6c8c',pack:'#2a303b',gun:'#191c23',tip:'#9ff6ff'},
   you:{armor:'#24211e',armorL:'#4a3c30',armorD:'#121110',leg:'#1c1a18',boot:'#0b0a09',trim:'#c87838',trimL:'#f2aa6a',helm:'#2a2724',helmL:'#5a4a3c',helmD:'#141210',visor:'#3a9cff',visorD:'#1a4aa8',pack:'#1a1816',gun:'#101216',tip:'#eaffff'}};
-function paintSoldier(px,R,f,fr,P){   // 16×24, boots on row 22; f: 0 facing you, 1 to the right, 2 away; fr: the step
-  if(f!==1){ const a=fr===1?1:0, b=fr===3?1:0;   // a leg lifts as it steps
-    R(5,16,2,5-a,P.leg); R(4,21-a,3,2,P.boot); R(9,16,2,5-b,P.leg); R(9,21-b,3,2,P.boot);
-    R(4,15,8,1,'#16191f'); if(f===0) R(7,15,2,1,P.trim);   // the belt
-    R(4,10,8,5,P.armor); R(4,10,1,5,P.armorD); R(11,10,1,5,P.armorD);
-    if(f===0){ R(6,11,4,2,P.armorL); R(7,13,2,1,P.armorD); } else { R(5,10,6,5,P.pack); R(6,11,4,1,P.armorL); px(9,13,'#4dffa6'); }   // the chest plate, or the pack on the back
-    R(2,10,3,2,P.trim); R(11,10,3,2,P.trim); R(2,10,3,1,P.trimL); R(11,10,3,1,P.trimL);   // shoulder plates
-    R(2,12,2,3,P.armorD); R(12,12,2,3,P.armorD); R(6,9,4,1,'#16191f');
+function paintSoldier(px,R,f,fr,P){   // 16×24, boots on row 22; f: 0 facing you, 1 to the right, 2 away, 3 three-quarters toward you, 4 three-quarters away; fr: the step
+  if(f!==1){ const a=fr===1?1:0, b=fr===3?1:0, q=f>=3;   // a leg lifts as it steps (turned three-quarters, the boots point the way they're going)
+    R(5,16,2,5-a,P.leg); R(q?5:4,21-a,3,2,P.boot); R(9,16,2,5-b,P.leg); R(q?10:9,21-b,3,2,P.boot);
+    R(4,15,8,1,'#16191f'); if(f===0) R(7,15,2,1,P.trim); else if(f===3) R(8,15,2,1,P.trim);   // the belt
+    R(4,10,8,5,P.armor); R(4,10,1,5,f===3?P.pack:P.armorD); R(11,10,1,5,P.armorD);
+    if(f===0){ R(6,11,4,2,P.armorL); R(7,13,2,1,P.armorD); } else if(f===3){ R(7,11,4,2,P.armorL); R(8,13,2,1,P.armorD); }   // the chest plate, or the pack on the back
+    else if(f===2){ R(5,10,6,5,P.pack); R(6,11,4,1,P.armorL); px(9,13,'#4dffa6'); } else { R(4,10,6,5,P.pack); R(5,11,4,1,P.armorL); px(8,13,'#4dffa6'); }
+    if(f===3){ R(3,10,2,2,P.trim); R(3,10,2,1,P.trimL); R(3,12,2,3,P.armorD); } else { R(2,10,3,2,P.trim); R(2,10,3,1,P.trimL); R(2,12,2,3,P.armorD); }   // shoulder plates (the far one smaller), arms
+    R(11,10,3,2,P.trim); R(11,10,3,1,P.trimL); R(12,12,2,3,P.armorD); R(6,9,4,1,'#16191f');
     R(5,3,6,6,P.helm); R(6,2,4,1,P.helm); R(5,3,1,5,P.helmL); R(6,2,2,1,P.helmL); R(10,3,1,6,P.helmD); R(5,8,6,1,P.helmD);
-    if(f===0){ R(6,5,4,2,P.visor); R(6,6,4,1,P.visorD); px(6,5,'#ffffff'); } else R(6,6,4,1,P.helmD); }
+    if(f===0){ R(6,5,4,2,P.visor); R(6,6,4,1,P.visorD); px(6,5,'#ffffff'); } else if(f===3){ R(7,5,4,2,P.visor); R(7,6,4,1,P.visorD); px(7,5,'#ffffff'); }   // the visor, wrapping round as they turn
+    else if(f===2) R(6,6,4,1,P.helmD); else { R(5,6,5,1,P.helmD); px(10,5,P.visor); px(10,6,P.visorD); } }
   else { const s=fr===1?2:fr===3?-2:0;   // side on: the legs swing
     R(7-s,16,2,5,P.armorD); R(7-s,21,3,2,P.boot); R(7+s,16,2,5,P.leg); R(7+s,21,3,2,P.boot);
     R(5,15,6,1,'#16191f'); R(3,10,2,5,P.pack); px(3,11,P.armorL);
@@ -6457,22 +6525,31 @@ function paintBrute(px,R,f,fr){   // a great dark brain with a mouthful of teeth
     if(f!==1 && x===15 && y<13+b) return '#4a1028';
     const v=Math.sin(x*.95+Math.sin(y*.9)*2.2)+Math.sin(y*1.3+x*.3)*.6; return v>1.0?(l>.4?'#9a3a5a':'#5a1530'):null; });
 }
+const DK_OCT={f:[1,3,0,3,1,4,2,4],fl:[0,0,0,1,1,1,0,0]};   // a soldier's eight ways round, from facing right: side, ¾ toward you, toward you, ¾, side, ¾ away, away, ¾ away (the left half mirrored)
+function dkLook(u){   // which sprite u shows: the way it's facing (eight ways for a soldier, three for a boarder), and its step
+  const a=u.da, fr=Math.hypot(u.vx,u.vy)>.25?Math.floor(u.step*1.2)%4:0;
+  if(u.side===0){ const o=((Math.round(a/(Math.PI/4))%8)+8)%8, f=DK_OCT.f[o], look=u.kind==='you'?'you':'bot';
+    return {S:dkSpr(look+f+fr,16,24,(px,R)=>paintSoldier(px,R,f,fr,DK_LOOK[look])),fl:!!DK_OCT.fl[o],fr,look,behind:f===2||f===4}; }
+  const c=Math.cos(a), s=Math.sin(a), f=s>.4?0:s<-.4?2:1;
+  return {S:u.kind==='squid'?dkSpr('sq'+f+fr,18,21,(px,R)=>paintSquid(px,R,f,fr)):u.kind==='blob'?dkSpr('bl'+f+fr,22,24,(px,R)=>paintBrain(px,R,f,fr))
+    :dkSpr('br'+f+fr,32,34,(px,R)=>paintBrute(px,R,f,fr)),fl:f===1&&c<0,fr}; }
 function dkDrawUnit(u,x,y){   // x,y: where u's feet are, on screen
-  const c=Math.cos(u.a), s=Math.sin(u.a), f=s>.4?0:s<-.4?2:1, fl=f===1&&c<0, fr=Math.hypot(u.vx,u.vy)>.25?Math.floor(u.step*1.2)%4:0;
-  const crew=u.side===0, look=u.kind==='you'?'you':'bot';
-  const S=crew?dkSpr(look+f+fr,16,24,(px,R)=>paintSoldier(px,R,f,fr,DK_LOOK[look])):u.kind==='squid'?dkSpr('sq'+f+fr,18,21,(px,R)=>paintSquid(px,R,f,fr))
-    :u.kind==='blob'?dkSpr('bl'+f+fr,22,24,(px,R)=>paintBrain(px,R,f,fr)):dkSpr('br'+f+fr,32,34,(px,R)=>paintBrute(px,R,f,fr));
-  const img=u.flash>0&&(u.flash&2)?S.f:S.c, ax=S.w>>1, ay=S.h-2;
+  const L=dkLook(u), S=L.S, img=u.flash>3?S.f:S.c, ax=S.w>>1, ay=S.h-2, crew=u.side===0, mv=Math.hypot(u.vx,u.vy)>.25;
+  let sx=1, sy=1;
+  if(crew){ x-=Math.cos(u.da)*u.kick*.5; y-=Math.sin(u.da)*u.kick*.3+(mv&&(L.fr&1)?.5:0); }   // (the recoil shoves them back a touch; they bob as they step)
+  else { const w=mv?Math.sin(u.step*1.6)*.045:0; sx=1+u.jig+w; sy=1-u.jig*.85-w; }   // (water balloons: they wobble when they're hit, and squish as they go)
   if(u.emerge>0) g.globalAlpha=clamp(1-u.emerge/20,0,1);
-  if(crew && f===2) dkRifle(x,y,c,s,look);   // aiming away: the rifle's behind them
-  if(fl){ g.save(); g.translate(x,y); g.scale(-1,1); g.drawImage(img,-ax,-ay); g.restore(); } else g.drawImage(img,x-ax,y-ay);
-  if(crew && f!==2) dkRifle(x,y,c,s,look);
+  if(crew && L.behind) dkRifle(x,y,u,L.look);   // aiming away: the rifle's behind them
+  g.save(); g.translate(x,y); g.scale(L.fl?-sx:sx,sy); g.drawImage(img,-ax,-ay,S.w,S.h); g.restore();
+  if(crew && !L.behind) dkRifle(x,y,u,L.look);
   g.globalAlpha=1;
 }
-function dkRifle(x,y,c,s,look){   // the rifle, from the hands out to the muzzle, pointing where they aim
-  const P=DK_LOOK[look], x0=x+c*2, y0=y-10+s, x1=x+c*11, y1=y-10+s*6, n=Math.max(1,Math.round(Math.max(Math.abs(x1-x0),Math.abs(y1-y0))));
-  g.fillStyle=P.gun; for(let i=0;i<=n;i++) g.fillRect(Math.round(x0+(x1-x0)*i/n)-1,Math.round(y0+(y1-y0)*i/n)-1,2,2);
-  g.fillStyle=P.tip; g.fillRect(Math.round(x1)-1,Math.round(y1)-1,1,1); }
+function dkRifle(x,y,u,look){   // the rifle at the exact angle it aims (foreshortened pointing at you or away): stock, body, barrel, the emitter lit. It slides back as it fires
+  const P=DK_LOOK[look], c=Math.cos(u.da), s=Math.sin(u.da), k=u.kick, vx=c*9, vy=s*5;
+  g.save(); g.translate(x+c*(2-k),y-LIFT+s*(1-k*.6)); g.rotate(Math.atan2(vy,vx)); g.scale(Math.hypot(vx,vy)/9,1);
+  g.fillStyle=P.gun; g.fillRect(-3.5,-1.25,4,2.5); g.fillRect(0,-1.75,6,3.25); g.fillRect(5.5,-.75,4,1.5);
+  g.fillStyle=P.trim; g.fillRect(.5,-1.75,3.5,1); g.fillStyle=P.tip; g.fillRect(8.5,-.75,1.5,1.5);
+  g.restore(); }
 function dkDrawDowned(x,y,K){   // you, down on the deck till the medics have you up
   g.fillStyle='rgba(0,0,0,.34)'; g.fillRect(x-12,y-1,24,3);
   g.fillStyle='#0b0a09'; g.fillRect(x-12,y-4,3,3); g.fillStyle='#14110e'; g.fillRect(x-9,y-5,14,5); g.fillStyle='#24211e'; g.fillRect(x-9,y-5,14,2);
@@ -6528,14 +6605,19 @@ function drawDeckBanner(B){ const a=Math.min(1,B.t/12,(B.life-B.t)/30); if(a<=0)
   g.textAlign='center'; g.font='bold 22px monospace'; g.fillText(B.title,VW/2,y+24);
   g.font='9px monospace'; g.fillStyle=good?'#d6ffe9':'#ffd0d6'; g.fillText(B.sub,VW/2,y+37);
   g.globalAlpha=1; g.textAlign='left'; }
-function drawDeckFrame(){
+let DKC=null, DKVIG=null;   // the deck's own canvas, twice the size of the world view · the red flush round the edges when you're hit
+function drawDeckFrame(){ try{ dkFrame(); } finally { g=wg; } }   // (whatever happens, the next frame starts back on the world layer)
+function dkFrame(){
   if(TOUCH){ g=wg; setView(); }
   const K=DK, P=K.you;
   if(!K.mini) K.mini=dkPaintMini();
-  g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over';
-  const tx=clamp(P.x-VW/2,-90,K.W*DT-VW+90), ty=clamp(P.y-10-VH/2,-90,K.H*DT-VH+90);
+  if(!DKC) DKC=document.createElement('canvas');   // drawn at double size and handed to the screen smoothed: no shimmer, and every line and glow comes out fine
+  if(DKC.width!==VW*DK_SS || DKC.height!==VH*DK_SS){ DKC.width=VW*DK_SS; DKC.height=VH*DK_SS; }
+  g=DKC.getContext('2d'); g.setTransform(DK_SS,0,0,DK_SS,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.imageSmoothingEnabled=false;
+  const tx=clamp(P.x+K.lead.x-VW/2,-90,K.W*DT-VW+90), ty=clamp(P.y+K.lead.y-10-VH/2,-90,K.H*DT-VH+90);   // (the view leads where you're shooting or going)
   if(!K.cam.set){ K.cam.x=tx; K.cam.y=ty; K.cam.set=true; } else { K.cam.x+=(tx-K.cam.x)*.18; K.cam.y+=(ty-K.cam.y)*.18; }
-  const sh=shake>.2, cx=Math.round(K.cam.x+(sh?rnd(-shake,shake)*.3:0)), cy=Math.round(K.cam.y+(sh?rnd(-shake,shake)*.3:0));
+  const h2=v=>Math.round(v*DK_SS)/DK_SS, sh=shake>.2;   // (everything sits on the half pixel: a whole pixel of the double-size view)
+  const cx=h2(K.cam.x+K.kick.x+(sh?rnd(-shake,shake)*.3:0)), cy=h2(K.cam.y+K.kick.y+(sh?rnd(-shake,shake)*.3:0));
   g.fillStyle='#03040a'; g.fillRect(0,0,VW,VH);
   const span=VW+400;
   for(const s of K.stars){ const x=((s.x*span-cx*.25)%span+span)%span-200, y=((s.y*(VH+300)-cy*.25)%(VH+300)+VH+300)%(VH+300)-150;
@@ -6562,35 +6644,70 @@ function drawDeckFrame(){
   for(const u of K.units) if(!u.dead && on(u.x,u.y,44)) L.push({k:u.y,u});
   L.sort((a,b)=>a.k-b.k);
   g.fillStyle='rgba(0,0,0,.34)';   // their shadows
-  for(const it of L){ const u=it.u; if(!u || u.emerge>0 || u.down>0) continue; const x=Math.round(u.x-cx), y=Math.round(u.y-cy), w=u.kind==='brute'?15:u.kind==='blob'?10:8;
+  for(const it of L){ const u=it.u; if(!u || u.emerge>0 || u.down>0) continue; const x=h2(u.x-cx), y=h2(u.y-cy), w=u.kind==='brute'?15:u.kind==='blob'?10:8;
     g.fillRect(x-w,y-1,w*2,3); g.fillRect(x-w+2,y-2,w*2-4,5); }
-  if(P.down<=0){ g.strokeStyle='rgba(67,240,255,.8)'; g.lineWidth=1; g.beginPath(); g.ellipse(Math.round(P.x-cx)+.5,Math.round(P.y-cy)+.5,11,5,0,0,TAU); g.stroke(); }   // (so you can pick yourself out of the crowd)
+  g.globalCompositeOperation='lighter';
+  for(const p of K.fx) if(p.ghost){ const S=p.S; if(!S.cy){ S.cy=document.createElement('canvas'); S.cy.width=S.c.width; S.cy.height=S.c.height; const q=S.cy.getContext('2d');   // your dive's afterimages, in light
+      q.drawImage(S.c,0,0); q.globalCompositeOperation='source-atop'; q.fillStyle='#2ad8ff'; q.fillRect(0,0,S.cy.width,S.cy.height); }
+    g.globalAlpha=.5*p.life/p.max; g.save(); g.translate(h2(p.x-cx),h2(p.y-cy)); g.scale(p.fl?-1:1,1); g.drawImage(S.cy,-(S.w>>1),-(S.h-2),S.w,S.h); g.restore(); }
+  g.globalCompositeOperation='source-over'; g.globalAlpha=1;
+  if(P.down<=0){ const x=h2(P.x-cx), y=h2(P.y-cy), by=y-34+h2(Math.sin(K.t*.12)*1.5);   // (so you can pick yourself out of the crowd: a ring at your feet, a marker over your head)
+    g.strokeStyle='rgba(67,240,255,.85)'; g.lineWidth=1.5; g.beginPath(); g.ellipse(x,y,11,5,0,0,TAU); g.stroke();
+    g.fillStyle='#43f0ff'; g.beginPath(); g.moveTo(x-3,by); g.lineTo(x+3,by); g.lineTo(x,by+3.5); g.closePath(); g.fill(); }
   for(const it of L){
     if(it.s) g.drawImage(it.s.img,it.s.x-cx,it.s.y-cy);
     else if(it.S) dkDrawSys(it.S,it.S.x*DT-cx,it.S.y*DT-cy,K);
     else if(it.n) dkDrawNode(it.n,it.n.cx-cx,it.n.cy-cy,K);
     else if(it.H) dkDrawHelm(it.H,it.H.x*DT-cx,it.H.y*DT-cy,K);
     else if(it.m) dkDrawMembrane(it.m,it.m.x*DT-cx,it.m.y*DT-cy,K);
-    else { const u=it.u, x=Math.round(u.x-cx), y=Math.round(u.y-cy);
+    else { const u=it.u, x=h2(u.x-cx), y=h2(u.y-cy);
       if(u.kind!=='you') dkDrawUnit(u,x,y); else if(u.down>0) dkDrawDowned(x,y,K); else if(!(u.inv>0 && (K.t>>2)&1)) dkDrawUnit(u,x,y); } }
-  for(const b of K.bolts){ const x=Math.round(b.x-cx), y=Math.round(b.y-b.h-cy);   // their bolts: hot red slugs with a tail
-    g.fillStyle='rgba(255,42,74,.5)'; g.fillRect(Math.round(x-b.vx*2)-1,Math.round(y-b.vy*2)-1,2,2); g.fillStyle='rgba(255,42,74,.3)'; g.fillRect(Math.round(x-b.vx*3.6),Math.round(y-b.vy*3.6),1,1);
-    g.fillStyle='#ff2a4a'; g.fillRect(x-2,y-2,4,4); g.fillStyle='#ffd0d6'; g.fillRect(x-1,y-1,2,2); }
-  for(const b of K.beams){ const k=b.life/b.max;   // the lasers: instant lines
-    g.globalAlpha=k; g.strokeStyle=b.you?'#9ff6ff':'#43a8ff'; g.lineWidth=b.you?2.5:2; g.beginPath(); g.moveTo(b.x0-cx,b.y0-cy); g.lineTo(b.x1-cx,b.y1-cy); g.stroke();
-    g.strokeStyle='#ffffff'; g.lineWidth=1; g.beginPath(); g.moveTo(b.x0-cx,b.y0-cy); g.lineTo(b.x1-cx,b.y1-cy); g.stroke(); }
+  for(const b of K.bolts){ const x=b.x-cx, y=b.y-b.h-cy, sp=Math.hypot(b.vx,b.vy)||1, ux=b.vx/sp, uy=b.vy/sp, R=(b.big?3.2:2.5)*(1+.22*Math.sin((K.t+b.ph)*.7));   // their bolts: hot red slugs, pulsing, with a tail
+    g.fillStyle='#ff2a4a'; for(let i=3;i>=1;i--){ g.globalAlpha=.5-i*.12; g.beginPath(); g.arc(x-ux*i*3.4,y-uy*i*3.4,R*(1-i*.2),0,TAU); g.fill(); }
+    g.globalAlpha=1; g.beginPath(); g.arc(x,y,R,0,TAU); g.fill(); g.fillStyle='#ffe0e6'; g.beginPath(); g.arc(x,y,R*.48,0,TAU); g.fill(); }
+  for(const u of K.units) if(u.side===1 && !u.dead && u.wind>0 && !K.boom && on(u.x,u.y,30)){ const k=u.wind/DK_TELL, R=1+2.4*k, x=u.x+Math.cos(u.da)*u.r*.6-cx, y=u.y-DFOE[u.kind].mz-cy;   // a boarder winding up to fire at you: a bolt swelling in its mouth
+    g.globalAlpha=.55+.45*k; g.fillStyle='#ff2a4a'; g.beginPath(); g.arc(x,y,R,0,TAU); g.fill(); g.fillStyle='#ffe0e6'; g.beginPath(); g.arc(x,y,R*.45,0,TAU); g.fill(); }
   g.globalAlpha=1;
-  for(const p of K.fx){ const a=clamp(p.life/p.max,0,1), x=p.x-cx, y=p.y-cy;   // sparks, goo, rings
+  const seg=(ax,ay,bx,by)=>{ g.beginPath(); g.moveTo(ax,ay); g.lineTo(bx,by); g.stroke(); };
+  g.lineCap='round';
+  for(const b of K.beams){ if(b.u && !b.u.dead && !b.u.down){ const m=dkMuzzle(b.u); b.x0=m[0]; b.y0=m[1]; }   // (it leaves from the muzzle, wherever that's got to)
+    const age=b.max-b.life, x0=b.x0-cx, y0=b.y0-cy, x1=b.x1-cx, y1=b.y1-cy, dx=x1-x0, dy=y1-y0, L=Math.hypot(dx,dy)||1;
+    if(b.you){ const k=b.life/b.max, w=Math.pow(k,.7);   // yours: a white-hot core in a cyan beam that burns down to a thread, and a bolt of light racing out along it
+      g.globalAlpha=Math.min(1,k*1.5); g.strokeStyle='#2fb8ff'; g.lineWidth=4.4*w; seg(x0,y0,x1,y1);
+      g.strokeStyle='#bff9ff'; g.lineWidth=2.4*w; seg(x0,y0,x1,y1); g.strokeStyle='#ffffff'; g.lineWidth=.6+.9*w; seg(x0,y0,x1,y1);
+      if(age<3){ const h=(age+1)/3, hx=x0+dx*h, hy=y0+dy*h, t=Math.min(L*h,28); g.globalAlpha=1; g.lineWidth=3.2; seg(hx-dx/L*t,hy-dy/L*t,hx,hy); } }
+    else { const h=Math.min(1,(age+1)/b.tt), hx=x0+dx*h, hy=y0+dy*h, t=Math.min(L*h,20);   // a marine's: a tracer streaking down the line
+      g.globalAlpha=age<b.tt?1:.45; g.strokeStyle='#43a8ff'; g.lineWidth=2.2; seg(hx-dx/L*t,hy-dy/L*t,hx,hy); g.strokeStyle='#e8f8ff'; g.lineWidth=1; seg(hx-dx/L*t*.6,hy-dy/L*t*.6,hx,hy); } }
+  g.lineCap='butt'; g.globalAlpha=1;
+  for(const p of K.fx){ const a=clamp(p.life/p.max,0,1), x=p.x-cx, y=p.y-cy;   // sparks, goo, rings, flashes
+    if(p.ghost||p.light) continue;   // (drawn elsewhere)
     if(p.ring){ g.globalAlpha=a*.9; g.strokeStyle=p.col; g.lineWidth=2; g.beginPath(); g.arc(x,y,p.r0+(p.r1-p.r0)*(1-a),0,TAU); g.stroke(); }
     else if(p.fire){ g.globalAlpha=a; g.fillStyle=a>.5?'#ffd27a':'#ff6a2a'; g.beginPath(); g.arc(x,y,p.r*(1.4-a),0,TAU); g.fill(); }
-    else if(p.smoke){ const r=p.r*(2.2-a); g.globalAlpha=a*.55; g.drawImage(dkPuff(),x-r,y-r,r*2,r*2); }
-    else { g.globalAlpha=a; g.fillStyle=p.col; const r=p.r|0||1; g.fillRect(Math.round(x-r/2),Math.round(y-r/2),r,r); } }
-  g.globalAlpha=1;
+    else if(p.smoke){ const r=p.r*(2.2-a); g.globalAlpha=a*.55; g.imageSmoothingEnabled=true; g.drawImage(dkPuff(),x-r,y-r,r*2,r*2); g.imageSmoothingEnabled=false; }
+    else if(p.flare){ const r=p.hit?7:6.5; g.globalAlpha=a; g.fillStyle='#ffffff'; g.save(); g.translate(x,y); g.rotate(p.a);   // a star of light: long along the shot, short across it (a hit's is even)
+      g.beginPath(); g.moveTo(p.hit?-r:-r*.4,0); g.lineTo(0,-1.3); g.lineTo(r*1.3,0); g.lineTo(0,1.3); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(0,p.hit?-r:-r*.6); g.lineTo(1.1,0); g.lineTo(0,p.hit?r:r*.6); g.lineTo(-1.1,0); g.closePath(); g.fill(); g.restore(); }
+    else if(p.hot){ g.globalAlpha=Math.min(1,a*2); g.fillStyle=a>.75?'#ffffff':a>.45?'#ffd27a':a>.2?'#ff6a2a':'#8a2412'; g.beginPath(); g.arc(x,y,1.1+a*1.2,0,TAU); g.fill(); }   // (white-hot, cooling)
+    else if(p.swell){ const k=1.25+.2*(1-a); g.globalAlpha=a; g.save(); g.translate(x,y); g.scale(p.fl?-k:k,k); g.drawImage(p.S.f,-(p.S.w>>1),-(p.S.h-2),p.S.w,p.S.h); g.restore(); }   // the balloon, bloated white as it bursts
+    else { g.globalAlpha=a; g.fillStyle=p.col; const r=p.r|0||1; g.fillRect(x-r/2,y-r/2,r,r); } }
+  g.globalAlpha=1; g.imageSmoothingEnabled=true;
   g.globalCompositeOperation='lighter';   // the light: beams, bolts, the reactor, the nodes, fires
   if(K.map.dock){ const [x,y,nx,ny]=K.map.dock; glow((x+.5)*DT+nx*16-cx,(y+.5)*DT+ny*16-cy,22,'#43f0ff',.35); }   // (the carrier's docking collar)
-  for(const b of K.beams){ const k=b.life/b.max; glow(b.x1-cx,b.y1-cy,b.you?12:9,b.you?'#9ff6ff':'#43a8ff',.6*k); glow(b.x0-cx,b.y0-cy,7,'#cfefff',.5*k); }
-  for(const b of K.bolts) glow(b.x-cx,b.y-b.h-cy,9,'#ff2a4a',.6);
-  for(const p of K.fx) if(p.fire) glow(p.x-cx,p.y-cy,p.r*2.4,'#ff9a3d',.5*p.life/p.max);
+  g.lineCap='round';
+  for(const b of K.beams){ const k=b.life/b.max, age=b.max-b.life;
+    if(b.you){ const w=Math.pow(k,.7); g.strokeStyle='#43c8ff'; g.globalAlpha=.12*k; g.lineWidth=13*w; seg(b.x0-cx,b.y0-cy,b.x1-cx,b.y1-cy); g.globalAlpha=.18*k; g.lineWidth=6.5*w; seg(b.x0-cx,b.y0-cy,b.x1-cx,b.y1-cy);   // a halo along your beam
+      glow(b.x1-cx,b.y1-cy,6+14*k,'#9ff6ff',.75*k); if(age<2) glow(b.x0-cx,b.y0-cy,14,'#e8ffff',.9); }
+    else { const h=Math.min(1,(age+1)/b.tt); glow(b.x0-cx+(b.x1-b.x0)*h,b.y0-cy+(b.y1-b.y0)*h,8,'#43a8ff',age<b.tt?.55:.3); if(age<1) glow(b.x0-cx,b.y0-cy,6,'#cfefff',.5); } }
+  g.lineCap='butt';
+  if(P.down<=0 && K.t-P.shotT<4) glow(P.x-cx,P.y-cy-4,46,'#43f0ff',.24*(1-(K.t-P.shotT)/4));   // your muzzle flash lights up the deck round you
+  for(const b of K.bolts) glow(b.x-cx,b.y-b.h-cy,b.big?14:11,'#ff2a4a',.65);
+  for(const u of K.units) if(u.side===1 && !u.dead && u.wind>0 && !K.boom && on(u.x,u.y,30)){   // a boarder winding up to fire at you: its mouth glows hotter and hotter
+    const k=u.wind/DK_TELL; glow(u.x+Math.cos(u.da)*u.r*.6-cx,u.y-DFOE[u.kind].mz-cy,6+14*k,'#ff2a4a',.35+.6*k); }
+  for(const p of K.fx){ const k=p.life/p.max;
+    if(p.fire) glow(p.x-cx,p.y-cy,p.r*2.4,'#ff9a3d',.5*k);
+    else if(p.light) glow(p.x-cx,p.y-cy,p.r*(.7+.3*k),p.col,.55*k);   // a pop's splash of light, in its colour
+    else if(p.hot) glow(p.x-cx,p.y-cy,8,'#ffb347',.7*k);
+    else if(p.flare) glow(p.x-cx,p.y-cy,p.hit?16:12,'#bff9ff',.8*k); }
   for(const S of K.sys) if(!S.dead && on(S.cx,S.cy,80)) glow(S.cx-cx,S.cy-cy-14,S.k==='R'?60:30,K.t-S.hackT<8?'#ff4d6d':S.k==='R'?'#4dffa6':'#43f0ff',.3);
   for(const n of K.nodes) if(!n.dead && on(n.cx,n.cy,60)) glow(n.cx-cx,n.cy-cy-20,40,'#d36bff',.35+.15*Math.sin(K.t*.1));
   for(const p of K.pods){ const b=p.b; if(p.t<130 && on(b.cx,b.cy,40)) glow(b.cx+b.nx*12-cx,b.cy+b.ny*12-cy,24,'#ffb347',.45+.2*Math.random()); }
@@ -6602,12 +6719,19 @@ function drawDeckFrame(){
   g.textAlign='center'; g.font=wFont(7);
   for(const S of K.sys) if(on(S.cx,S.cy,80)){ g.fillStyle=S.dead?'rgba(255,77,109,.9)':K.t-S.hackT<8&&(K.t>>3)&1?'#ff4d6d':'rgba(159,246,255,.8)'; g.fillText(S.dead?S.name+' · LOST':S.name,S.cx-cx,S.y*DT-cy-28); }
   if(K.helm && on(K.helm.cx,K.helm.cy,90)){ const H=K.helm; g.fillStyle='rgba(230,180,255,.85)'; g.fillText(K.open?'HELM':'HELM · SEALED',H.cx-cx,H.y*DT-8+H.h*DT/2-cy-38); }
-  for(const p of K.pops){ g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.fillText(p.txt,p.x-cx,p.y-cy-(60-p.life)*.4); }
+  for(const u of K.units) if(u.kind==='brute' && !u.dead && K.t-u.hitT<150 && on(u.x,u.y,30)){ const x=u.x-cx, y=u.y-cy-40, f=Math.max(0,u.hp)/DFOE.brute.hp;   // a brute you've hurt shows how much it has left
+    g.globalAlpha=Math.min(1,(150-(K.t-u.hitT))/30); g.fillStyle='rgba(5,8,18,.85)'; g.fillRect(x-10,y,20,3.5); g.fillStyle=f>.5?'#ffb347':'#ff4d6d'; g.fillRect(x-9.5,y+.5,19*f,2.5); }
+  for(const p of K.pops){ g.globalAlpha=clamp(p.life/25,0,1); g.fillStyle=p.col; g.font=p.big?'bold '+wFont(9):wFont(7); g.fillText(p.txt,p.x-cx,p.y-cy-(60-p.life)*.4); }   // (a streak's in bold)
   g.globalAlpha=1; g.textAlign='left';
   // the overlay (on a phone, its own layer): the minimap, arrows to trouble off screen, the banners
   const z=TOUCH?WZ:1;
-  if(TOUCH){ ctx.drawImage(bb,0,0,WVW,WVH,0,0,cv.width,cv.height); g=ug; VW=UVW; VH=UVH; g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.clearRect(0,0,VW,VH); }
+  if(TOUCH){ ctx.imageSmoothingEnabled=true; ctx.drawImage(DKC,0,0,DKC.width,DKC.height,0,0,cv.width,cv.height); ctx.imageSmoothingEnabled=false;
+    g=ug; VW=UVW; VH=UVH; g.setTransform(1,0,0,1,0,0); g.globalAlpha=1; g.globalCompositeOperation='source-over'; g.clearRect(0,0,VW,VH); }
   if(flash>0){ g.fillStyle=`rgba(255,140,120,${flash*.5})`; g.fillRect(0,0,VW,VH); }
+  const hv=Math.max(K.hurtT/24*.8, P.down<=0&&P.hp<=3&&!K.done&&!K.lost?.22+.08*Math.sin(K.t*.15):0);   // hit: the edges of the view flush red (and stay a little red while you're low)
+  if(hv>0){ if(!DKVIG){ DKVIG=document.createElement('canvas'); DKVIG.width=160; DKVIG.height=90; const q=DKVIG.getContext('2d'), gr=q.createRadialGradient(80,45,26,80,45,96);
+      gr.addColorStop(0,'rgba(255,30,50,0)'); gr.addColorStop(.55,'rgba(255,30,50,.22)'); gr.addColorStop(1,'rgba(255,30,50,.85)'); q.fillStyle=gr; q.fillRect(0,0,160,90); }
+    const sm=g.imageSmoothingEnabled; g.imageSmoothingEnabled=true; g.globalAlpha=clamp(hv,0,1); g.drawImage(DKVIG,0,0,VW,VH); g.globalAlpha=1; g.imageSmoothingEnabled=sm; }
   const ms=TOUCH?.78:1.6, mw=K.W*ms, mh=K.H*ms, mx=VW-mw-8-SAFE.r, my=8+SAFE.t;   // the minimap
   g.fillStyle='rgba(5,8,18,.72)'; g.fillRect(mx-2,my-2,mw+4,mh+4); g.strokeStyle='rgba(67,240,255,.5)'; g.lineWidth=1; g.strokeRect(mx-1.5,my-1.5,mw+3,mh+3);
   g.save(); g.imageSmoothingEnabled=false; g.drawImage(K.mini,mx,my,mw,mh); g.restore();
@@ -6632,11 +6756,13 @@ function drawDeckFrame(){
   if(K.boom && K.boom.end){ g.fillStyle=`rgba(255,250,236,${clamp((K.boom.t-K.boom.end)/36,0,1)})`; g.fillRect(0,0,VW,VH); }   // the blast reaches you
   if(fadeIn>0){ g.fillStyle=`rgba(255,255,255,${fadeIn/45})`; g.fillRect(0,0,VW,VH); }
   if(TOUCH){ ctx.drawImage(ub,0,0,UVW,UVH,0,0,cv.width,cv.height); g=wg; VW=WVW; VH=WVH; }
-  else { ctx.clearRect(0,0,cv.width,cv.height); ctx.drawImage(bb,0,0,VW,VH,0,0,cv.width,cv.height); }
+  else { ctx.clearRect(0,0,cv.width,cv.height); ctx.imageSmoothingEnabled=true; ctx.drawImage(DKC,0,0,DKC.width,DKC.height,0,0,cv.width,cv.height); ctx.imageSmoothingEnabled=false; }
 }
-// the mouse, on a desktop: point to aim, hold the button to fire
+// the mouse, on a desktop: point to aim, hold the button to fire, right-click to dive
 cv.addEventListener('mousemove',e=>{ if(!DK||TOUCH) return; dkMouse.sx=e.clientX; dkMouse.sy=e.clientY; dkMouse.t=DK.t; });
-cv.addEventListener('mousedown',e=>{ if(!DK||TOUCH||e.button!==0||state!=='deck') return; dkMouse.sx=e.clientX; dkMouse.sy=e.clientY; dkMouse.t=DK.t; dkMouse.down=true; e.preventDefault(); });
+cv.addEventListener('mousedown',e=>{ if(!DK||TOUCH||state!=='deck') return; if(e.button===2){ dkMouse.dash=true; e.preventDefault(); return; } if(e.button!==0) return;
+  dkMouse.sx=e.clientX; dkMouse.sy=e.clientY; dkMouse.t=DK.t; dkMouse.down=true; e.preventDefault(); });
+cv.addEventListener('contextmenu',e=>{ if(DK&&!TOUCH) e.preventDefault(); });   // (aboard, the right button is the dive, not a menu)
 window.addEventListener('mouseup',()=>{ dkMouse.down=false; });
 window.addEventListener('blur',()=>{ dkMouse.down=false; });
 
@@ -7249,9 +7375,9 @@ const vrDebug1=window.vrDebug;   // (the snapshot for automated playtests, with 
 window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bossBoardT, world:LV.world||null, crippled:!!(boss&&boss.crippled), ark:!!(boss&&boss.ark),
   deck:DK&&{kind:DK.kind,t:DK.t,wave:DK.wave,rest:DK.rest,q:DK.q.length,open:DK.open,knock:DK.knock,done:DK.done,lost:DK.lost,banner:DK.banner&&DK.banner.title,
     killed:DK.killed,total:DK.total,dmgMul:+DK.dmgMul.toFixed(2),preferBots:DK.preferBots,cam:{...DK.cam},bolts:DK.bolts.length,beams:DK.beams.length,
-    you:{x:DK.you.x,y:DK.you.y,hp:DK.you.hp,down:DK.you.down,inv:DK.you.inv,a:DK.you.a},
+    you:{x:DK.you.x,y:DK.you.y,hp:DK.you.hp,down:DK.you.down,inv:DK.you.inv,a:DK.you.a,da:DK.you.da,dash:DK.you.dash,dashCd:DK.you.dashCd}, stop:DK.stop, streak:DK.streak, fx:DK.fx.length,
     bots:DK.units.filter(u=>u.kind==='bot'&&!u.dead).map(u=>({x:u.x,y:u.y,hp:+u.hp.toFixed(2),tgt:!!u.tgt})),
-    foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt})),
+    foes:DK.units.filter(u=>u.side===1&&!u.dead).map(u=>({kind:u.kind,x:u.x,y:u.y,hp:u.hp,goal:u.goal,hack:!!u.hack,emerge:u.emerge,tgt:!!u.tgt,wind:u.wind,stun:u.stun})),
     sys:DK.sys.map(S=>({k:S.k,hp:S.hp,dead:S.dead,cx:S.cx,cy:S.cy})), nodes:DK.nodes.map(n=>({cx:n.cx,cy:n.cy,hp:n.hp,dead:n.dead})), helm:DK.helm&&{cx:DK.helm.cx,cy:DK.helm.cy,prog:DK.helm.prog},
     map:{W:DK.W,H:DK.H,grid:DK.grid}, boom:DK.boom&&{t:DK.boom.t,end:DK.boom.end,out:DK.boom.out,next:DK.boom.next,far:DK.boom.far,speed:DK.boom.speed}},
   planets:planets.map(p=>({name:p.name||null,x:Math.round(p.x),y:Math.round(p.y),r:p.r}))});
