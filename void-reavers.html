@@ -255,7 +255,8 @@
   body.touch .mcard{bottom:auto; top:calc(var(--mapb,76px) + 40px); right:var(--map-r,6px); width:210px; padding:7px}
   body.touch .mitem{min-height:34px; padding:5px 9px; font-size:10px}
   body.touch .mitem kbd{display:none}
-  @media (max-height:330px){ body.touch .mcard{top:calc(var(--mapb,76px) + 2px); right:calc(var(--map-r,6px) + 46px)} }
+  @media (max-height:400px){ body.touch .mitem{min-height:27px; margin-bottom:3px; padding:3px 9px} body.touch .mhead{padding-bottom:4px} }   /* (six rows: tighter, so the card fits) */
+  @media (max-height:330px){ body.touch .mcard{top:max(6px,env(safe-area-inset-top,0px)); right:calc(var(--map-r,6px) + 46px)} }   /* (and on a short screen it starts at the top, beside the ☰) */
   /* the jump menu: B, the menu's Jump to…, or a cutscene's SKIP button picks exactly which part of the campaign to go to */
   #jump{position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:rgba(2,4,10,.74); backdrop-filter:blur(2px)}
   #jump.hidden{display:none}
@@ -391,7 +392,7 @@
 </div>
 
 <div id="hud-bottom" class="hud">
-  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part · <kbd>F</kbd> massive wave (test)</span>
+  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>O</kbd> friend/foe outlines · <kbd>B</kbd> jump to any part · <kbd>F</kbd> massive wave (test)</span>
 </div>
 
 <div id="touch">
@@ -417,6 +418,7 @@
     <button class="mitem" id="mn-jump"><i>»</i><span>Jump to…</span><kbd>B</kbd></button>
     <button class="mitem" id="mn-music"><i>♪</i><span>Music</span><em id="mn-music-v">on</em><kbd>N</kbd></button>
     <button class="mitem" id="mn-sfx"><i>✦</i><span>Sound effects</span><em id="mn-sfx-v">on</em><kbd>V</kbd></button>
+    <button class="mitem" id="mn-iff"><i>◇</i><span>Friend/foe outlines</span><em id="mn-iff-v">on</em><kbd>O</kbd></button>
   </div>
 </div>
 
@@ -2586,7 +2588,7 @@ window.addEventListener('keydown', e=>{
   if(jumpOpen){ if(!e.repeat){ if(k==='escape'){ e.preventDefault(); closeJump(); } else if(k==='b') jumpHere(); } return; }   // (Enter/Space press the focused button)
   if(miniOpen){ if(!e.repeat){   // the mini menu: its own keys still work, Esc or P carries on (Enter/Space press the focused item)
       if(k==='escape'||k==='p'){ e.preventDefault(); closeMini(); } else if(k==='m') miniMap(); else if(k==='b') openJump();
-      else if(k==='n'){ toggleMusic(); } else if(k==='v'){ toggleSfx(); } }
+      else if(k==='n'){ toggleMusic(); } else if(k==='v'){ toggleSfx(); } else if(k==='o'){ toggleIff(); } }
     return; }
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
   if((k==='arrowup'||k==='arrowdown') && !elOv.classList.contains('hidden')) elOv.scrollBy(0,k==='arrowup'?-90:90);   // (↑ ↓ scroll the title and end cards)
@@ -2605,6 +2607,7 @@ window.addEventListener('keydown', e=>{
   if(k==='p'||k==='escape'){ openMini(); return; }   // (in a fight, the menu is the pause screen)
   if(k==='n') toggleMusic();
   if(k==='v') toggleSfx();
+  if(k==='o') toggleIff();
   if(paused) return;
   if(k==='1') selectWeapon('laser');
   if(k==='2') selectWeapon('rocket');
@@ -2640,10 +2643,10 @@ function miniRefresh(){   // what's on the card right now
   for(const id of ['mn-resume','mn-map']) document.getElementById(id).style.display=fight&&(id!=='mn-map'||state==='play')?'':'none';   // (no map on foot)
   elMnStat.textContent=fight||state==='launch'||state==='dying' ? `${fmtTime(Math.floor((bossDead?clearT:runT)/60))} · ${score.toLocaleString('en-US')} pts · ${deaths} lost` : '';
   const on=(id,v)=>{ const el=document.getElementById(id); el.textContent=v?'on':'off'; el.classList.toggle('off',!v); };
-  on('mn-music-v',VRAudio.musicOn); on('mn-sfx-v',VRAudio.sfxOn); }
+  on('mn-music-v',VRAudio.musicOn); on('mn-sfx-v',VRAudio.sfxOn); on('mn-iff-v',iffOn); }
 tap('btn-menu',()=>{ miniOpen?closeMini():openMini(); });
 tap('mn-resume',()=>closeMini()); tap('mn-map',()=>miniMap()); tap('mn-jump',()=>openJump());
-tap('mn-music',()=>toggleMusic()); tap('mn-sfx',()=>toggleSfx());
+tap('mn-music',()=>toggleMusic()); tap('mn-sfx',()=>toggleSfx()); tap('mn-iff',()=>toggleIff());
 elMini.addEventListener('click',e=>{ if(e.target===elMini) closeMini(); });
 
 // ---- touch mode (TOUCH is decided up by the canvas setup) ----
@@ -3394,6 +3397,7 @@ function launchLancers(){
   goodBanner('STATION SCRAMBLES FIGHTERS','THREE LANCERS LAUNCHING FROM '+LV.post.toUpperCase()+' · THEY GUARD THE STATION',200);
 }
 function drawFighter(px,py,E,filter,max,col){
+  if(iffNow()){ g.save(); g.translate(px,py); g.scale(.85,.85); g.rotate(E.a); iffRing(cutterImg(),14,10,IFF_US); g.restore(); }   // ours
   g.save(); g.filter=filter; g.translate(px,py); g.scale(.85,.85); drawCutter(0,0,E.a,E.thrust,false); g.restore();
   if(E.hit>0){ g.fillStyle=`rgba(255,120,120,${E.hit/10})`; g.fillRect(px-6,py-6,12,12); }
   for(let i=0;i<max;i++){ g.fillStyle=i<E.hp?col:col+'33'; g.fillRect(px-7+i*4,py+13,3,2); }   // hull, in pips
@@ -3406,6 +3410,7 @@ function drawWing(toS){
   const D=derelict;
   if(D){ const[px,py]=toS(D.x,D.y);
     if(px>-60&&py>-60&&px<VW+60&&py<VH+60){
+      if(iffNow()){ g.save(); g.translate(px,py); g.rotate(D.a); iffRing(cutterImg(),14,10,IFF_US,.5); g.restore(); }
       g.save(); g.globalAlpha=.55; drawCutter(px,py,D.a,false,false); g.restore();   // dark and dead in the water
       if(D.hit>0){ g.fillStyle=`rgba(255,255,255,${D.hit/8})`; g.fillRect(px-6,py-6,12,12); }
       if((t>>4)&1){ g.fillStyle='#4dffa6'; g.fillRect(px-1,py-12,2,2); }   // her distress strobe
@@ -4097,6 +4102,7 @@ function setPause(p){
 function syncAudioUI(){ if(miniOpen) miniRefresh(); }   // (music and sound show their on/off in the menu)
 function toggleMusic(){ VRAudio.setMusic(!VRAudio.musicOn); syncAudioUI(); }
 function toggleSfx(){ VRAudio.setSfx(!VRAudio.sfxOn); syncAudioUI(); }
+function toggleIff(){ iffOn=!iffOn; try{ localStorage.setItem('vr-iff',iffOn?'1':'0'); }catch(e){} syncAudioUI(); VRAudio.sfx.ui(iffOn?'open':'close'); }   // the friend/foe outlines, on or off (remembered)
 
 // ---- explosions (longer + more dramatic, lethal blast) ----
 // size = the radius of the hull going up: the blast scales to it, and a core of fire blooms over the whole hull in a
@@ -4565,7 +4571,9 @@ function capDraw(S,px,py){ const C=CAP[S.kind], k=C.sc, al=S.warp>0?clamp(1-S.wa
   if(S.warp>0) g.scale(1+S.warp/70*1.6,1);   // (stretched along its line of flight as it drops out of warp)
   if(k!==1) g.scale(k,k);
   const dmg=Math.max(clamp(1-S.hp/S.maxhp,0,1)*(S.dying?1:.8),S.dark?.65:0);   // (scorched as it's hurt; powered down, it goes dark)
-  { const P=capSprite(S.kind); g.drawImage(P.img,-P.cx,-P.cy);
+  { const P=capSprite(S.kind);
+    if(!S.dying && !(S.warp>0) && !(S.out>0) && iffNow()) iffRing(P.img,P.cx,P.cy,S.side?IFF_THEM:IFF_US,S.dark?.3:IFF_A);
+    g.drawImage(P.img,-P.cx,-P.cy);
     if(dmg>.12){ g.globalAlpha=al*Math.min(.8,dmg); g.drawImage(P.burnt,-P.cx,-P.cy); g.globalAlpha=al; }
     if(P.eng && !S.dying){ const fl=(t>>1)&1;   // engines
       for(const [x,y,h] of P.eng){ const len=(S.kind==='carrier'?6:4)+fl*2; g.fillStyle=P.fl[0]; g.fillRect(x-len,y,len,h); g.fillStyle=P.fl[1]; g.fillRect(x-len-2,y+1,2,Math.max(1,h-2)); } }
@@ -6251,6 +6259,7 @@ function drawJob(px,py,j){   // the far objective itself: a reaver beacon, a hau
     jobBar(px,py-38,j.hp/j.maxhp,'#ff4d6d');
     jobLabel(px,py+40,'REAVER BEACON · '+fmtTime(Math.ceil(j.fuse/60)),j.fuse<1200&&(t>>3)&1?'#ffffff':'rgba(255,150,165,.9)');
   }else if(j.kind==='rescue'){
+    if(iffNow()){ const H=HULKS.hauler; g.save(); g.translate(px,py); g.rotate(j.a); iffRing(H.img,H.cx,H.cy,IFF_US); g.restore(); }
     drawHulk(px,py,{kind:'hauler',a:j.a});
     if(!j.free && (t>>4)&1){ g.fillStyle='#ff4d6d'; g.fillRect(px-1,py-24,2,2); }   // distress light
     jobBar(px,py-28,j.hp/j.maxhp,j.hp>20?'#4dffa6':j.hp>10?'#ffb347':'#ff4d6d');
@@ -6540,9 +6549,28 @@ function pirateShape(gg,e){
   if(e.type==='warden'){ gg.save(); gg.rotate(e.wob*2.2);   // the point-defense emitter sweeping for missiles
     gg.fillStyle='#6fd0e8'; gg.fillRect(0,-1,4,2); gg.fillStyle=blink?'#ffffff':'#9ff6ff'; gg.fillRect(3,-1,2,2); gg.restore(); }
 }
+// ---- friend or foe: a thin glowing outline round every ship but yours, green for our side and red for theirs, so you can tell
+// them apart at a glance whichever way they come at you. Each sprite's outline is cut once and kept. O or the menu turns it off,
+// and it's never drawn in a cutscene or on the title screen ----
+let iffOn=true; try{ iffOn=localStorage.getItem('vr-iff')!=='0'; }catch(e){}
+const IFF_US='#4dffa6', IFF_THEM='#ff4d6d', IFF_A=.8, RINGS=new Map();
+const iffNow=()=>iffOn && !cine && state!=='menu';
+function ringOf(img,col){ let m=RINGS.get(img); if(!m){ m={}; RINGS.set(img,m); } if(m[col]) return m[col];
+  const P=3, w=img.width+P*2, h=img.height+P*2, c=document.createElement('canvas'); c.width=w; c.height=h; const q=c.getContext('2d');
+  const layer=(r,a)=>{ const L=document.createElement('canvas'); L.width=w; L.height=h; const lq=L.getContext('2d');
+    for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++) if(dx*dx+dy*dy<=r*r+1) lq.drawImage(img,P+dx,P+dy);
+    lq.globalCompositeOperation='source-in'; lq.fillStyle=col; lq.fillRect(0,0,w,h); q.globalAlpha=a; q.drawImage(L,0,0); };
+  layer(2,.38); layer(1,1);   // a one-pixel line, and a faint pixel of glow outside it
+  q.globalAlpha=1; q.globalCompositeOperation='destination-out'; q.drawImage(img,P,P);   // (with the hull itself cut out of the middle)
+  return m[col]=c; }
+function iffRing(img,cx,cy,col,a){ const ga=g.globalAlpha; g.globalAlpha=ga*(a==null?IFF_A:a); g.drawImage(ringOf(img,col),-cx-3,-cy-3); g.globalAlpha=ga; }   // (in the sprite's own transform)
+let CUTTER_IMG=null;
+function cutterImg(){ if(CUTTER_IMG) return CUTTER_IMG;   // the cutter is drawn live: a still copy of it to cut an outline from
+  const c=document.createElement('canvas'); c.width=28; c.height=20; const g0=g; g=c.getContext('2d'); try{ drawCutter(14,10,0,false,false); } finally{ g=g0; } return CUTTER_IMG=c; }
 function drawPirate(px,py,e){
   g.save(); g.translate(px,py); g.rotate(e.a);
   if(e.warp>0) g.globalAlpha=clamp(1-e.warp/40,0,1);
+  else if(iffNow()){ const S=SHIPS[e.type]; iffRing(S.img,S.cx,S.cy,IFF_THEM); }   // theirs
   pirateShape(g,e); g.restore();
   if(e.alien && e.warp<=0){   // a clan captain: corner brackets and a name tag
     const rr=e.r+7, k=4; g.strokeStyle=(t>>4)&1?'rgba(255,77,109,.95)':'rgba(255,77,109,.55)'; g.lineWidth=1; g.beginPath();
@@ -6558,6 +6586,7 @@ function drawBoss(px,py,b){
   const S=SHIPS.boss, H=HULLS.boss, fl=(t>>1)&1, blink=(Math.sin(b.wob*2)>-.3), ours=b.ours;   // ours: a flagship you've taken, its lights cyan
   if(b.warp>0) g.globalAlpha=0.25+0.75*(1-b.warp/70);
   if(b.flee>0) g.globalAlpha=.25+.75*b.flee/80;   // thinning out as the jump drive takes it
+  if(!ours && !(b.warp>0) && !(b.flee>0) && !b.dying && iffNow()) iffRing(S.img,S.cx,S.cy,IFF_THEM);
   g.drawImage(S.img,-S.cx,-S.cy);
   // engine array
   for(const [x,y,h] of S.eng){ const len=4+fl*3;
@@ -7804,6 +7833,7 @@ SHIPS.ark=paintArk();
 function drawArk(px,py,b){
   const S=SHIPS.ark, fl=(t>>1)&1; g.save(); g.translate(px,py); g.rotate(b.a);
   if(b.warp>0) g.globalAlpha=.25+.75*(1-b.warp/70);
+  else if(!b.dying && iffNow()) iffRing(S.img,S.cx,S.cy,IFF_THEM);
   g.drawImage(S.img,-S.cx,-S.cy);
   for(const [x,y,h] of S.eng){ const len=5+fl*4; g.fillStyle='#c8ffe4'; g.fillRect(x-len,y,len,h); g.fillStyle='#3aff9a'; g.fillRect(x-len-3,y+2,3,h-4); }
   g.globalAlpha=1; g.restore();

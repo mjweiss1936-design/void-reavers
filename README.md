@@ -12,6 +12,8 @@ Or open `void-reavers.html` in a browser.
 
 The cutter flies like a spaceship: it glides a long way after every burn and slows only gently, so start your stops early. The retro thrusters stop you faster.
 
+Ships come at you from every direction, so every ship but yours has a thin glowing outline: **green** for our side (wingmen, escorts, the station's fighters, Earth's warships, a hauler you're saving) and **red** for theirs (reavers, the flagships, her warships, the ark). Turn it off with **O** or from the menu.
+
 In the first sector your cutter's shields are dead, so one hit destroys it. Clear that sector and the yard crews rebuild the shields: from then on every cutter has **three shield cells**. Each cell soaks one hit, and they charge back when you stay out of the fire for a few seconds.
 
 When a cutter is destroyed, you eject in a space suit with a single thruster, no brakes and 60 seconds of air, and must fly back to the station for a new cutter. If you're hit or run out of air on the way, the run is over.
@@ -96,6 +98,7 @@ Add `?touch` to the address to try touch mode with a mouse.
 - **Sector map**
 - **Jump to…** any part of the campaign
 - **Music** and **Sound effects**, on or off
+- **Friend/foe outlines**, on or off (**O**). The game remembers your choice.
 
 ## Jumping around
 
