@@ -36,7 +36,16 @@ The Cerebrant was only a steward. Partway through the medal ceremony, a whole fl
   Hold the Resolute and her armorers refit your cutter: **proton torpedoes** and **five shield cells** from here on (see below).
 - **Earth:** Earth sits just below Skyhook Station with the Moon beyond it, and the rest of the solar system's planets are out across the sector. Defend the station through three hordes, with half of each horde going for the station. All the while, the fleets are at war around you (see below). When the last horde breaks, the fleet strips the shield off the Matriarch's flagship. Then you silence its four gun batteries, with lasers, missiles or torpedoes, and leave the hull in one piece.
 - **Boarding:** Skyhook's personnel carrier brings a fresh squad of marines and clamps onto the crippled flagship's hull at its stern. Take them through it, chamber by chamber toward the bow. Each chamber has a nerve node feeding its brood pits: burn the node out and those pits go dead, so nothing comes at you from behind. With all three gone, the membrane over the helm opens. Then hold the helm while the ship throws everything it has at you. Get knocked down three times and the boarding fails.
-- **Broodhome:** fly the captured flagship to the clans' homeworld, with the Home Fleet jumping in behind you. It has eight shield cells, a three-gun broadside, twin torpedo tubes and its own point defence, but it turns slowly. Survive two hordes. Then knock out the three spore pylons feeding the shield on the Matriarch's ark, and the whole fleet turns its lances on her.
+- **Broodhome:** fly the captured flagship to the clans' homeworld, with the Home Fleet jumping in behind you. Skyhook's yard crews refit it before the jump, and it turns slowly, but it's the strongest thing you'll ever fly:
+  - **A vast shield:** a bubble of light round the whole hull, with twelve cells. A reaver's bolt only dents it, and it takes four bolts to knock out a cell. Shells, lances and rams still cost a whole cell. The cells charge back twice as fast as a cutter's.
+  - **Four torpedo tubes:** every shot is a salvo of four, from a rack of eight that reloads faster. The warheads hit harder too.
+  - A three-gun broadside and its own point defence.
+
+  Survive two hordes. Then knock out the three spore pylons feeding the shield on the Matriarch's ark, and the whole fleet turns its lances on her.
+- **The end:** her ark tears itself apart for five seconds, and the camera swings round to watch it. Then it goes up like a small sun. The blast wave races out across the whole battle, and what's left of her line goes up with her. Then:
+  - The fleet jumps home to Earth, with fireworks going off across the darkening side of the planet.
+  - On the waterfront at New Geneva, half a million people watch you fly over through the fireworks.
+  - On the Resolute's command deck, with Earth in the window, Commander Varga pins the Solar Cross on you.
 
 If the carrier falls or the boarding fails, you play that fight again from the start.
 
@@ -51,7 +60,7 @@ From Earth on, you have a third weapon: blue proton torpedoes (**3** on a keyboa
   - One torpedo silences a battery on her flagship or knocks out a pylon round the ark. Once the ark's shield is down, torpedoes burn the ark itself.
   - They never hurt you or our side.
 - **The rack:** it holds six. It starts reloading a moment after your last shot, one torpedo every two and a half seconds.
-- **The flagship:** the captured flagship fires them in pairs.
+- **The flagship:** the captured flagship fires them four at a time. Its rack holds eight and reloads faster, and its warheads have a bigger blast.
 - **Shields:** her own flagship's shield and the ark's still hold until the fleet strips them or the pylons fall. A torpedo just splashes off.
 
 ### The fleets at war
@@ -72,7 +81,7 @@ Touch screens get a touch mode, played in landscape:
 - **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. From Earth on, **TORP** (above MISSILE) fires proton torpedoes. Tap **BRAKE** to come to a dead stop, or hold it to slow down.
 - **Corner map:** tap it for the full sector map, and tap anywhere to put it away.
 - **☰:** the menu (see below).
-- **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight. On a short screen, like Safari's under its toolbar and tab bar, the buttons and the cutscene radio get smaller still.
+- **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight. The captured flagship's twelve shield cells show as a count. On a short screen, like Safari's under its toolbar and tab bar, the buttons and the cutscene radio get smaller still.
 - **On foot:** push the left thumb the way you want to run, and hold **FIRE** to shoot. Your rifle finds the nearest boarder for you, or a charge first if one's ticking. Tap **ROLL** (where MISSILE is in space) to jump and roll the way you're running, clear of their bolts. Slide your thumb onto it from FIRE and you keep shooting as you go.
 - **Cutscenes:** tap to move the dialogue on, or **SKIP** to jump ahead.
 
