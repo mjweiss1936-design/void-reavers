@@ -832,6 +832,9 @@ function crowd(d,vol){ if(!live()||!gate('crowd',900)) return; const t=ac.curren
   const v=ac.createGain(); v.gain.setValueAtTime(.001,t); v.gain.exponentialRampToValueAtTime(1,t+Math.min(1.2,d*.3)); v.gain.setValueAtTime(1,t+d*.7); v.gain.exponentialRampToValueAtTime(.001,t+d); v.connect(o);
   for(const [f,q,a] of [[520,1.3,.9],[1150,1.5,.65],[2500,2,.3]]){ const m=gain(a,v); const b=filt('bandpass',f,q,m); nz(t,d,b); }
   for(let i=0;i<Math.floor(d*1.2);i++){ const s=t+R(.2,Math.max(.3,d-.8)), f0=R(480,880); sweep(osc('triangle',f0,s,.45,filt('bandpass',f0*1.4,3,vca(s,.07,.06,.36,o))).frequency,f0,f0*R(1.3,1.8),s,.3); } }
+function thud(x,y){ if(!live()||!gate('thud',70)) return; const P=place(x,y,900); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.34,.15);   // someone hitting the deck: a dull, soft thump
+  sweep(osc('sine',96,t,.2,vca(t,1,.002,.17,o)).frequency,96,44,t,.16);
+  nz(t,.08,filt('lowpass',520,1,vca(t,.45,.002,.07,o))); }
 function charge(x,y,k){ if(!live()||!gate('chargeT',60)) return; const P=place(x,y,1000); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.075,.08), f0=900+k*900;   // a boarder's charge ticking down: a hard double blip that climbs as the fuse burns
   for(const d of [0,.07]) osc('square',f0*(d?1.26:1),t+d,.04,filt('lowpass',3200,null,vca(t+d,1,.001,.035,o))); }
 // the capital ships' war: a gun firing out across the gap (a deep thud and a crack), a lance spooling up (a rising whine),
@@ -931,7 +934,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
            klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash,
-           cannon,lanceCharge,lanceFire,charge,torpedo,proton,rumble,nova,fwork,crowd};
+           cannon,lanceCharge,lanceFire,charge,torpedo,proton,rumble,nova,fwork,crowd,thud};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -6769,7 +6772,7 @@ function startDeck(kind){
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(M.polys.some(P=>inPoly(P,x+.5,y+.5))) grid[y*W+x]=0;
   for(const p of M.props) for(let y=p.y;y<p.y+p.h;y++) for(let x=p.x;x<p.x+p.w;x++) if(grid[y*W+x]===0) grid[y*W+x]=2;
   const at=(p)=>({cx:(p.x+p.w/2)*DT, cy:(p.y+p.h/2)*DT});
-  DK={kind, map:M, W, H, grid, t:0, open:false, units:[], bolts:[], beams:[], fx:[], pops:[], fields:{}, cam:{x:0,y:0,set:false}, banner:null, art:null, decal:null, mini:null,
+  DK={kind, map:M, W, H, grid, t:0, open:false, units:[], bolts:[], beams:[], fx:[], pops:[], falls:[], fields:{}, cam:{x:0,y:0,set:false}, banner:null, art:null, decal:null, mini:null,
     sys:M.props.filter(p=>p.kind==='sys').map(p=>({...p,...at(p),name:{B:'BRIDGE',R:'REACTOR',E:'ENGINES'}[p.k],hp:100,max:100,dead:false,hackT:-999,hitT:-999,low:false,scars:[]})),
     nodes:M.props.filter(p=>p.kind==='node').sort((a,b)=>a.x-b.x).map((p,i)=>({...p,...at(p),hp:240,max:240,dead:false,r:22,hitT:-999,c:i})),   // (left to right: node 0 feeds the first chamber's pits)
     helm:M.props.filter(p=>p.kind==='helm').map(p=>({...p,...at(p),prog:0}))[0]||null,
@@ -6950,13 +6953,32 @@ function dkHurtCrew(u,dmg,b){   // (b: the bolt that hit, if one did)
   u.hp-=dmg*K.dmgMul*(u.post?.6:1); u.flash=6; u.hitT=K.t;   // (a fire team holding a system is dug in: it takes less)
   if(u.hp<=0){ const team=u.post?K.units.reduce((a,v)=>a+(v.kind==='bot'&&!v.dead&&v.post===u.post?1:0),0):0;
     if(left<=2 || team===1){ u.hp=.5; return; }   // (the last couple hang on, whatever happens; and so does the last man holding a system)
-    dkBotDown(u,left-1); }
+    dkBotDown(u,left-1,b); }
 }
-function dkBotDown(u,left){ const K=DK; u.dead=true;
-  dkSparks(u.x,u.y-LIFT,'#ffd27a',10); dkSparks(u.x,u.y-LIFT,'#ff9a3d',8); K.fx.push({fire:1,x:u.x,y:u.y-LIFT*.7,life:16,max:16,r:12}); dkScorch(u.x,u.y);
-  VRAudio.sfx.explode(u.x,u.y,'small',.4);
+function dkBotDown(u,left,b){ const K=DK; u.dead=true;
+  dkFall(u,b); VRAudio.sfx.hit(u.x,u.y);   // (he goes down: see dkFall)
   if(left===10||left===5||left===3) say('cmd','crewLow',{n:left},2); else if(cool('botDown',420)) say('cmd','botDown',null,1);
 }
+// a marine going down: no blast, nothing gory. He keels over sideways (the way the shot was going), lands with a thud, and lies
+// there with a small pool of blood spreading out from under him, his rifle beside him
+const FALL_T=22, POOL_T=80;
+function dkFall(u,b){ const L=dkLook(u), dir=b&&Math.abs(b.vx)>.2?Math.sign(b.vx):(Math.random()<.5?-1:1);
+  DK.falls.push({x:u.x,y:u.y,S:L.S,fl:L.fl,dir,t:0,r:rnd(4.6,6),gy:rnd(-1.5,1.5)}); }
+function dkLanded(F){ const x=F.x+F.dir*11, y=F.y;   // the thud, and a little dust
+  for(let i=0;i<6;i++){ const a=rnd(Math.PI,TAU), s=rnd(.3,1); DK.fx.push({x:x+rnd(-8,8),y,vx:Math.cos(a)*s,vy:Math.sin(a)*s*.5,life:rnd(10,18),max:18,col:'#5a5e6a',r:1}); }
+  VRAudio.sfx.thud(x,y); }
+function dkDeadSpr(S){ if(S.dead) return S.dead;   // his sprite, gone dark
+  const c=document.createElement('canvas'); c.width=S.c.width; c.height=S.c.height; const q=c.getContext('2d');
+  q.drawImage(S.c,0,0); q.globalCompositeOperation='source-atop'; q.fillStyle='rgba(14,12,20,.42)'; q.fillRect(0,0,c.width,c.height); return S.dead=c; }
+function dkDrawFallen(F,x,y){ const S=F.S, k=Math.min(1,F.t/FALL_T), a=F.dir*Math.PI/2*k*k, down=F.t>=FALL_T;   // (he topples faster as he goes, like anything falling)
+  if(down){ const p=easeOut(Math.min(1,(F.t-FALL_T)/POOL_T)), r=F.r*p, px=x+F.dir*12, py=y+5;   // the pool, under him and spreading
+    if(r>.4){ g.fillStyle='#5c0a13'; g.beginPath(); g.ellipse(px,py,r*1.5,r*.72,0,0,TAU); g.fill(); g.beginPath(); g.ellipse(px-F.dir*5,py+1.5,r*.85,r*.45,0,0,TAU); g.fill();
+      g.fillStyle='#86121d'; g.beginPath(); g.ellipse(px+F.dir*2,py+.5,r*.9,r*.4,0,0,TAU); g.fill();
+      if(p>.5){ g.fillStyle='#d23440'; g.fillRect(Math.round(px+F.dir*r*.5),Math.round(py+r*.3),1,1); } }   // (and the one bright red pixel catching the light)
+    g.save(); g.translate(x+F.dir*9,y-8+F.gy); g.rotate(F.dir*.35); g.fillStyle='#2a2f3a'; g.fillRect(-4.5,-1,9,2); g.fillStyle='#4a5262'; g.fillRect(-4.5,-1,9,.5); g.restore(); }   // his rifle, dropped beside him
+  else { g.fillStyle='rgba(0,0,0,.3)'; g.fillRect(x-8+F.dir*k*8,y-1,16,3); }   // (his shadow, stretching out as he goes over)
+  g.save(); g.translate(x,y); g.rotate(a); g.scale(F.fl?-1:1,1);
+  g.drawImage(down?dkDeadSpr(S):S.c,-(S.w>>1),-(S.h-2),S.w,S.h); g.restore(); }
 function dkYouDown(){ const K=DK, P=K.you; P.down=K.kind==='defend'?240:200; P.hp=0; downs++; score=Math.max(0,score-300);
   VRAudio.sfx.alarm(); dkSparks(P.x,P.y-LIFT,'#ff4d6d',16); shake=Math.min(shake+10,20);
   if(K.kind==='assault' && ++K.knock>=3){ dkLose('crew'); return; }
@@ -7285,6 +7307,7 @@ function deckTick(){
     p.x+=p.vx; p.y+=p.vy; p.vx*=p.drop?.9:.94; p.vy*=p.drop?.9:.94; if(p.drop) p.vy+=.16;
     if(p.floor!=null && p.y>=p.floor && p.vy>0){ if(p.bounce){ p.y=p.floor; p.vy*=-.45; p.vx*=.7; if(p.vy>-.3) p.life=Math.min(p.life,4); } else { dkLand(p); p.life=0; } } }   // (sparks bounce; goo lands, and stays)
   K.fx=K.fx.filter(p=>p.life>0); for(const b of K.beams) b.life--; K.beams=K.beams.filter(b=>b.life>0);
+  for(const F of K.falls) if(F.t<FALL_T+POOL_T && ++F.t===FALL_T) dkLanded(F);
   K.kick.x*=.7; K.kick.y*=.7; if(K.hurtT>0) K.hurtT--;
   for(const p of K.pops) p.life--; K.pops=K.pops.filter(p=>p.life>0);
   for(const p of K.pods) p.t++;
@@ -7630,8 +7653,10 @@ function dkFrame(){
   if(K.helm && K.open && on(K.helm.cx,K.helm.cy,90)){ const H=K.helm;   // where you stand to take the helm
     g.strokeStyle='rgba(159,246,255,.35)'; g.lineWidth=1; g.setLineDash([4,4]); g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,0,TAU); g.stroke(); g.setLineDash([]);
     if(H.prog>0){ g.strokeStyle='#9ff6ff'; g.lineWidth=4; g.beginPath(); g.arc(H.cx-cx,H.cy-cy,DT*3.6,-Math.PI/2,-Math.PI/2+H.prog*TAU); g.stroke(); } }
+  for(const F of K.falls) if(F.t>=FALL_T && on(F.x,F.y,40)) dkDrawFallen(F,h2(F.x-cx),h2(F.y-cy));   // the fallen, where they lie
   // everything standing on the deck, back to front: the props, the systems, the nodes, the helm, and everyone in the fight
   const L=[];
+  for(const F of K.falls) if(F.t<FALL_T && on(F.x,F.y,44)) L.push({k:F.y,F});
   for(const s of K.props) if(on(s.x+s.w/2,s.key,s.w/2+90)) L.push({k:s.key,s});
   for(const S of K.sys) if(on(S.cx,S.cy,100)) L.push({k:(S.y+S.h)*DT,S});
   for(const n of K.nodes) if(on(n.cx,n.cy,70)) L.push({k:(n.y+n.h)*DT,n});
@@ -7659,6 +7684,7 @@ function dkFrame(){
     else if(it.H) dkDrawHelm(it.H,it.H.x*DT-cx,it.H.y*DT-cy,K);
     else if(it.m) dkDrawMembrane(it.m,it.m.x*DT-cx,it.m.y*DT-cy,K);
     else if(it.c) dkDrawCharge(it.c,h2(it.c.x-cx),h2(it.c.y-cy),K);
+    else if(it.F) dkDrawFallen(it.F,h2(it.F.x-cx),h2(it.F.y-cy));
     else { const u=it.u, x=h2(u.x-cx), y=h2(u.y-cy);
       if(u.kind!=='you') dkDrawUnit(u,x,y); else if(u.down>0) dkDrawDowned(x,y,K); else if(!(u.inv>0 && (K.t>>2)&1)) dkDrawUnit(u,x,y); } }
   for(const b of K.bolts){ const x=b.x-cx, y=b.y-b.h-cy, sp=Math.hypot(b.vx,b.vy)||1, ux=b.vx/sp, uy=b.vy/sp, R=(b.big?3.2:2.5)*(1+.22*Math.sin((K.t+b.ph)*.7));   // their bolts: hot red slugs, pulsing, with a tail
@@ -8569,6 +8595,7 @@ const vrDebug1=window.vrDebug;   // (the snapshot for automated playtests, with 
 window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bossBoardT, world:LV.world||null, crippled:!!(boss&&boss.crippled), ark:!!(boss&&boss.ark),
   deck:DK&&{kind:DK.kind,t:DK.t,wave:DK.wave,rest:DK.rest,q:DK.q.length,open:DK.open,knock:DK.knock,done:DK.done,lost:DK.lost,banner:DK.banner&&DK.banner.title,
     killed:DK.killed,total:DK.total,dmgMul:+DK.dmgMul.toFixed(2),preferBots:DK.preferBots,cam:{...DK.cam},bolts:DK.bolts.length,beams:DK.beams.length,
+    falls:DK.falls.map(F=>({x:Math.round(F.x),y:Math.round(F.y),t:F.t,dir:F.dir})),
     you:{x:DK.you.x,y:DK.you.y,hp:DK.you.hp,down:DK.you.down,inv:DK.you.inv,a:DK.you.a,da:DK.you.da,dash:DK.you.dash,dashCd:DK.you.dashCd}, stop:DK.stop, streak:DK.streak, fx:DK.fx.length,
     bots:DK.units.filter(u=>u.kind==='bot'&&!u.dead).map(u=>({x:u.x,y:u.y,hp:+u.hp.toFixed(2),tgt:!!u.tgt,post:u.post?u.post.k:null})),
     charges:DK.charges.map(c=>({x:c.x,y:c.y,t:c.t,fuse:c.fuse,hp:c.hp,sys:c.S.k})), rally:DK.rally||null, split:DK.split, dash:DK.you.dash,
