@@ -6443,7 +6443,7 @@ const DFOE={   // the boarders: hit points, speed, size, frames between shots, b
   blob: {hp:2, sp:1.2, r:9,  cool:[56,86],  n:1, spread:0,   range:240, pts:150, goo:'#e0283a', mz:8},
   brute:{hp:7, sp:.8,  r:10, cool:[76,104], n:3, spread:.22, range:260, pts:400, goo:'#c42a52', mz:12}   // (drawn big, but its footing fits the narrow gaps)
 };
-const CREW_N=20, BOT_HP=3, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=420, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck · DK_REST: the breather between waves, long enough to move up a section)
+const CREW_N=20, BOT_HP=6, YOU_HP=10, BOLT_SP=3.3, DK_HACK=.024, DK_REST=420, LIFT=10;   // (LIFT: how high a rifle, and a bolt in flight, is off the deck · DK_REST: the breather between waves, long enough to move up a section)
 // the waves come aboard section by section, stern to bow, so you clear the ship one way and never double back: the first at
 // engineering, the second amidships (the crew deck and the reactor), and the last everywhere at once, the bow first and the rest
 // a little after (that's when your squad splits up to hold them). go: [section, frames after the first pod, the system they're after]
@@ -6629,22 +6629,25 @@ function dkBeam(u,x1,y1,tgt,dmg){   // a laser from u's rifle to (x1,y1), hurtin
   if(you){ u.shotT=K.t; K.beams.push({u,x0:mx,y0:my,x1,y1:y1-hy,life:9,max:9,you:1});   // yours: a heavy bolt of light that burns down to nothing
     K.fx.push({flare:1,x:mx,y:my,a:Math.atan2(y1-hy-my,x1-mx),life:3,max:3});   // the muzzle flash
     K.kick.x-=c*1.8; K.kick.y-=s*1.2; }   // (the view kicks back as it fires)
-  else { const tt=clamp(Math.round(Math.hypot(x1-mx,y1-hy-my)/55),2,5); K.beams.push({u,x0:mx,y0:my,x1,y1:y1-hy,life:tt+2,max:tt+2,tt}); }   // the marines': tracers that streak down the line
-  if(tgt) dkHurt(tgt,dmg,x1,y1-hy,you?a:null);
+  else { const tt=clamp(Math.round(Math.hypot(x1-mx,y1-hy-my)/55),2,5); K.beams.push({u,x0:mx,y0:my,x1,y1:y1-hy,life:tt+3,max:tt+3,tt});   // the marines': heavy tracers that streak down the line,
+    K.fx.push({flare:1,mar:1,x:mx,y:my,a:Math.atan2(y1-hy-my,x1-mx),life:2,max:2}); }   // each with a flash at the muzzle
+  if(tgt) dkHurt(tgt,dmg,x1,y1-hy,you?a:null,you?null:a);
   else if(you) dkWallHit(x1,y1);
-  else dkSparks(x1,y1-LIFT,'#9ff6ff',3);
+  else { dkSparks(x1,y1-LIFT,'#9ff6ff',5); K.fx.push({flare:1,mar:1,hit:1,x:x1,y:y1-LIFT,a,life:3,max:3}); }
 }
 function dkWallHit(x,y){ const K=DK, hy=y-LIFT;   // your shot burns into the wall: a white-hot mark that cools to red, and sparks that bounce off the deck
   K.fx.push({hot:1,x,y:hy,life:46,max:46}); dkSoot(x,hy,rnd(3,4.5));
   for(let i=0;i<5;i++){ const a=rnd(0,TAU), sp=rnd(.8,2.4); K.fx.push({x,y:hy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1.4,life:ri(16,28),max:28,col:Math.random()<.5?'#ffffff':'#ffd27a',r:1,drop:1,floor:y+rnd(-3,5),bounce:1}); } }
-function dkHurt(t,dmg,hx,hy,a){   // a: your shot's angle. Yours land hard: they knock a boarder back and leave it reeling
-  const K=DK, you=a!=null;
+function dkHurt(t,dmg,hx,hy,a,ma){   // a: your shot's angle (yours land hard: they knock a boarder back and leave it reeling) · ma: a marine's
+  const K=DK, you=a!=null, mar=ma!=null;
   if(you) K.fx.push({flare:1,hit:1,x:hx,y:hy,a,life:4,max:4});   // a star of light where it hits
+  else if(mar) K.fx.push({flare:1,mar:1,hit:1,x:hx,y:hy,a:ma,life:3,max:3});   // (a marine's, a smaller one)
   if(t.charge){ if(t.dead) return; t.hp-=dmg; t.hitT=K.t; dkSparks(hx,hy,'#e6a8ff',5); if(t.hp<=0) dkDefuse(t); return; }   // a charge on a machine
   if(t.max && t.cx!=null){ t.hp-=dmg; t.hitT=K.t; dkSparks(hx,hy,'#ff8ad8',you?6:4); if(t.hp<=0) dkNodeDown(t); return; }   // a nerve node
-  const T=DFOE[t.kind]; t.hp-=dmg; t.flash=6; t.hitT=K.t; t.jv+=(you?.12:.05)*(t.kind==='brute'?.5:1);   // (a water balloon: it wobbles. A brute's a heavier one)
+  const T=DFOE[t.kind]; t.hp-=dmg; t.flash=6; t.hitT=K.t; t.jv+=(you?.12:mar?.09:.05)*(t.kind==='brute'?.5:1);   // (a water balloon: it wobbles. A brute's a heavier one)
   if(you){ const kb=t.kind==='brute'?.9:t.kind==='blob'?1.9:2.4; t.vx+=Math.cos(a)*kb; t.vy+=Math.sin(a)*kb;
     if(t.stunCd<=0){ t.stun=t.kind==='brute'?9:6; t.stunCd=t.kind==='brute'?40:12; } }   // (a brute staggers, then it's had enough of that for a while)
+  else if(mar){ const kb=t.kind==='brute'?.3:t.kind==='blob'?.8:1; t.vx+=Math.cos(ma)*kb; t.vy+=Math.sin(ma)*kb; }   // (a marine's shot shoves it back a little too)
   if(t.hp<=0) dkPop(t,you); else { dkDroplets(t.x,t.y-LIFT,T.goo,you?7:5,1.6,t.y); VRAudio.sfx.hit(t.x,t.y); }
 }
 function dkFire(u){   // a boarder's volley: bolts at whoever it's after, spat from its mouth
@@ -6656,7 +6659,7 @@ function dkFire(u){   // a boarder's volley: bolts at whoever it's after, spat f
   VRAudio.sfx.eshot(u.x,u.y,u.kind==='brute');
 }
 function dkPop(f,you){   // and they pop like water balloons. Yours with a beat of hit-stop, a flash of their colour, and a streak if you keep it up
-  const K=DK, T=DFOE[f.kind], big=f.kind==='brute'; f.dead=true; K.killed++; kills++;
+  const K=DK, T=DFOE[f.kind], big=f.kind==='brute'; f.dead=true; K.killed++; kills++; K.lastKillT=K.t;
   let pts=T.pts, n=0;
   if(you){ K.streak=K.t-K.streakT<=80?K.streak+1:1; K.streakT=K.t; n=K.streak; if(n>1) pts+=20*Math.min(n-1,10); }   // (each kill within a second and a bit of the last: +20 more, up to +200)
   score+=pts; K.pops.push({x:f.x,y:f.y-24,txt:'+'+pts+(n>1?'  ×'+n:''),col:n>1?'#9ff6ff':'#ffd27a',life:50,big:n>2});
@@ -6747,15 +6750,15 @@ function dkAutoTarget(P){ let best=null, bs=1e9;
 function dkBot(u){
   const K=DK, P=K.you;
   if(u.cool>0) u.cool--; if(u.aimT>0) u.aimT--; if(u.flash>0) u.flash--;
-  if(--u.tgtT<=0){ u.tgtT=10+ri(0,6); u.tgt=dkTarget(u,240,false); }
+  if(--u.tgtT<=0){ u.tgtT=10+ri(0,6); u.tgt=dkTarget(u,260,false); }
   if(u.tgt && (u.tgt.dead||u.tgt.down||u.tgt.emerge>0)) u.tgt=null;
-  if(u.tgt && u.cool<=0 && !K.boom){ u.cool=u.post?ri(24,36):ri(34,52); const t=u.tgt, tx=t.cx??t.x, ty=t.cy??t.y;   // (a fire team dug in at a system fires faster, and surer)
-    if(Math.random()<(u.post?.85:.7)) dkBeam(u,tx,ty,t,1); else { const [ex,ey]=dkRay(u.x,u.y,Math.atan2(ty-u.y,tx-u.x)+rnd(-.14,.14),300); dkBeam(u,ex,ey,null,0); }
+  if(u.tgt && u.cool<=0 && !K.boom){ u.cool=u.post?ri(20,30):ri(28,42); const t=u.tgt, tx=t.cx??t.x, ty=t.cy??t.y;   // (a fire team dug in at a system fires faster, and surer)
+    if(Math.random()<(u.post?.9:.82)) dkBeam(u,tx,ty,t,1.5); else { const [ex,ey]=dkRay(u.x,u.y,Math.atan2(ty-u.y,tx-u.x)+rnd(-.14,.14),300); dkBeam(u,ex,ey,null,0); }   // (a marine's hit puts a squid down; a blob takes two)
     VRAudio.sfx.zap(u.x,u.y,false); }
   if(u.post){ const S=u.post;   // the last wave: a fire team holding a system, round it, until it's lost (then they come and find you)
     if(S.dead || K.done) u.post=null;
     else { const d=Math.hypot(S.cx-u.x,S.cy-u.y), hold=Math.max(S.w,S.h)*DT*.5+DT*2.2;
-      let foe=null; if(!u.tgt && d<hold+80){ let bd=1e9; for(const f of K.units) if(f.side===1 && !f.dead && f.hack===S){ const fd=Math.hypot(f.x-u.x,f.y-u.y); if(fd<bd){ bd=fd; foe=f; } } }
+      let foe=null; if(!u.tgt && d<hold+80){ let bd=1e9; for(const f of K.units) if(f.side===1 && !f.dead && f.emerge<=0 && (f.hack===S || Math.hypot(f.x-S.cx,f.y-S.cy)<150)){ const fd=Math.hypot(f.x-u.x,f.y-u.y); if(fd<bd){ bd=fd; foe=f; } } }
       const dir=foe?dkFollow(u,dkField('pf'+S.k,()=>[[Math.floor(foe.x/DT),Math.floor(foe.y/DT)]],20))   // one at the machine they can't see from here (it's round the far side): go round to it
         :d>hold?dkFollow(u,dkField('sys'+S.k,()=>dkAround(S))):null;
       dkMove(u,dir?dir[0]:0,dir?dir[1]:0,d>hold+150?2.05:1.45); return; } }
@@ -6778,7 +6781,7 @@ function dkFoe(f){
   else f.wind=0;
   let F=null;
   if(f.goal==='sys' && !K.boom){ let S=f.sys; if(!S||S.dead) S=f.sys=dkNearSys(f);
-    if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.max(S.w,S.h)*DT*.5+DT*1.3){ f.hack=S; S.hackT=K.t; if(f.aimT<=0) f.a=Math.atan2(S.cy-f.y,S.cx-f.x);   // at the system: going at it
+    if(S){ if(Math.hypot(S.cx-f.x,S.cy-f.y)<Math.hypot((S.w/2+1.1)*DT,(S.h/2+1.1)*DT)){ f.hack=S; S.hackT=K.t; if(f.aimT<=0) f.a=Math.atan2(S.cy-f.y,S.cx-f.x);   // at the system (anywhere on the ring of tiles round it, corners too): going at it
         if(cool('hack'+S.k,720)){ say('cmd','deckHack',{sys:S.name.toLowerCase()},2); VRAudio.sfx.alarm(); }
         if(f.sapper){ if(!f.plant) f.plant=DK_PLANT; if(--f.plant<=0){ dkPlant(f,S); f.sapper=false; f.goal='hunt'; f.hack=null; } dkMove(f,0,0,0); return; }   // a sapper plants its charge, then goes hunting
         if(--f.strike<=0){ f.strike=Math.round(DK_STRIKE[f.kind]*rnd(.85,1.15)); dkStrike(f,S); }   // the rest go at it: a squid's jolts, a blob's acid, a brute's fists
@@ -6855,6 +6858,8 @@ function defendTick(){ const K=DK;
   dkCharges(); dkWounds();
   if(K.rally && K.rest<=0 && Math.hypot(K.rally.x-K.you.x,K.rally.y-K.you.y)<120) K.rally=null;   // (you've moved up: the marker's done its job)
   if(K.rest>0){ if(--K.rest===0) dkWave(); return; }
+  if(!K.q.length && K.t-(K.lastKillT||0)>900){ const left=K.units.filter(u=>u.side===1&&!u.dead&&u.emerge<=0);   // (the last few stragglers of a wave, no kills in a while: they come looking for you, so a wave can't stall)
+    if(left.length && left.length<=4) for(const f of left) if(f.goal!=='hunt'){ f.goal='hunt'; f.sys=null; f.sapper=false; f.hack=null; } }
   if(K.q.length || K.charges.length || K.units.some(u=>u.side===1&&!u.dead)) return;   // (a wave's not beaten while a charge is still ticking)
   if(K.wave>=DWAVES.length){ dkWin(); return; }
   K.rest=DK_REST; const bonus=1000*K.wave; score+=bonus;
@@ -7032,7 +7037,8 @@ function deckTick(){
   if(K.t%30===0){   // the fight's director: by the end only two or three bots should still be standing
     const bots=K.units.reduce((a,u)=>a+(u.kind==='bot'&&!u.dead?1:0),0), done=K.nodes.filter(n=>n.dead).length;
     const p=K.kind==='defend'?(K.killed+K.aboard)/K.total/2:Math.min(1,done*.25+(K.helm?K.helm.prog*.25:0));   // (aboard: the losses come while the boarders pour in)
-    const want=CREW_N-18*clamp(p/.88,0,1)**(K.kind==='defend'?1.8:1.3); /* (most of the squad lasts most of the fight; the heavy losses come at the end: aboard the Resolute, in the last wave, once they've split up) */ K.dmgMul=clamp(1+.35*(bots-want),.2,3); K.fireMul=clamp(1-.06*(bots-want),.5,1.3); K.preferBots=bots-want>1.5; }
+    const want=CREW_N-8*clamp(p/.9,0,1)**1.6; /* (tough as they are now, a dozen or so should still be standing at the end, the losses mostly late) */
+    K.dmgMul=clamp(1+.25*(bots-want),.5,2.5); K.fireMul=clamp(1-.04*(bots-want),.8,1.2); K.preferBots=bots-want>2; }
   dkPlayer();
   for(const u of K.units){ if(u.dead) continue; if(u.kind==='bot') dkBot(u); else if(u.side===1) dkFoe(u); }
   dkSeparate(); dkBolts(); for(const u of K.units) if(!u.dead) dkTurn(u);
@@ -7412,8 +7418,9 @@ function dkFrame(){
       g.globalAlpha=Math.min(1,k*1.5); g.strokeStyle='#2fb8ff'; g.lineWidth=4.4*w; seg(x0,y0,x1,y1);
       g.strokeStyle='#bff9ff'; g.lineWidth=2.4*w; seg(x0,y0,x1,y1); g.strokeStyle='#ffffff'; g.lineWidth=.6+.9*w; seg(x0,y0,x1,y1);
       if(age<3){ const h=(age+1)/3, hx=x0+dx*h, hy=y0+dy*h, t=Math.min(L*h,28); g.globalAlpha=1; g.lineWidth=3.2; seg(hx-dx/L*t,hy-dy/L*t,hx,hy); } }
-    else { const h=Math.min(1,(age+1)/b.tt), hx=x0+dx*h, hy=y0+dy*h, t=Math.min(L*h,20);   // a marine's: a tracer streaking down the line
-      g.globalAlpha=age<b.tt?1:.45; g.strokeStyle='#43a8ff'; g.lineWidth=2.2; seg(hx-dx/L*t,hy-dy/L*t,hx,hy); g.strokeStyle='#e8f8ff'; g.lineWidth=1; seg(hx-dx/L*t*.6,hy-dy/L*t*.6,hx,hy); } }
+    else { const h=Math.min(1,(age+1)/b.tt), hx=x0+dx*h, hy=y0+dy*h, t=Math.min(L*h,34);   // a marine's: a heavy tracer streaking down the line, a white-hot head on a long blue tail
+      g.globalAlpha=age<b.tt?1:.5; g.strokeStyle='#3d9cff'; g.lineWidth=3.8; seg(hx-dx/L*t,hy-dy/L*t,hx,hy);
+      g.strokeStyle='#a8dcff'; g.lineWidth=2.2; seg(hx-dx/L*t*.7,hy-dy/L*t*.7,hx,hy); g.strokeStyle='#ffffff'; g.lineWidth=1.3; seg(hx-dx/L*t*.35,hy-dy/L*t*.35,hx,hy); } }
   g.lineCap='butt'; g.globalAlpha=1;
   for(const p of K.fx){ const a=clamp(p.life/p.max,0,1), x=p.x-cx, y=p.y-cy;   // sparks, goo, rings, flashes
     if(p.ghost||p.light) continue;   // (drawn elsewhere)
@@ -7425,7 +7432,7 @@ function dkFrame(){
       g.globalAlpha=Math.min(1,a*1.6); g.strokeStyle='#c8ffe0'; g.lineWidth=1.4; g.beginPath(); g.moveTo(x,y);
       for(let i=1;i<5;i++){ const k=i/5, j=(((p.seed*31+i*17+K.t*7)%13)-6)*.7; g.lineTo(x+(x1-x)*k+nx*j,y+(y1-y)*k+ny*j); } g.lineTo(x1,y1); g.stroke(); }
     else if(p.glob){ g.globalAlpha=1; g.fillStyle='#9aff3a'; g.beginPath(); g.arc(x,y,2.6,0,TAU); g.fill(); g.fillStyle='#eaffd0'; g.fillRect(x-1.2,y-1.6,1.5,1.5); }   // a blob's acid, lobbed
-    else if(p.flare){ const r=p.hit?7:6.5; g.globalAlpha=a; g.fillStyle='#ffffff'; g.save(); g.translate(x,y); g.rotate(p.a);   // a star of light: long along the shot, short across it (a hit's is even)
+    else if(p.flare){ const r=p.mar?(p.hit?5.5:5):p.hit?7:6.5; g.globalAlpha=a; g.fillStyle=p.mar?'#dff2ff':'#ffffff'; g.save(); g.translate(x,y); g.rotate(p.a);   // a star of light: long along the shot, short across it (a hit's is even; a marine's a little smaller)
       g.beginPath(); g.moveTo(p.hit?-r:-r*.4,0); g.lineTo(0,-1.3); g.lineTo(r*1.3,0); g.lineTo(0,1.3); g.closePath(); g.fill();
       g.beginPath(); g.moveTo(0,p.hit?-r:-r*.6); g.lineTo(1.1,0); g.lineTo(0,p.hit?r:r*.6); g.lineTo(-1.1,0); g.closePath(); g.fill(); g.restore(); }
     else if(p.hot){ g.globalAlpha=Math.min(1,a*2); g.fillStyle=a>.75?'#ffffff':a>.45?'#ffd27a':a>.2?'#ff6a2a':'#8a2412'; g.beginPath(); g.arc(x,y,1.1+a*1.2,0,TAU); g.fill(); }   // (white-hot, cooling)
@@ -7438,7 +7445,7 @@ function dkFrame(){
   for(const b of K.beams){ const k=b.life/b.max, age=b.max-b.life;
     if(b.you){ const w=Math.pow(k,.7); g.strokeStyle='#43c8ff'; g.globalAlpha=.12*k; g.lineWidth=13*w; seg(b.x0-cx,b.y0-cy,b.x1-cx,b.y1-cy); g.globalAlpha=.18*k; g.lineWidth=6.5*w; seg(b.x0-cx,b.y0-cy,b.x1-cx,b.y1-cy);   // a halo along your beam
       glow(b.x1-cx,b.y1-cy,6+14*k,'#9ff6ff',.75*k); if(age<2) glow(b.x0-cx,b.y0-cy,14,'#e8ffff',.9); }
-    else { const h=Math.min(1,(age+1)/b.tt); glow(b.x0-cx+(b.x1-b.x0)*h,b.y0-cy+(b.y1-b.y0)*h,8,'#43a8ff',age<b.tt?.55:.3); if(age<1) glow(b.x0-cx,b.y0-cy,6,'#cfefff',.5); } }
+    else { const h=Math.min(1,(age+1)/b.tt); glow(b.x0-cx+(b.x1-b.x0)*h,b.y0-cy+(b.y1-b.y0)*h,14,'#43a8ff',age<b.tt?.8:.35); if(age<2) glow(b.x0-cx,b.y0-cy,11,'#cfefff',.7); } }   // (the tracer's head lights the deck as it goes)
   g.lineCap='butt';
   if(P.down<=0 && K.t-P.shotT<4) glow(P.x-cx,P.y-cy-4,46,'#43f0ff',.24*(1-(K.t-P.shotT)/4));   // your muzzle flash lights up the deck round you
   for(const b of K.bolts) glow(b.x-cx,b.y-b.h-cy,b.big?14:11,'#ff2a4a',.65);
@@ -7448,7 +7455,7 @@ function dkFrame(){
     if(p.fire) glow(p.x-cx,p.y-cy,p.r*2.4,'#ff9a3d',.5*k);
     else if(p.light) glow(p.x-cx,p.y-cy,p.r*(.7+.3*k),p.col,.55*k);   // a pop's splash of light, in its colour
     else if(p.hot) glow(p.x-cx,p.y-cy,8,'#ffb347',.7*k);
-    else if(p.flare) glow(p.x-cx,p.y-cy,p.hit?16:12,'#bff9ff',.8*k);
+    else if(p.flare) glow(p.x-cx,p.y-cy,p.mar?(p.hit?14:10):p.hit?16:12,p.mar?'#8fcfff':'#bff9ff',.8*k);
     else if(p.zap){ glow(p.x1-cx,p.y1-cy,12,'#9affc8',.7*k); glow(p.x-cx,p.y-cy,7,'#9affc8',.5*k); }
     else if(p.glob) glow(p.x-cx,p.y-cy,7,'#9aff3a',.5); }
   for(const c of K.charges) if(!c.dead && on(c.x,c.y,40)){ const k=c.t/c.fuse; glow(c.x-cx,c.y-7-cy,10+8*k,'#ff2a4a',(.25+.35*k)*(.6+.4*((K.t>>(k>.75?1:2))&1))); }   // a charge's eye, hotter as it gets close
