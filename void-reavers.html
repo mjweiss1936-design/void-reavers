@@ -43,6 +43,8 @@
   .chip{font-size:10px; padding:3px 7px; border-radius:3px; border:1px solid #2a3a63; color:var(--dim); letter-spacing:.1em}
   .chip.on-laser{color:#001318; background:var(--laser); border-color:var(--laser); box-shadow:0 0 10px var(--laser)}
   .chip.on-rocket{color:#1a0f00; background:var(--rocket); border-color:var(--rocket); box-shadow:0 0 10px var(--rocket)}
+  .chip.on-torp{color:#00102a; background:#5aa8ff; border-color:#5aa8ff; box-shadow:0 0 12px #3d8cff}
+  body:not(.torps) #chip-torp, body:not(.torps) #t-torp, body.deck #t-torp{display:none}   /* proton torpedoes: only once the Resolute's armorers have fitted them */
   .warn{color:var(--hot); font-size:10px; letter-spacing:.12em; margin-top:7px; text-shadow:0 0 6px rgba(255,77,109,.5)}
   .row{display:flex; gap:16px; align-items:baseline}
   .big{font-size:22px}
@@ -116,9 +118,13 @@
     right:calc(84px + env(safe-area-inset-right,0px)); bottom:calc(19px + env(safe-area-inset-bottom,0px))}
   #t-missile.on{background:rgba(255,179,71,.38)}
   #t-missile.cool{opacity:.45}
+  #t-torp{width:44px; height:44px; border:2px solid rgba(90,168,255,.9); color:#d6e8ff; font-size:7px;   /* proton torpedoes: blue, up above MISSILE */
+    right:calc(86px + env(safe-area-inset-right,0px)); bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  #t-torp.on{background:rgba(90,168,255,.42)}
+  #t-torp.cool{opacity:.45}
   #t-brake{width:40px; height:40px; font-size:8px; right:calc(24px + env(safe-area-inset-right,0px)); bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   #t-brake.lit{background:rgba(255,179,71,.3); border-color:var(--rocket); color:#ffe0b0}   /* a tap-stop under way */
-  body.eva #t-fire, body.eva #t-missile, body.eva #t-brake{opacity:.22}                       /* on EVA: no guns, no brakes */
+  body.eva #t-fire, body.eva #t-missile, body.eva #t-brake, body.eva #t-torp{opacity:.22}       /* on EVA: no guns, no brakes */
   /* aboard ship (the deck fights): the weapon panel shows your health and the crew instead; no BRAKE or corner map, and MISSILE is DASH */
   body.deck .wsel, body.deck #reload, body.deck #hud-top .stat:first-child > .label, body.deck #t-brake, body.deck #t-mapzone{display:none}
   body.deck #t-missile{border-color:rgba(159,246,255,.85); color:#dffcff; letter-spacing:1px}   /* aboard it's ROLL: cyan, like FIRE, so it reads as yours */
@@ -187,6 +193,8 @@
     #t-fire{width:54px; height:54px; right:calc(10px + env(safe-area-inset-right,0px)); bottom:calc(10px + env(safe-area-inset-bottom,0px))}
     #t-missile{width:42px; height:42px; font-size:7px; right:calc(74px + env(safe-area-inset-right,0px)); bottom:calc(16px + env(safe-area-inset-bottom,0px))}
     #t-missile b{font-size:10px}
+    #t-torp{width:38px; height:38px; font-size:6.5px; right:calc(76px + env(safe-area-inset-right,0px)); bottom:calc(66px + env(safe-area-inset-bottom,0px))}
+    #t-torp b{font-size:9px}
     #t-brake{width:36px; height:36px; font-size:7px; right:calc(20px + env(safe-area-inset-right,0px)); bottom:calc(74px + env(safe-area-inset-bottom,0px))}
     body.touch.cine #comms .cface{width:56px; height:56px}
     body.touch.cine .ctext{font-size:13px}
@@ -215,6 +223,7 @@
   .reload{height:3px; margin-top:7px; background:#14203d; border-radius:2px; overflow:hidden}
   .reload i{display:block; height:100%; background:var(--laser); transform-origin:left}
   .reload.rocket i{background:var(--rocket)}
+  .reload.torp i{background:#5aa8ff}
   .bump{display:inline-block; animation:bump .4s ease-out}
   @keyframes bump{0%{transform:scale(1.6); color:#fff1b0; text-shadow:0 0 12px #ffb347}100%{transform:scale(1)}}
   #sys-ctl{position:fixed; z-index:25; display:flex; gap:6px;
@@ -350,6 +359,7 @@
     <div class="wsel">
       <span id="chip-laser" class="chip on-laser">1·LASER</span>
       <span id="chip-rocket" class="chip">2·MISSILE</span>
+      <span id="chip-torp" class="chip">3·TORPEDO</span>
     </div>
     <div class="reload" id="reload"><i id="reload-bar"></i></div>
     <div class="warn" style="display:none"></div>
@@ -381,13 +391,14 @@
 </div>
 
 <div id="hud-bottom" class="hud">
-  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part · <kbd>F</kbd> massive wave (test)</span>
+  <span><kbd>W</kbd>/<kbd>↑</kbd> thrust · <kbd>S</kbd>/<kbd>↓</kbd> reverse · <kbd>A D</kbd>/<kbd>← →</kbd> turn · <kbd>Space</kbd> fire · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> weapon · <kbd>M</kbd> map · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part · <kbd>F</kbd> massive wave (test)</span>
 </div>
 
 <div id="touch">
   <div id="t-zone" class="idle"><div class="stick-base"></div><div class="stick-knob"></div></div>
   <div class="pad" id="t-fire">LASER</div>
   <div class="pad" id="t-missile">MISSILE</div>
+  <div class="pad" id="t-torp">TORP</div>
   <div class="pad" id="t-brake">BRAKE</div>
   <div id="t-mapzone" title="Sector map"></div>   <!-- (over the corner map: tap it for the full one) -->
 </div>
@@ -789,6 +800,14 @@ function dash(land){ if(!live()||!gate(land?'dashL':'dash',80)) return; const t=
   if(land){ sweep(osc('sine',130,t,.12,vca(t,.8,.002,.1,o)).frequency,130,52,t,.09); nz(t,.07,filt('lowpass',700,null,vca(t,.5,.002,.06,o))); return; }
   const f=filt('bandpass',500,1.6,vca(t,1,.008,.16,o)); sweep(f.frequency,450,2600,t,.14); nz(t,.18,f);
   sweep(osc('sine',190,t,.12,vca(t,.35,.004,.1,o)).frequency,190,420,t,.1); }
+function torpedo(){ if(!live()||!gate('torp',120)) return; const t=ac.currentTime, o=out(ME,.24,.3);   // a proton torpedo leaving the tube: a charged thrum under a bright rising chirp
+  sweep(osc('sawtooth',90,t,.35,filt('lowpass',900,4,vca(t,.8,.01,.3,o))).frequency,90,180,t,.3);
+  sweep(osc('sine',600,t,.25,vca(t,.45,.005,.22,o)).frequency,600,2400,t,.2);
+  nz(t,.25,filt('bandpass',1800,2,vca(t,.3,.02,.22,o))); }
+function proton(x,y){ if(!live()||!gate('proton',90)) return; const P=place(x,y,1600); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.55,.5);   // and its blast: a deep thump, an electric crack, a ringing shimmer
+  sweep(osc('sine',140,t,.6,vca(t,1,.003,.55,o)).frequency,140,32,t,.45);
+  nz(t,.35,filt('bandpass',3200,1.2,vca(t,.7,.002,.3,o)));
+  for(const f of [880,1320,1760]) sweep(osc('triangle',f,t+.02,.7,vca(t+.02,.12,.01,.65,o)).frequency,f,f*.6,t+.02,.6); }
 function charge(x,y,k){ if(!live()||!gate('chargeT',60)) return; const P=place(x,y,1000); if(P.v<.02) return; const t=ac.currentTime, o=out(P,.075,.08), f0=900+k*900;   // a boarder's charge ticking down: a hard double blip that climbs as the fuse burns
   for(const d of [0,.07]) osc('square',f0*(d?1.26:1),t+d,.04,filt('lowpass',3200,null,vca(t+d,1,.001,.035,o))); }
 // the capital ships' war: a gun firing out across the gap (a deep thud and a crack), a lance spooling up (a rising whine),
@@ -888,7 +907,7 @@ function setSfx(on){ sfxOn=on; save(); if(!ac) return; glide(sfxBus.gain,on?1:0,
 const safe=f=>(...a)=>{ try{ return f(...a); }catch(e){ console.warn('[audio]',e); } };
 const sfx={explode,laser,missile,ready,swap,deflect,hit,eshot,zap,implode,split,alarm,eject,beacon,
            klaxon,warpIn,bossMissile,bossHit,lock,hyper,launch,ui,bump,chip,crumble,arrive,clank,shieldHit,shieldUp,medal,splat,dash,
-           cannon,lanceCharge,lanceFire,charge};
+           cannon,lanceCharge,lanceFire,charge,torpedo,proton};
 for(const k in sfx) sfx[k]=safe(sfx[k]);
 const safeTick=safe(tick);
 return {unlock:safe(unlock), play:safe(play), jingle:safe(jingle), setIntensity:safe(setIntensity),
@@ -2075,7 +2094,7 @@ Half the planet is watching this on the news, pilot. No pressure.
 brief4:L(`
 That's Broodhome, Halcyon. Every clan in the sky was hatched down there.
 Your new ship hits like a hammer and soaks a lot. It also turns like a moon. Plan ahead.
-Six shield cells, a three-gun broadside and its own point defence. Use all of it.
+Eight shield cells, a three-gun broadside, twin torpedo tubes and its own point defence. Use all of it.
 Their hordes will throw everything at you. Outlast them, and we go for her ark.
 `),
 eBoss:L(`
@@ -2219,7 +2238,12 @@ She's going down! Punch out, pilot! We regroup and hit them again!
 `),
 bigTip:L(`
 I've never flown anything this big. Turning is going to take some getting used to.
-Six shield cells and a broadside. I could get used to this.
+Eight shield cells, a broadside and torpedoes. I could get used to this.
+`),
+torpTip:L(`
+Those proton torpedoes are yours now, Halcyon. Nothing she has can shoot one down.
+Torpedoes on the rack, pilot. Point one at anything of hers, big or small, and it's gone.
+The armorers say one torpedo clears a whole pack. Go and find out.
 `),
 deckStart:L(`
 Boarding pods on the stern! Halcyon, you're in engineering. Hold the engines, then we work forward.
@@ -2561,6 +2585,7 @@ window.addEventListener('keydown', e=>{
   if(paused) return;
   if(k==='1') selectWeapon('laser');
   if(k==='2') selectWeapon('rocket');
+  if(k==='3' && hasTorps()) selectWeapon('torp');
   if(k==='m') toggleMap();
   if(k==='f' && state==='play' && !levelDone && !fleet) fleetArrives(job&&job.kind==='beacon'?job:null);   // test shortcut: the massive wave, now
   if((k==='enter'||k===' ') && (state==='menu'||state==='win'||state==='over')) startRun();
@@ -2632,12 +2657,13 @@ const holdPad=(id,fn)=>{ const el=document.getElementById(id); let pid=null;
   const up=e=>{ if(e.pointerId!==pid) return; pid=null; el.classList.remove('on'); fn(false); };
   el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
   el.addEventListener('contextmenu',e=>e.preventDefault()); };
-const touchFire={laser:false,rocket:false};
-const tMissile=document.getElementById('t-missile');
-// LASER and MISSILE share the right thumb: slide from one to the other (and back) without lifting it.
+const touchFire={laser:false,rocket:false,torp:false};
+const tMissile=document.getElementById('t-missile'), tTorp=document.getElementById('t-torp');
+// LASER, MISSILE and TORP share the right thumb: slide from one to another (and back) without lifting it.
 // Let go and you're back on the laser
 const fireGroup=[{el:document.getElementById('t-fire'), fn:v=>{ touchFire.laser=v; if(v) selectWeapon('laser'); }},
-                 {el:tMissile,                         fn:v=>{ touchFire.rocket=v; selectWeapon(v?'rocket':'laser'); }}];
+                 {el:tMissile,                         fn:v=>{ touchFire.rocket=v; selectWeapon(v?'rocket':'laser'); }},
+                 {el:tTorp,                            fn:v=>{ touchFire.torp=v; selectWeapon(v&&hasTorps()?'torp':'laser'); }}];
 let firePid=null, fireOn=null;
 function fireSet(P){ if(P===fireOn) return;
   if(fireOn){ fireOn.el.classList.remove('on'); fireOn.fn(false); }
@@ -2675,7 +2701,7 @@ let bodyKey='';
 function syncBody(){ const k=state+'|'+!!(ship.suit&&ship.alive)+'|'+showMap; if(k===bodyKey) return; bodyKey=k;
   const B=document.body.classList; B.toggle('launch',state==='launch'); B.toggle('eva',!!(ship.suit&&ship.alive)); }
 // let go of everything (pausing, jumping, a new run): no stuck stick, trigger or brake when you come back
-function touchReset(){ stick.on=false; stick.id=null; stick.mag=0; touchFire.laser=touchFire.rocket=false; keys['arrowdown']=false;
+function touchReset(){ stick.on=false; stick.id=null; stick.mag=0; touchFire.laser=touchFire.rocket=touchFire.torp=false; keys['arrowdown']=false;
   firePid=null; if(fireOn){ fireOn.el.classList.remove('on'); fireOn=null; } brakeOff();
   for(const el of document.querySelectorAll('#touch .pad.on')) el.classList.remove('on');
   if(TOUCH) stickRest(); }
@@ -2755,9 +2781,11 @@ const TYPES = {
 function selectWeapon(w){
   if(w!==ship.weapon && state==='play') VRAudio.sfx.swap(w);
   ship.weapon=w;
-  document.getElementById('reload').className='reload'+(w==='rocket'?' rocket':'');
+  document.getElementById('reload').className='reload'+(w==='rocket'?' rocket':w==='torp'?' torp':'');
   document.getElementById('chip-laser').className='chip'+(w==='laser'?' on-laser':'');
   document.getElementById('chip-rocket').className='chip'+(w==='rocket'?' on-rocket':'');
+  document.getElementById('chip-torp').className='chip'+(w==='torp'?' on-torp':'');
+  try{ lastMis=-1; lastFr=-1; }catch(e){}   // (the rack readout follows whichever weapon you're on)
 }
 
 function makeEnemy(type,x,y,born,goal){
@@ -2849,8 +2877,8 @@ function alarmBanner(title,sub,life){ alarm={title,sub,t:0,life}; }
 // the good-news version: a green full-screen banner and a chime for rescues and pickups, so you can't miss them mid-fight
 // (it waits its turn rather than stepping on a fresh red warning)
 let goodQ=[];
-function goodBanner(title,sub,life=210){ const b={title,sub,t:0,life,good:true};
-  if(alarm && (!alarm.good ? alarm.t<120 : alarm.t<40)) goodQ.push(b); else { alarm=b; VRAudio.sfx.ready(); } }
+function goodBanner(title,sub,life=210,hold){ const b={title,sub,t:0,life,good:true,hold};   // (hold: how long it stays up before a queued card can take its place)
+  if(alarm && (!alarm.good ? alarm.t<120 : alarm.t<(alarm.hold||40))) goodQ.push(b); else { alarm=b; VRAudio.sfx.ready(); } }
 function startJob(kind){
   const p=jobSpot(), s=sectorOf(p.x,p.y);
   if(kind==='beacon'){
@@ -3391,8 +3419,9 @@ function setupLevel(i){   // the sector itself: backdrop, station, rocks, standi
   ship.x=spawnPt.x; ship.y=spawnPt.y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2;
   ship.cool=0; ship.invuln=90; ship.alive=true; ship.suit=false; ship.r=7; finalDeath=false; ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;
   ship.big=!!LV.big; if(ship.big) ship.r=24; ship.pd=0; bigLost=false; bossBoardT=0;   // (Broodhome: you fly the captured flagship)
-  fitShields();   // (none in the Drift; three cells from Ember Reach on)
-  bullets=[]; missiles=[]; particles=[]; efire=[]; shockwaves=[]; fireballs=[]; debris=[]; delayedBooms=[]; husks=[];
+  fitShields();   // (none in the Drift; three cells from Ember Reach on; five once the Resolute's armorers have been at it)
+  ship.torp=TORP_MAX; ship.tcool=0; ship.torpT=0; document.body.classList.toggle('torps',hasTorps());   // (proton torpedoes, from Earth on)
+  bullets=[]; missiles=[]; torps=[]; particles=[]; efire=[]; shockwaves=[]; fireballs=[]; debris=[]; delayedBooms=[]; husks=[];
   boss=null; bossDead=false; bossFled=false; emissiles=[]; pdFlashes=[]; warpLines=[]; bossBanner=0;
   muzzles=[]; lights=[]; pops=[]; heat=0; lockT=0; lastShot=''; wreck=null; pod=null;
   showMap=false; selectWeapon('laser');
@@ -3419,8 +3448,10 @@ function beginLevel(){
   if(LV.horde && !LV.big){ launchFlight(true);   // the Cradle (and Earth): your honor flight jumps in with you
     notes.push(()=>{ goodBanner('HOME GUARD JOINED','VALKYRIE · COMET · ATLAS · THREE EARTH FIGHTERS ON YOUR WING THROUGH THE HORDES',220);
       say('flight','flightJoin',null,2); }); }
-  if(LV.big) notes.push(()=>{ goodBanner('THE FLAGSHIP IS YOURS','SIX SHIELD CELLS · A THREE-GUN BROADSIDE · ITS OWN POINT DEFENCE · IT TURNS SLOWLY',240);
+  if(LV.big) notes.push(()=>{ goodBanner('THE FLAGSHIP IS YOURS','EIGHT SHIELD CELLS · A THREE-GUN BROADSIDE · TWIN TORPEDO TUBES · IT TURNS SLOWLY',240);
     say('you','bigTip',null,2); });
+  else if(level===2) notes.unshift(()=>{ goodBanner('PROTON TORPEDOES',(TOUCH?'TORP':'KEY 3')+' · NOTHING OF HERS CAN SHOOT THEM DOWN · THEY TAKE OUT ANYTHING · FIVE SHIELD CELLS NOW',260,140);   // the Resolute's refit (first, and it holds a while before the Home Guard's card)
+    say('cmd','torpTip',null,2); });
   noteT=notes.length?290:0;
   say('cmd','brief'+(level+1)); say('cmd','brief'+(level+1)); if(Math.random()<.75) say('you','youBrief');
   if(battle && battle.kind==='earth') say('cmd','lineStart3',null,1);   // (over Broodhome the fleet says its piece when it comes through the jump)
@@ -3440,6 +3471,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
   for(let k=0;k<12 && rocks.some(R=>Math.hypot(R.x-x,R.y-y)<R.r+30);k++){ x=o.x+rnd(-120,120); y=o.y+rnd(40,140); }
   ship.x=x; ship.y=y; ship.vx=0; ship.vy=0; ship.a=-Math.PI/2; ship.cool=0; ship.invuln=180; ship.alive=true; ship.suit=false; ship.r=7;
   ship.mis=MIS_MAX; ship.mcool=0; ship.misT=0;   // a fresh cutter comes with a full rack
+  ship.torp=TORP_MAX; ship.tcool=0; ship.torpT=0;   // (and its torpedoes)
   brakeOff();                                    // (and no tap-stop left over from the last one)
   fitShields();                                  // and, after the Drift, fully charged shields
   wreck=null; pod=null; state='play';
@@ -4120,6 +4152,7 @@ function missileLock(x,y,a,range,cone){ let best=null, bs=1e9;
 const MIS_MAX=10, MIS_GAP=11, MIS_WAIT=60, MIS_EACH=80;   // rack size, frames between missiles, pause before reloading, frames per reload
 function fire(){
   if(!ship.alive) return;
+  if(ship.weapon==='torp'){ if(hasTorps() && ship.tcool<=0 && ship.torp>=1) fireTorp(); return; }   // (proton torpedoes: their own rack)
   if(ship.weapon==='laser' ? ship.cool>0 : (ship.mcool>0 || ship.mis<1)) return;
   const nx=Math.cos(ship.a), ny=Math.sin(ship.a);
   if(ship.weapon==='laser' && ship.big){   // the captured flagship: a three-gun broadside, a touch slower
@@ -4374,7 +4407,7 @@ function flagShieldDown(){ const B=battle, b=boss; b.shield=false; B.phase='guns
   shockwaves.push({x:b.x,y:b.y,delay:0,r0:b.r,max:b.r+130,life:0,maxlife:40,col:'#ff9ab0'},{x:b.x,y:b.y,delay:8,r0:b.r*.6,max:b.r+80,life:0,maxlife:34,col:'#ffffff'});
   VRAudio.sfx.implode(b.x,b.y); VRAudio.sfx.zap(b.x,b.y,true); pops.push({x:b.x,y:b.y-b.r-14,txt:'SHIELD DOWN',col:'#ffd0d6',life:80});
   say('cmd','lineGuns',null,2); say('matriarch','eShield',null,1);
-  alarmBanner('SILENCE ITS GUNS','FOUR GUN BATTERIES · LASERS OR MISSILES · LEAVE THE HULL IN ONE PIECE',240); }
+  alarmBanner('SILENCE ITS GUNS','FOUR GUN BATTERIES · LASERS, MISSILES OR TORPEDOES · LEAVE THE HULL IN ONE PIECE',240); }
 function gunDown(G){ const b=boss; G.dead=true; G.hp=0; const [x,y]=bossGun(G);
   capBoom(x,y,'big',14); capScar(b,x,y); addScore(750,x,y-14,'#ffd27a');
   const left=b.guns.filter(g=>!g.dead).length;
@@ -4575,6 +4608,85 @@ function battleGlow(toS){ const B=battle, on=(px,py,m)=>px>-m&&py>-m&&px<VW+m&&p
     const f=L.t-LANCE_CH, w=f<LANCE_FIRE?1:Math.max(0,1-(f-LANCE_FIRE)/12); if(w<=0) continue;
     glow(x0,y0,26,col,.7*w); glow(x1,y1,36,col,.8*w); glow(x1,y1,18,'#ffffff',.6*w);
     const n=Math.min(24,Math.floor(Math.hypot(x1-x0,y1-y0)/70)); for(let i=1;i<n;i++){ const k=i/n; glow(x0+(x1-x0)*k,y0+(y1-y0)*k,20,col,.2*w); } } }
+// ======================================================================================================================
+// ---- PROTON TORPEDOES. Once you've held the Resolute, her armorers fit them (Earth, and the flagship you take to Broodhome). A blue
+// torpedo that no point defence can touch, homing on whatever you point it at. Its blast clears a pack of reavers outright, cracks any
+// reaver's shield, blows a battery or a pylon clean off, and tears her line's warships apart: one for a gun-beast, two for a cruiser. (Her own ship's
+// shield holds until the hordes are done: the fleet has to strip that) ----
+// ======================================================================================================================
+const TORP_MAX=6, TORP_GAP=26, TORP_WAIT=90, TORP_EACH=150, TORP_R=88, TORP_CAP=350, TORP_ARK=60;   // rack, frames between, pause before reloading, frames per reload, blast radius, what a hit does to a warship, and to the ark
+let torps=[];
+function hasTorps(){ return level>=2; }
+const torpBig=T=>T.k!=='e';   // (what it's locked on: a reaver 'e', one of her warships 'cap', a battery 'gun', a pylon 'pyl', the ark 'ark')
+function torpAim(T){ const r=T.r; return T.k==='gun'?bossGun(r):T.k==='ark'?[boss.x,boss.y]:[r.x,r.y]; }
+function torpLive(T){ const r=T.r, B=battle;
+  return T.k==='e'?r.alive&&!(r.warp>0) : T.k==='cap'?capOn(r) : T.k==='gun'?!r.dead&&!!boss&&!boss.crippled&&B&&B.phase==='guns' : T.k==='pyl'?!r.dead&&B&&B.phase==='pylons' : !!boss&&!boss.dying&&B&&B.phase==='finish'; }
+function torpLock(x,y,a,range,cone){   // what a torpedo goes for: the best thing in front, big things first (a warship of hers, a battery, a pylon, the ark), then reavers
+  const c=[]; for(const e of enemies) if(e.alive && !(e.warp>0)) c.push({k:'e',r:e});
+  if(battle){ const B=battle; for(const S of B.ships) if(S.side===1 && capOn(S)) c.push({k:'cap',r:S});
+    if(boss && boss.line && !boss.dying && !boss.crippled){
+      if(B.phase==='guns' && boss.guns) for(const G of boss.guns) if(!G.dead) c.push({k:'gun',r:G});
+      if(B.phase==='pylons') for(const P of B.pylons) if(!P.dead) c.push({k:'pyl',r:P});
+      if(B.phase==='finish') c.push({k:'ark',r:boss}); } }
+  let best=null, bs=1e9;
+  for(const T of c){ const [tx,ty]=torpAim(T), dx=tx-x, dy=ty-y, d=Math.hypot(dx,dy); if(d>range) continue;
+    const off=Math.abs(((Math.atan2(dy,dx)-a+Math.PI*3)%TAU)-Math.PI); if(off>cone) continue;
+    const s=d*(1+off*3)*(torpBig(T)?.55:1); if(s<bs){ bs=s; best=T; } }
+  return best; }
+function fireTorp(){   // one off the rack (the captured flagship fires its pair from both sides)
+  ship.torp--; ship.tcool=TORP_GAP; ship.torpT=0;
+  const tg=torpLock(ship.x,ship.y,ship.a,900,.5)||torpLock(ship.x,ship.y,ship.a,700,1.2);
+  for(const s of ship.big?[-1,1]:[0]){ const nx=Math.cos(ship.a), ny=Math.sin(ship.a), ox=-ny*s*14, oy=nx*s*14;
+    torps.push({x:ship.x+nx*(ship.r+4)+ox,y:ship.y+ny*(ship.r+4)+oy,a:ship.a+s*.12,vx:ship.vx+nx*3,vy:ship.vy+ny*3,life:260,tg,spin:rnd(0,TAU)});
+    muzzles.push({x:ship.x+nx*(ship.r+4)+ox,y:ship.y+ny*(ship.r+4)+oy,life:5,max:5,r:12,col:'#5aa8ff'}); }
+  VRAudio.sfx.torpedo(); lastShot='torp'; }
+function torpTick(){
+  for(const T of torps){
+    if(T.tg && !torpLive(T.tg)) T.tg=null;
+    if(!T.tg && T.life%8===0) T.tg=torpLock(T.x,T.y,T.a,700,1.2);
+    if(T.tg){ const [tx,ty]=torpAim(T.tg); T.a+=clamp(((Math.atan2(ty-T.y,tx-T.x)-T.a+Math.PI*3)%TAU)-Math.PI,-.1,.1); }
+    T.vx+=(Math.cos(T.a)*5.4-T.vx)*.12; T.vy+=(Math.sin(T.a)*5.4-T.vy)*.12; T.x+=T.vx; T.y+=T.vy; T.life--; T.spin+=.3;
+    if(t%2===0) particles.push({x:T.x,y:T.y,vx:rnd(-.3,.3)-T.vx*.1,vy:rnd(-.3,.3)-T.vy*.1,life:rnd(14,24),max:24,col:Math.random()<.5?'#9ff6ff':'#5aa8ff',r:1.5,grav:0});
+    if(torpHit(T)||T.life<=0){ T.life=0; protonBlast(T.x,T.y); } }   // (it goes off on whatever it reaches, or at the end of its run)
+  torps=torps.filter(T=>T.life>0&&T.x>0&&T.y>0&&T.x<WORLD&&T.y<WORLD); }
+function torpHit(T){ const x=T.x, y=T.y;
+  for(const e of enemies) if(e.alive && !(e.warp>0) && (e.x-x)**2+(e.y-y)**2<(e.r+6)**2) return true;
+  for(const R of rocks) if((R.x-x)**2+(R.y-y)**2<(R.r+3)**2) return true;
+  if(battle){ for(const S of battle.ships) if(S.side===1 && !S.dead && !(S.warp>0) && capIn(S,x,y,4)) return true;
+    if(wreckAt(x,y)) return true;
+    for(const P of battle.pylons) if(!P.dead && (P.x-x)**2+(P.y-y)**2<16*16) return true;
+    if(boss && boss.line && !boss.dying && !(T.tg && (T.tg.k==='gun'||T.tg.k==='pyl')) && capIn(boss,x,y,boss.shield?16:4)) return true;   // (one going for a battery or a pylon skims over her hull to get to it)
+    if(boss && boss.guns && boss.line && !boss.crippled) for(const G of boss.guns) if(!G.dead){ const [gx,gy]=bossGun(G); if((gx-x)**2+(gy-y)**2<14*14) return true; } }
+  return false; }
+function protonBlast(x,y){ const R=TORP_R;   // the blast: a flash of blue-white light, rings, blue fire, and everything of theirs inside it
+  shockwaves.push({x,y,delay:0,r0:8,max:R*1.2,life:0,maxlife:26,col:'#ffffff'},{x,y,delay:4,r0:6,max:R*1.6,life:0,maxlife:36,col:'#5aa8ff'},{x,y,delay:9,r0:4,max:R*2.1,life:0,maxlife:44,col:'#2f6fff'});
+  lights.push({x,y,r:R*1.5,life:0,max:24,col:'#5aa8ff'});
+  for(let i=0;i<46;i++){ const a=rnd(0,TAU), sp=rnd(.5,5.5); particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rnd(20,60),max:60,col:['#ffffff','#9ff6ff','#5aa8ff','#2f6fff'][ri(0,3)],r:rnd(1,3),grav:0}); }
+  for(let i=0;i<9;i++){ const a=rnd(0,TAU), d=rnd(0,R*.35); fireballs.push({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,max:rnd(6,14),life:-ri(0,6),maxlife:ri(16,28),col:['#e8fbff','#9ff6ff','#5aa8ff','#2f6fff'][ri(0,3)]}); }
+  fireballs.push({x,y,max:R*.45,life:0,maxlife:22,col:'#9ff6ff',grow:6},{x,y,max:R*.28,life:0,maxlife:16,col:'#ffffff',grow:7});
+  const dc=Math.hypot(x-(camX+VW/2),y-(camY+VH/2)), k=clamp(1-(dc-260)/700,0,1); shake=Math.min(shake+10*k,24);
+  VRAudio.sfx.proton(x,y);
+  for(const e of enemies){ if(!e.alive||e.warp>0) continue; if(Math.hypot(e.x-x,e.y-y)<R+e.r){ e.shield=false; kill(e); } }   // every reaver in it, shields and all
+  for(const f of efire) if(Math.hypot(f.x-x,f.y-y)<R) f.life=0;   // (and their bolts)
+  for(const m of emissiles) if(m.life>0 && Math.hypot(m.x-x,m.y-y)<R) m.life=0;
+  for(let i=rocks.length-1;i>=0;i--){ const Rk=rocks[i]; if(Math.hypot(Rk.x-x,Rk.y-y)<R*.8+Rk.r) breakRock(i); }
+  if(battle) protonLine(x,y,R); }
+function protonLine(x,y,R){ const B=battle, b=boss;   // in a battle sector: her warships, her flagship's batteries, the ark's pylons, the ark
+  for(const S of B.ships){ if(S.side!==1 || S.dead || S.dying || S.warp>0) continue; const C=CAP[S.kind], ca=Math.cos(S.a), sa=Math.sin(S.a);
+    if(segD2(S.x-ca*C.L,S.y-sa*C.L,S.x+ca*C.L,S.y+sa*C.L,x,y)<(C.R+R*.6)**2) capHit(S,TORP_CAP,x,y,true); }
+  if(b && b.line && !b.dying && !b.crippled){
+    if(b.shield){ if(capIn(b,x,y,R*.6)){ b.shieldHit=14; b.shA=Math.atan2(y-b.y,x-b.x); } }   // (her shield takes it, until the fleet's stripped it)
+    else { if(b.guns && B.phase==='guns') for(const G of b.guns){ if(G.dead) continue; const [gx,gy]=bossGun(G); if(Math.hypot(gx-x,gy-y)<R*.45) gunDown(G); }
+      if(b.ark && B.phase==='finish' && capIn(b,x,y,R*.5)){ b.hp-=TORP_ARK; b.hit=8; capScar(b,x,y); if(b.hp<=0) arkDown(); } } }
+  for(const P of B.pylons) if(!P.dead && B.phase==='pylons' && Math.hypot(P.x-x,P.y-y)<R*.8) pylonDown(P);
+  for(const w of B.wrecks) if(w.life>120 && Math.hypot(w.x-x,w.y-y)<R+w.r) w.life=121; }   // (a wreck caught in it is blown to scraps)
+function drawTorps(toS){ for(const T of torps){ const[px,py]=toS(T.x,T.y); if(px<-34||py<-34||px>VW+34||py>VH+34) continue;   // a crackling blue orb with a short blue tail
+    const sp=Math.hypot(T.vx,T.vy)||1, ux=T.vx/sp, uy=T.vy/sp;
+    g.lineCap='round'; g.strokeStyle='rgba(47,111,255,.35)'; g.lineWidth=7; g.beginPath(); g.moveTo(px,py); g.lineTo(px-ux*28,py-uy*28); g.stroke();
+    g.strokeStyle='rgba(159,246,255,.6)'; g.lineWidth=2.5; g.beginPath(); g.moveTo(px,py); g.lineTo(px-ux*17,py-uy*17); g.stroke(); g.lineCap='butt';
+    g.fillStyle='#2f6fff'; g.beginPath(); g.arc(px,py,5.5,0,TAU); g.fill(); g.fillStyle='#9ff6ff'; g.beginPath(); g.arc(px,py,3.7,0,TAU); g.fill();
+    g.fillStyle='#ffffff'; g.beginPath(); g.arc(px,py,2.1,0,TAU); g.fill();
+    g.strokeStyle='rgba(159,246,255,.85)'; g.lineWidth=1.2; for(let k=0;k<3;k++){ const a=T.spin+k*2.1; g.beginPath(); g.moveTo(px+Math.cos(a)*6,py+Math.sin(a)*6); g.lineTo(px+Math.cos(a+.5)*10.5,py+Math.sin(a+.5)*10.5); g.stroke(); } } }
 function battleMap(mx,my,k,full){ const B=battle;   // the minimap: the two lines as dashes along their hulls, and the wrecks
   for(const w of B.wrecks){ g.fillStyle='rgba(150,140,128,.55)'; const r=full?2:1; g.fillRect((mx+w.x*k)|0,(my+w.y*k)|0,r,r); }
   for(const S of B.ships){ if(S.warp>0) continue; const w=full?6:3, h=full?2:1;
@@ -4628,8 +4740,10 @@ function update(){
     if(ship.y<ship.r){ship.y=ship.r;ship.vy=Math.abs(ship.vy)*.4;}
     if(ship.y>WORLD-ship.r){ship.y=WORLD-ship.r;ship.vy=-Math.abs(ship.vy)*.4;}
     if(wallV>1.2) VRAudio.sfx.bump();
-    const firing=keys[' ']||keys['j']||touchFire.laser||touchFire.rocket;
+    const firing=keys[' ']||keys['j']||touchFire.laser||touchFire.rocket||touchFire.torp;
     if(ship.cool>0) ship.cool--;
+    if(ship.tcool>0) ship.tcool--;   // the torpedo rack: a pause after your last one, then they reload one by one
+    if(hasTorps() && ship.torp<TORP_MAX && ++ship.torpT>=TORP_WAIT && (ship.torpT-TORP_WAIT)%TORP_EACH===0){ ship.torp++; if(ship.torp===TORP_MAX) VRAudio.sfx.ready(); }
     // the missile rack: ten tubes. Fire them as fast as you like; a short pause after your last one, and they reload one by one
     if(ship.mcool>0) ship.mcool--;
     if(ship.mis<MIS_MAX && ++ship.misT>=MIS_WAIT && (ship.misT-MIS_WAIT)%MIS_EACH===0){ ship.mis++;
@@ -4651,7 +4765,7 @@ function update(){
   if(lvlBanner>0) lvlBanner--;
   if(noteT>0 && state==='play' && --noteT===0){ const n=notes; notes=[]; for(const f of n) f(); }   // (a second card queues behind the first)
   if(alarm && ++alarm.t>=alarm.life) alarm=null;
-  if(goodQ.length && (!alarm || (!alarm.good && alarm.t>=120) || (alarm.good && alarm.t>=60))){ alarm=goodQ.shift(); VRAudio.sfx.ready(); }
+  if(goodQ.length && (!alarm || (!alarm.good && alarm.t>=120) || (alarm.good && alarm.t>=(alarm.hold||60)))){ alarm=goodQ.shift(); VRAudio.sfx.ready(); }
   if(failT>0 && --failT===0) sectorLost();
   commsTick();
 
@@ -4710,6 +4824,7 @@ function update(){
     if(++m.trail%2===0) particles.push({x:m.x,y:m.y,vx:rnd(-.2,.2),vy:rnd(-.2,.2),life:16,max:16,col:'#ffb347',r:1.5,grav:0});
   }
   missiles=missiles.filter(m=>m.life>0&&m.x>0&&m.y>0&&m.x<WORLD&&m.y<WORLD);
+  if(torps.length) torpTick();   // proton torpedoes, homing on whatever they're locked on
 
   for(const e of enemies){
     if(!e.alive)continue;
@@ -5511,7 +5626,7 @@ function drawAstronaut(px,py){
 // every cutter carries three cells. Each soaks one hit; keep out of the fire a few seconds and they charge back, one by one ----
 const CELL_MAX=3, CELL_WAIT=240, CELL_EACH=150, CELL_GRACE=60;   // cells, quiet frames before they charge, frames per cell, grace after a soak
 let shieldFx=null, toldShields=false, notes=[], noteT=0;   // notes: full-screen cards waiting for the title card to clear
-function fitShields(){ ship.cellMax=ship.big?6:level>=1?CELL_MAX:0; ship.cells=ship.cellMax; ship.cellT=0; shieldFx=null; }   // (the captured flagship has six)
+function fitShields(){ ship.cellMax=ship.big?8:level>=2?5:level>=1?CELL_MAX:0; ship.cells=ship.cellMax; ship.cellT=0; shieldFx=null; }   // (after the Resolute's refit, five; the captured flagship, eight)
 function hitShip(cause,by){   // anything that would wreck the cutter comes through here: a charged cell soaks it if there's one. true = she's gone
   if(!ship.alive) return true;
   if(ship.suit || !(ship.cells>0)){ killShip(cause,by); return true; }
@@ -5581,14 +5696,17 @@ let lastFr=-1, lastSec=-1, lastScore=-1, hudKey='', postKey='', lastShield=-1, o
 const elWarn=document.querySelector('.warn'), elObj=document.getElementById('m-obj'), elObjT=document.getElementById('m-objt'), elObjV=document.getElementById('m-objv');
 function updateHUD(){ document.getElementById('deaths').textContent=deaths; }
 // per-frame HUD bits: missile reload bar, clock, score, mission strip (DOM only touched when they change)
-let lastMis=-1; const elChipR=document.getElementById('chip-rocket');
+let lastMis=-1, lastTorp=-1; const elChipR=document.getElementById('chip-rocket'), elChipT=document.getElementById('chip-torp');
 const elReload=document.getElementById('reload-bar'), elClock=document.getElementById('clock'), elScore=document.getElementById('score');
 const elM=Object.fromEntries(['box','level','count','fill','ghost','mark','post','pname','hp','hpt'].map(k=>[k,document.getElementById('m-'+k)]));
 function hudTick(){
   // the bar under the weapons is the missile rack: full when all ten tubes are loaded
-  const fr=(ship.mis+(ship.mis<MIS_MAX && ship.misT>=MIS_WAIT ? ((ship.misT-MIS_WAIT)%MIS_EACH)/MIS_EACH : 0))/MIS_MAX;
+  // (or the torpedo rack, while you're on torpedoes)
+  const fr=ship.weapon==='torp'?(ship.torp+(ship.torp<TORP_MAX && ship.torpT>=TORP_WAIT ? ((ship.torpT-TORP_WAIT)%TORP_EACH)/TORP_EACH : 0))/TORP_MAX
+    :(ship.mis+(ship.mis<MIS_MAX && ship.misT>=MIS_WAIT ? ((ship.misT-MIS_WAIT)%MIS_EACH)/MIS_EACH : 0))/MIS_MAX;
   if(Math.abs(fr-lastFr)>.004){ lastFr=fr; elReload.style.transform='scaleX('+fr.toFixed(3)+')'; }
   if(ship.mis!==lastMis){ lastMis=ship.mis; elChipR.textContent='2·MISSILE ×'+ship.mis; tMissile.innerHTML='MISSILE<b>'+ship.mis+'</b>'; tMissile.classList.toggle('cool',ship.mis<1); }
+  if((ship.torp|0)!==lastTorp){ lastTorp=ship.torp|0; elChipT.textContent='3·TORPEDO ×'+lastTorp; tTorp.innerHTML='TORP<b>'+lastTorp+'</b>'; tTorp.classList.toggle('cool',lastTorp<1); }
   const sec=Math.floor((bossDead?clearT:runT)/60);   // the clock stops when the flagship dies, matching the clear time
   if(sec!==lastSec){ lastSec=sec; elClock.textContent=fmtTime(sec); }
   if(score!==lastScore){ elScore.textContent=score.toLocaleString('en-US');
@@ -5754,6 +5872,7 @@ function draw(){
   for(const m of missiles){ const[px,py]=toS(m.x,m.y);
     g.save(); g.translate(px,py); g.rotate(m.a);
     g.fillStyle='#ffb347'; g.fillRect(-3,-1,6,2); g.fillStyle='#fff'; g.fillRect(2,-1,2,2); g.restore(); }
+  if(torps.length) drawTorps(toS);
   // boss missiles (hostile, red-amber)
   for(const m of emissiles){ const[px,py]=toS(m.x,m.y);
     g.save(); g.translate(px,py); g.rotate(m.a);
@@ -5829,13 +5948,14 @@ function draw(){
   for(const f of efire){ const[px,py]=toS(f.x,f.y); if(f.pea) glow(px,py,6,'#ffb02a',.45); else glow(px,py,9,'#ff2a4a',.5); }
   for(const b of bullets){ const[px,py]=toS(b.x,b.y); glow(px,py,6,'#43f0ff',.55); }
   for(const m of missiles){ const[px,py]=toS(m.x,m.y); glow(px,py,8,'#ffb347',.55); }
+  for(const T of torps){ const[px,py]=toS(T.x,T.y); glow(px,py,20,'#3d8cff',.7); glow(px,py,8,'#e8fbff',.6); }   // a torpedo's glow
   for(const m of emissiles){ const[px,py]=toS(m.x,m.y); glow(px,py,11,'#ff6a3d',.6); }
   for(const f of pdFlashes){ const[ax,ay]=toS(f.ax,f.ay),[bx,by]=toS(f.bx,f.by);
     g.globalAlpha=f.life/f.max*.45; g.strokeStyle=f.col; g.lineWidth=5;
     g.beginPath(); g.moveTo(ax,ay); g.lineTo(bx,by); g.stroke(); glow(bx,by,10,f.col,f.life/f.max*.8); }
   for(const f of muzzles){ const[px,py]=toS(f.x,f.y); glow(px,py,f.r*(.5+f.life/8),f.col,f.life/f.max); }
   for(const b of fireballs){ if(b.life<0) continue; const[px,py]=toS(b.x,b.y), pr=b.life/b.maxlife; glow(px,py,b.max*2.4,b.col,(1-pr)*.32); }
-  for(const L of lights){ const[px,py]=toS(L.x,L.y), pr=L.life/L.max; glow(px,py,L.r*(.55+.45*pr),'#ff9a4a',(1-pr)*(1-pr)*.7); }
+  for(const L of lights){ const[px,py]=toS(L.x,L.y), pr=L.life/L.max; glow(px,py,L.r*(.55+.45*pr),L.col||'#ff9a4a',(1-pr)*(1-pr)*.7); }   // (a torpedo's light is blue)
   if(ship.alive && !ship.suit && (state==='play'||state==='winning') && !(ship.invuln>0 && (t>>2)&1)){
     const[px,py]=toS(ship.x,ship.y), hot=thrustOn||state==='winning', bk=ship.big?40:10;
     glow(px-Math.cos(ship.a)*bk,py-Math.sin(ship.a)*bk,(hot?15:6)*(ship.big?2.2:1),'#43f0ff',hot?.5+Math.random()*.2:.22); }
@@ -6552,7 +6672,7 @@ function deckDom(on){   // the HUD and the buttons switch between flying and fig
   hb.innerHTML=on?'<kbd>W A S D</kbd>/<kbd>↑ ↓ ← →</kbd> move · <kbd>Space</kbd> fire (it aims for you) · or aim with the mouse and hold the button · <kbd>Shift</kbd>/right-click jump and roll · <kbd>P</kbd>/<kbd>Esc</kbd> menu · <kbd>N</kbd> music · <kbd>V</kbd> sfx · <kbd>B</kbd> jump to any part':hintFly;
   document.getElementById('t-fire').textContent=on?'FIRE':'LASER';
   if(on){ tMissile.textContent='ROLL'; tMissile.classList.remove('cool'); }   // (aboard, the MISSILE button is your jump-and-roll; back in space it shows the rack again)
-  lastMis=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
+  lastMis=-1; lastTorp=-1; hudKey=''; postKey=''; objKey=''; lastShield=-1; lastScore=-1; lastSec=-1;   // (each HUD redraws itself from scratch)
   if(!on) elWarn.classList.remove('shielded');
 }
 function endDeck(){ if(!DK) return; DK=null; deckDom(false); touchReset(); for(const k in keys) keys[k]=false; flash=0; shake=0; dkMouse.down=false; dkMouse.dash=false;
@@ -7997,6 +8117,7 @@ function afterDefenseShots(){
         ['you',"They're pulling back. Why pull back now?"],
         ['cmd',"Because we were never the target. That whole fleet just plotted a jump. For Earth."],
         ['matriarch',"Run home, little pilot. Your world will be my next cradle."],
+        ['cmd',"Then let's give her something to run from. The armorers have loaded your cutter with proton torpedoes. They'll take out anything she's got."],
         ['cmd',"Every carrier we have is jumping after them. Halcyon, launch. You're the fastest thing we've got."]],
       init(c){ c.black=1; c.actors=[]; carrier=hulk('carrier',H.x,H.y,0); c.actors.push(carrier); c.cam={x:H.x+40,y:H.y};
         caption(c,'CARRIER RESOLUTE','Scorched, but holding',300); VRAudio.play('menu',0,1.2);
@@ -8142,6 +8263,7 @@ window.vrDebug=()=>Object.assign(vrDebug1(),{big:!!ship.big, bigLost, downs, bos
     map:{W:DK.W,H:DK.H,grid:DK.grid}, boom:DK.boom&&{t:DK.boom.t,end:DK.boom.end,out:DK.boom.out,next:DK.boom.next,far:DK.boom.far,speed:DK.boom.speed}},
   planets:planets.map(p=>({name:p.name||null,x:Math.round(p.x),y:Math.round(p.y),r:p.r})),
   bullets:bullets.slice(0,8).map(b=>({x:Math.round(b.x),y:Math.round(b.y),life:b.life,wing:b.wing||null})),
+  torp:ship.torp, torps:torps.map(T=>({x:Math.round(T.x),y:Math.round(T.y),life:T.life,tg:T.tg&&T.tg.k})), weapon:ship.weapon,
   battle:battle&&{kind:battle.kind,phase:battle.phase,T:battle.T,shells:battle.shells.length,wrecks:battle.wrecks.length,hc:battle.hc,bc:battle.bc,u:[battle.ux,battle.uy],
     ships:battle.ships.map(S=>({kind:S.kind,side:S.side,name:S.name,x:Math.round(S.x),y:Math.round(S.y),hp:Math.round(S.hp),max:S.maxhp,warp:S.warp,dying:S.dying,out:S.out,dark:S.dark})),
     lances:battle.lances.map(L=>({side:L.S.side,t:L.t,x0:Math.round(L.x0),y0:Math.round(L.y0),x1:Math.round(L.x1),y1:Math.round(L.y1)})),

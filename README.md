@@ -31,12 +31,28 @@ The Cerebrant was only a steward. Partway through the medal ceremony, a whole fl
 
   Boarders at a system don't just stand there. Squids jolt it with arcs of current, blobs spit acid into it, and brutes beat on it. Some plant a charge on it that ticks faster and faster before it blows a chunk out: shoot it off. Lose any one system and the ship is lost.
 
-  Your squad's lasers hit instantly. The boarders' bolts are slower, and you can jump and roll clear of them. Your own rifle hits hard: it knocks boarders back, and they wobble and pop like water balloons. Only a few of your marines make it to the end. If the boarders destroy the engines or the reactor, the Resolute blows up around you, and then you watch her go from outside.
-- **Earth:** Earth sits just below Skyhook Station with the Moon beyond it, and the rest of the solar system's planets are out across the sector. Defend the station through three hordes, with half of each horde going for the station. All the while, the fleets are at war around you (see below). When the last horde breaks, the fleet strips the shield off the Matriarch's flagship. Then you silence its four gun batteries, with lasers or missiles, and leave the hull in one piece.
+  Your squad's lasers hit instantly, in a big flash. Your marines are tough, and most of them make it to the end if you keep them in the fight. The boarders' bolts are slower, and you can jump and roll clear of them. Your own rifle hits hard: it knocks boarders back, and they wobble and pop like water balloons. If the boarders destroy the engines or the reactor, the Resolute blows up around you, and then you watch her go from outside.
+
+  Hold the Resolute and her armorers refit your cutter: **proton torpedoes** and **five shield cells** from here on (see below).
+- **Earth:** Earth sits just below Skyhook Station with the Moon beyond it, and the rest of the solar system's planets are out across the sector. Defend the station through three hordes, with half of each horde going for the station. All the while, the fleets are at war around you (see below). When the last horde breaks, the fleet strips the shield off the Matriarch's flagship. Then you silence its four gun batteries, with lasers, missiles or torpedoes, and leave the hull in one piece.
 - **Boarding:** Skyhook's personnel carrier brings a fresh squad of marines and clamps onto the crippled flagship's hull at its stern. Take them through it, chamber by chamber toward the bow. Each chamber has a nerve node feeding its brood pits: burn the node out and those pits go dead, so nothing comes at you from behind. With all three gone, the membrane over the helm opens. Then hold the helm while the ship throws everything it has at you. Get knocked down three times and the boarding fails.
-- **Broodhome:** fly the captured flagship to the clans' homeworld, with the Home Fleet jumping in behind you. It has six shield cells, a three-gun broadside and its own point defence, but it turns slowly. Survive two hordes. Then knock out the three spore pylons feeding the shield on the Matriarch's ark, and the whole fleet turns its lances on her.
+- **Broodhome:** fly the captured flagship to the clans' homeworld, with the Home Fleet jumping in behind you. It has eight shield cells, a three-gun broadside, twin torpedo tubes and its own point defence, but it turns slowly. Survive two hordes. Then knock out the three spore pylons feeding the shield on the Matriarch's ark, and the whole fleet turns its lances on her.
 
 If the carrier falls or the boarding fails, you play that fight again from the start.
+
+### Proton torpedoes
+
+From Earth on, you have a third weapon: blue proton torpedoes (**3** on a keyboard, **TORP** on a phone). From there the war is yours to win. Only real carelessness gets you killed.
+
+- **Homing:** a torpedo homes on whatever's in front of you, big things first, and nothing of hers can shoot one down.
+- **What they kill:**
+  - The blast wipes out every reaver in it, shields and all, along with their bolts and missiles.
+  - One torpedo kills one of her gun-beasts, and two kill one of her line's cruisers, even the ones fighting out in the background.
+  - One torpedo silences a battery on her flagship or knocks out a pylon round the ark. Once the ark's shield is down, torpedoes burn the ark itself.
+  - They never hurt you or our side.
+- **The rack:** it holds six. It starts reloading a moment after your last shot, one torpedo every two and a half seconds.
+- **The flagship:** the captured flagship fires them in pairs.
+- **Shields:** her own flagship's shield and the ark's still hold until the fleet strips them or the pylons fall. A torpedo just splashes off.
 
 ### The fleets at war
 
@@ -53,7 +69,7 @@ Over Earth and over Broodhome, a line of Earth's warships (the Resolute and her 
 Touch screens get a touch mode, played in landscape:
 
 - **Left thumb:** touch anywhere on the left half and drag. A small push turns the cutter to aim, and a big push burns the engine that way.
-- **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. Tap **BRAKE** to come to a dead stop, or hold it to slow down.
+- **Right thumb:** hold **LASER** or **MISSILE** to fire, and slide between them without lifting your thumb. From Earth on, **TORP** (above MISSILE) fires proton torpedoes. Tap **BRAKE** to come to a dead stop, or hold it to slow down.
 - **Corner map:** tap it for the full sector map, and tap anywhere to put it away.
 - **☰:** the menu (see below).
 - **Everything's small:** a phone shows about as much of the sector as a desktop monitor does, with small buttons and a trimmed HUD (just your score, your shields and the mission), so the screen is left to the fight. On a short screen, like Safari's under its toolbar and tab bar, the buttons and the cutscene radio get smaller still.
