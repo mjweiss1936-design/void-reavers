@@ -8,6 +8,8 @@ The dogfights alternate between two tracks, each played twice through before han
 
 Flagships get a track of their own.
 
+**Homecoming** plays at the end of the war, once the win fanfare after the Matriarch's fall has played out. It's a slow hymn in D major, solemn the first time through, with bells over warm chords and a timpani. Then it lifts into brass and voices with timpani and snare rolls. Each phrase turns briefly minor, because not everyone came home. It carries on through the homecoming, the celebration and the last medal.
+
 ## Play
 
 **Online:** https://mjweiss1936-design.github.io/void-reavers/void-reavers.html

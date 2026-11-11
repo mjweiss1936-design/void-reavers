@@ -584,6 +584,22 @@ function blip(t,m,v,o,fx){ const g=vca(t,.04*v,.001,.05,o); if(fx) g.connect(fx)
 function riser(t,dur,v,o){ const f=filt('bandpass',500,3), g=ac.createGain(); f.connect(g); g.connect(o);   // a wash of noise sweeping up into the next phrase
   g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.09*v,t+dur*.95); g.gain.linearRampToValueAtTime(0,t+dur);
   sweep(f.frequency,500,7000,t,dur); nz(t,dur,f); }
+function brass(t,m,dur,v,o,fx){ const g=ac.createGain(), pk=.056*v;   // brass: a stack of saws swelling in through a filter that opens as the note speaks, a slow vibrato coming in
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(pk,t+.07); g.gain.setTargetAtTime(pk*.85,t+.1,.3); g.gain.setTargetAtTime(0,t+dur,.12);
+  g.connect(o); if(fx) g.connect(fx);
+  const f=filt('lowpass',700,1.2,g); f.frequency.setValueAtTime(700,t); f.frequency.linearRampToValueAtTime(2400+v*800,t+.12); f.frequency.setTargetAtTime(1700,t+.16,.4);
+  const lfo=ac.createOscillator(), dep=ac.createGain(); lfo.frequency.value=4.8; dep.gain.setValueAtTime(0,t); dep.gain.linearRampToValueAtTime(8,t+Math.min(.6,dur)); lfo.connect(dep); lfo.start(t); lfo.stop(t+dur+.7);
+  for(const dt of [-8,0,8]){ const s=osc('sawtooth',mtof(m),t,dur+.6,f); s.detune.setValueAtTime(dt,t); dep.connect(s.detune); } }
+function timp(t,m,v,o){ const g=vca(t,.32*v,.004,1.3,o), f=mtof(m);   // a timpani: a low drum with a pitch, settling as it rings
+  const s=osc('sine',f*1.04,t,1.4,g); s.frequency.exponentialRampToValueAtTime(f,t+.12);
+  osc('triangle',f*1.5,t,.6,vca(t,.06*v,.004,.5,o));
+  nz(t,.09,filt('lowpass',380,1,vca(t,.25*v,.002,.08,o))); }
+function choir(t,ms,dur,v,o,fx){ const g=ac.createGain(), pk=.085*v;   // voices on an open "aah": saws through the vowel's two formants, breathing in slowly
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(pk,t+Math.min(1,dur*.35)); g.gain.setValueAtTime(pk,t+dur*.8); g.gain.linearRampToValueAtTime(0,t+dur+.6);
+  g.connect(o); if(fx) g.connect(fx);
+  const mix=gain(1,filt('bandpass',760,3.5,g)); mix.connect(filt('bandpass',1180,4.5,g));
+  const lfo=ac.createOscillator(), dep=ac.createGain(); lfo.frequency.value=5.2; dep.gain.value=9; lfo.connect(dep); lfo.start(t); lfo.stop(t+dur+.7);
+  for(const m of ms) for(const dt of [-12,5,14]){ const s=osc('sawtooth',mtof(m),t,dur+.7,mix); s.detune.setValueAtTime(dt,t); dep.connect(s.detune); } }
 
 // ---- music: a step sequencer, 16th notes scheduled ~120ms ahead on the audio clock ----
 // every song has a "base" layer that always plays and a "hot" layer that swells in while reavers are close
@@ -611,6 +627,14 @@ const GRID_MEL=[
   [[0,77,3],[3,79,3],[6,77,2],[8,72,4],[12,74,4]], [[0,76,6],[6,74,2],[8,72,8]],
   [[0,79,3],[3,81,3],[6,79,2],[8,83,4],[12,84,4]], [[0,83,4],[4,81,4],[8,79,8]],
   [[0,77,4],[4,76,2],[6,77,2],[8,81,8]],           [[0,76,8],[8,75,4],[12,71,4]]].map(notes);
+// Homecoming: the anthem for the end of the war. A hymn in D major at a slow march, solemn first time through (bells over pads,
+// a deep note under every chord, a soft timpani) and then lifted up (brass with a harmony under it, voices, timpani and snare rolls).
+// The Gm in each phrase is the bittersweet part: not everyone came home
+const ANTHEM_PROG=[[50,'M',38],[47,'m',35],[43,'M',31],[45,'M',33],[50,'M',42],[43,'M',31],[43,'m',31],[45,'M',33]];   // D Bm G A · D/F# G Gm A (chord root, quality, bass note)
+const ANTHEM_MEL=[
+  [[0,74,8],[8,69,4],[12,66,4]], [[0,71,6],[6,73,2],[8,74,8]], [[0,76,4],[4,74,4],[8,71,4],[12,67,4]], [[0,69,12],[12,73,4]],
+  [[0,69,4],[4,74,4],[8,78,8]],  [[0,76,6],[6,74,2],[8,71,8]], [[0,70,8],[8,69,4],[12,67,4]],             [[0,69,8],[8,73,8]]].map(notes);
+const chordBelow=(m,cr,c)=>{ for(let d=3;d<=9;d++){ const x=m-d; if(c.some(k=>((x-cr-k)%12+12)%12===0)) return x; } return m-12; };   // (the harmony: the chord's next note down, a third to a sixth below)
 const SONGS={
   menu:{bpm:72, fade:1.5, step(s,i,t,sp){   // slow ambient drift: pads, sub swells, stray bells
     const pos=i%16, [r,tn]=MENU_PROG[(i>>4)%4];
@@ -653,6 +677,20 @@ const SONGS={
     hat(t,pos%4===2?.8:.38,pos%4===2,s.hot);
     if(Math.random()<.16) blip(t,[84,87,90,93,96,99][(Math.random()*6)|0],.8,s.hot,s.hfx);
     const n=bar>=8 && GRID_MEL[bar%8][pos]; if(n) alien(t,n[0],n[1]*sp,1,s.hot,s.hfx);
+  }},
+  anthem:{bpm:84, hot:1, fade:1.2, step(s,i,t,sp){   // Homecoming: see ANTHEM_PROG
+    const pos=i%16, bar=(i>>4)%16, [cr,q,bs]=ANTHEM_PROG[bar%8], c=CH[q], B=bar>=8, tp=bs<36?bs+12:bs, n=ANTHEM_MEL[bar%8][pos];
+    if(pos===0){ pad(t,c.map(x=>cr+12+x),sp*16,.8,s.base,s.bfx); sub(t,bs,sp*16,B?.95:.9,s.base);
+      if(B) choir(t,c.map(x=>cr+12+x),sp*16,1,s.base,s.bfx);
+      if((bar===8) || (bar===0 && i>=256)) crash(t,.75,s.base); }
+    if(pos===0) timp(t,tp,B?.7:.5,s.base); else if(B && pos===8) timp(t,tp,.5,s.base);
+    if(B && (pos===0||pos===8)) brass(t,bs+12,sp*7.5,.45,s.base,s.bfx);   // (a low line of brass under it all)
+    if((bar===7||bar===15) && pos>=8) snare(t,.12+(pos-8)*.07,s.base);   // a roll into the next phrase
+    if(B && bar!==15 && pos===12) snare(t,.22,s.base);
+    if(bar===15 && pos>=8 && pos%2===0) timp(t,tp,.35+(pos-8)*.06,s.base);
+    if(n){ if(B){ brass(t,n[0],n[1]*sp,1,s.base,s.bfx); brass(t,chordBelow(n[0],cr,c),n[1]*sp,.42,s.base,s.bfx); }
+      else bell(t,n[0],.55,s.base,s.bfx); }
+    if(B && (pos===4||pos===12)) bell(t,cr+24+c[(pos>>2)%3],.28,s.base,s.bfx);   // a glint of bells between
   }},
   sting:{bpm:120, hot:1, fade:.01}   // one-shot jingles schedule their own notes
 };
@@ -5132,7 +5170,7 @@ function update(){
     winTimer++;
     if(ship.alive){ ship.vx+=Math.cos(ship.a)*0.22; ship.vy+=Math.sin(ship.a)*0.22; ship.x+=ship.vx; ship.y+=ship.vy; }
     if(winTimer===8){ shockwaves.push({x:ship.x,y:ship.y,delay:0,r0:6,max:170,life:0,maxlife:40,col:'#9ff6ff'}); VRAudio.sfx.hyper(); }
-    if(winTimer===150) VRAudio.jingle('win','menu');
+    if(winTimer===150) VRAudio.jingle('win',LV.big?'anthem':'menu');   // (after Broodhome, the fanfare hands over to the homecoming anthem)
     if(winTimer===175){
       const next=level+1;   // the arrival shot builds the next sector; a skipped scene has to build it here
       if(jumpNext) playCine(chaseShots(level),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('fight'); VRAudio.sfx.launch(); });
@@ -8543,7 +8581,7 @@ function endingShots(){
         ['cmd',"Come home, Halcyon. Earth wants to say thank you. So do I."]],
       init(c){ c.white=1; c.actors=[]; F=actor('boss',H.x+40,H.y,-.2); F.ours=1; F.sc=.55; c.actors.push(F);
         carrier=hulk('carrier',H.x-560,H.y+70,.9); c.actors.push(carrier); c.cam={x:H.x-40,y:H.y+20};
-        c.title={main:'BROODHOME FALLS',sub:'THE MATRIARCH IS GONE · THE CLANS ARE BROKEN',life:300,t:0}; VRAudio.play('menu',0,1.2); },   // (the Resolute was in the line all along: she just comes alongside)
+        c.title={main:'BROODHOME FALLS',sub:'THE MATRIARCH IS GONE · THE CLANS ARE BROKEN',life:300,t:0}; },   // (the Resolute was in the line all along: she just comes alongside. The win fanfare plays out over this, then hands over to the anthem)
       tick(c,lt){ F.wob+=.03; carrier.vx*=.985; if(lt%36===0) firework(c.cam.x+rnd(-330,330),c.cam.y+rnd(-150,120)); } },
     { dur:220, lines:[['cmd',"All ships, this is the Resolute. Form up on the Halcyon. We're going home."]],   // the jump home
       init(c){ c.white=1; c.streaks=hyperStreaks(); c.hyper='ours'; c.actors=[]; c.cap=null; c.title={main:'HOME',sub:'THE FLEET JUMPS FOR EARTH',life:200,t:0};
@@ -8559,7 +8597,7 @@ function endingShots(){
         const cx=outpost.x-150, cy=outpost.y+165; cx0=cx; c.cam={x:cx,y:cy};
         F2=actor('boss',cx+70,cy+380,-Math.PI/2+.35); F2.ours=1; F2.sc=.55; F2.vy=-15; F2.tick=A=>{ A.vy*=.95; A.vx*=.95; A.a+=(-Math.PI/2+.9-A.a)*.01; };
         carrier=hulk('carrier',cx-300,cy-30,.28); c.actors.push(carrier,F2);
-        caption(c,'EARTH ORBIT','The fleet comes home',320); VRAudio.play('menu',0,1.2); VRAudio.sfx.arrive(F2.x,F2.y-300); },
+        caption(c,'EARTH ORBIT','The fleet comes home',320); VRAudio.play('anthem',0,1.2); VRAudio.sfx.arrive(F2.x,F2.y-300); },
       tick(c,lt){ F2.wob+=.03; c.cam.x=cx0+lt*.12;
         for(const [at,dx,dy] of [[46,250,150],[76,-60,-170],[106,330,-70]]) if(lt===at){ const D=hulk('destroyer',c.cam.x+dx,c.cam.y+dy,.32); D.alpha=0; D.tick=A=>{ A.alpha=Math.min(1,A.alpha+.06); };   // the destroyers, jumping in round you
           c.actors.push(D); shockwaves.push({x:D.x,y:D.y,delay:0,r0:20,max:110,life:0,maxlife:40,col:'#9ff6ff'}); VRAudio.sfx.warpIn(D.x,D.y); }
@@ -8587,7 +8625,7 @@ function finalCeremonyShots(){
     { dur:280, lines:[['cmd',"Pilot Halcyon. Front and center, one more time."],
         ['cmd',"For Earth. For the Resolute, and for every ship that came home from Broodhome."],
         ['cmd',"Earth awards you the Solar Cross. Nobody has worn it in eighty years."]],
-      init(c){ c.black=1; c.actors=[]; c.title=null; cerT=0; caption(c,'CARRIER RESOLUTE','Earth orbit · the morning after',300); VRAudio.play('menu',0,1.5); },
+      init(c){ c.black=1; c.actors=[]; c.title=null; cerT=0; caption(c,'CARRIER RESOLUTE','Earth orbit · the morning after',300); VRAudio.play('anthem',0,1.5); },
       tick(){ cerT++; },
       draw(c,lt){ drawCeremony(0,lt,null,true); } },
     { dur:240, lines:[['you',"I didn't do it alone, Commander."],['cmd',"No. But you were always out in front. Wear it."]],
@@ -8619,7 +8657,7 @@ function partTwoJump(id){
   if(id==='d2'){ setupLevel(2); startDeck('assault'); return; }
   if(id==='c5'){ setupLevel(2); boss=null; playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); }); return; }
   if(id==='s6'){ at(3); return; }
-  if(id==='e3'){ setupLevel(3); bossDead=true; clearT=runT; VRAudio.play('menu',0,1); playCine(endingShots(),()=>{ state='win'; endScreen(); }); return; }
+  if(id==='e3'){ setupLevel(3); bossDead=true; clearT=runT; VRAudio.play('anthem',0,1); playCine(endingShots(),()=>{ state='win'; endScreen(); }); return; }
 }
 // Earth: the flagship's hull is low enough. Its guns go dark, and the boarding begins
 function bossCrippled(){
