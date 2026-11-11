@@ -618,15 +618,17 @@ const BOSS_MEL=[
 const MENU_PROG=[[45,[0,3,7,10,14]],[41,[0,4,7,11,14]],[38,[0,3,7,10,14]],[40,[0,3,7,10,12]]];   // Am9 Fmaj9 Dm9 Em7
 const ARP=[0,1,2,3,2,1,4,3,0,1,2,3,5,4,3,1], RIFF=[0,2,1,2,0,2,1,2,0,2,1,2,3,2,1,2];
 const ROLL=[0,0,12,0,0,0,12,0,0,0,12,0,0,12,7,12], BROLL=[0,0,12,0,0,0,12,0,0,0,12,0,0,12,0,12];
-// Grid: the second dogfight track. 150 bpm in E phrygian: a bass bouncing octaves on every sixteenth, a pedal-tone arp racing
-// over it, kicks on every beat and stabs between them. In a fight: claps, open hats, alien chatter, and an FM voice on the melody
-const GRID_PROG=[[40,'m'],[40,'m'],[41,'M'],[41,'M'],[43,'M'],[43,'M'],[41,'M'],[38,'m']];   // Em Em F F G G F Dm
+// Grid: the second dogfight track, and the grim one: a last stand. 150 bpm in E minor, every chord minor but the last, Em Em Cm Cm
+// Am Fm Em B: the Cm and the Fm are the dark turns, and the B drags it back home. A bass bouncing octaves on every sixteenth, a
+// pedal-tone arp racing over it, kicks on every beat and stabs between them. Second time round: low horns on the melody, a low choir
+// and timpani. In a fight: claps, open hats, alien chatter, and an FM voice on the melody, low and grinding
+const GRID_PROG=[[40,'m'],[40,'m'],[36,'m'],[36,'m'],[45,'m'],[41,'m'],[40,'m'],[35,'M']];   // Em Em Cm Cm Am Fm Em B
 const GRID_ARP=[0,3,0,4,0,5,0,6,0,5,0,4,0,3,1,2];   // (the root between each climbing note)
 const GRID_MEL=[
-  [[0,76,3],[3,77,3],[6,76,2],[8,71,4],[12,72,4]], [[0,74,4],[4,72,4],[8,71,6],[14,70,2]],
-  [[0,77,3],[3,79,3],[6,77,2],[8,72,4],[12,74,4]], [[0,76,6],[6,74,2],[8,72,8]],
-  [[0,79,3],[3,81,3],[6,79,2],[8,83,4],[12,84,4]], [[0,83,4],[4,81,4],[8,79,8]],
-  [[0,77,4],[4,76,2],[6,77,2],[8,81,8]],           [[0,76,8],[8,75,4],[12,71,4]]].map(notes);
+  [[0,64,4],[4,67,2],[6,66,2],[8,64,4],[12,59,4]],  [[0,67,4],[4,69,2],[6,71,2],[8,72,4],[12,71,4]],
+  [[0,72,4],[4,75,4],[8,74,2],[10,72,2],[12,67,4]], [[0,68,6],[6,67,2],[8,63,8]],
+  [[0,69,4],[4,72,4],[8,76,4],[12,74,2],[14,72,2]], [[0,72,4],[4,68,4],[8,65,8]],
+  [[0,64,4],[4,67,4],[8,71,4],[12,76,4]],           [[0,75,6],[6,74,2],[8,75,4],[12,71,4]]].map(notes);   // (the D grinding on the D sharp over the B: the last twist before it comes home)
 // Homecoming: the anthem for the end of the war. A hymn in D major at a slow march, solemn first time through (bells over pads,
 // a deep note under every chord, a soft timpani) and then lifted up (brass with a harmony under it, voices, timpani and snare rolls).
 // The Gm in each phrase is the bittersweet part: not everyone came home
@@ -673,10 +675,13 @@ const SONGS={
     pluck(t,r+24+T[GRID_ARP[pos]],(pos%2?.55:.85)*(bar%8<2&&bar<8?.7:1),s.base,s.bfx);
     if(pos===0 && bar%8===0) crash(t,.7,s.base);
     if(pos===0 && bar%8===7) riser(t,sp*16,1,s.base);
+    if(bar>=8){ if(pos===0) choir(t,c.map(x=>r+12+x),sp*16,.6,s.base,s.bfx);   // the second time round: a low choir, and timpani on the changes
+      if(pos===0||(pos===8&&bar%2)) timp(t,r<38?r+12:r,pos?.45:.6,s.base); }
     if(pos===4||pos===12) snare(t,.85,s.hot);
     hat(t,pos%4===2?.8:.38,pos%4===2,s.hot);
     if(Math.random()<.16) blip(t,[84,87,90,93,96,99][(Math.random()*6)|0],.8,s.hot,s.hfx);
-    const n=bar>=8 && GRID_MEL[bar%8][pos]; if(n) alien(t,n[0],n[1]*sp,1,s.hot,s.hfx);
+    const n=bar>=8 && GRID_MEL[bar%8][pos];
+    if(n){ brass(t,n[0]-12,n[1]*sp,.4,s.base,s.bfx); alien(t,n[0],n[1]*sp,1,s.hot,s.hfx); }   // (horns an octave down, always; the alien voice on top in a fight)
   }},
   anthem:{bpm:84, hot:1, fade:1.2, step(s,i,t,sp){   // Homecoming: see ANTHEM_PROG
     const pos=i%16, bar=(i>>4)%16, [cr,q,bs]=ANTHEM_PROG[bar%8], c=CH[q], B=bar>=8, tp=bs<36?bs+12:bs, n=ANTHEM_MEL[bar%8][pos];

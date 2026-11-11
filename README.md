@@ -4,7 +4,7 @@ A single-file space shooter: one HTML page with a canvas and synthesized Web Aud
 
 The dogfights alternate between two tracks, each played twice through before handing over:
 - **The Hunt:** an arpeggio and a pulse, with drums and a lead joining as the reavers close in.
-- **Grid:** frantic, at 150 bpm, with a bass bouncing octaves under a racing arpeggio. Once the fight's on, an alien voice bends up into the melody over chirps of alien chatter.
+- **Grid:** frantic and grim, at 150 bpm, in E minor with every chord minor but the last. It has a bass bouncing octaves under a racing arpeggio. The second time through, low horns carry the melody over a dark choir and timpani. Once the fight's on, an alien voice bends up into the melody over chirps of alien chatter.
 
 Flagships get a track of their own.
 
