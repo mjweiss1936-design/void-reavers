@@ -570,6 +570,20 @@ function stab(t,ms,v,o,fx){ const g=vca(t,.06*v,.008,.34,o); if(fx) g.connect(fx
   for(const m of ms) for(const dt of [-11,11]) osc('sawtooth',mtof(m),t,.36,f).detune.setValueAtTime(dt,t); }
 function sub(t,m,dur,v,o){ const g=ac.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.14*v,t+dur*.4); g.gain.linearRampToValueAtTime(0,t+dur);
   g.connect(o); osc('sine',mtof(m),t,dur,g); }
+function alien(t,m,dur,v,o,fx){ const g=ac.createGain(), pk=.06*v, f=mtof(m);   // an alien voice: an FM tone with an inharmonic edge, bending up into each note and wobbling wider as it holds
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(pk,t+.015); g.gain.setTargetAtTime(pk*.75,t+.03,.15); g.gain.setTargetAtTime(0,t+dur,.06);
+  g.connect(o); if(fx) g.connect(fx);
+  const car=ac.createOscillator(), mod=ac.createOscillator(), md=ac.createGain(), lfo=ac.createOscillator(), ld=ac.createGain();
+  car.type='triangle'; car.frequency.setValueAtTime(f*.94,t); car.frequency.exponentialRampToValueAtTime(f,t+.06);
+  mod.frequency.setValueAtTime(f*1.414,t); md.gain.setValueAtTime(f*1.2,t); md.gain.setTargetAtTime(f*.35,t+.02,.18);
+  lfo.frequency.value=6.5; ld.gain.setValueAtTime(0,t); ld.gain.linearRampToValueAtTime(f*.025,t+Math.min(.25,dur));
+  mod.connect(md); md.connect(car.frequency); lfo.connect(ld); ld.connect(car.frequency); car.connect(filt('lowpass',3400,1.5,g));
+  for(const x of [car,mod,lfo]){ x.start(t); x.stop(t+dur+.4); } }
+function blip(t,m,v,o,fx){ const g=vca(t,.04*v,.001,.05,o); if(fx) g.connect(fx);   // alien chatter: a quick square chirp that skids off its pitch
+  const s=osc('square',mtof(m),t,.07,filt('bandpass',mtof(m)*1.5,3,g)); s.frequency.exponentialRampToValueAtTime(mtof(m+R(-7,7)),t+.05); }
+function riser(t,dur,v,o){ const f=filt('bandpass',500,3), g=ac.createGain(); f.connect(g); g.connect(o);   // a wash of noise sweeping up into the next phrase
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.09*v,t+dur*.95); g.gain.linearRampToValueAtTime(0,t+dur);
+  sweep(f.frequency,500,7000,t,dur); nz(t,dur,f); }
 
 // ---- music: a step sequencer, 16th notes scheduled ~120ms ahead on the audio clock ----
 // every song has a "base" layer that always plays and a "hot" layer that swells in while reavers are close
@@ -588,6 +602,15 @@ const BOSS_MEL=[
 const MENU_PROG=[[45,[0,3,7,10,14]],[41,[0,4,7,11,14]],[38,[0,3,7,10,14]],[40,[0,3,7,10,12]]];   // Am9 Fmaj9 Dm9 Em7
 const ARP=[0,1,2,3,2,1,4,3,0,1,2,3,5,4,3,1], RIFF=[0,2,1,2,0,2,1,2,0,2,1,2,3,2,1,2];
 const ROLL=[0,0,12,0,0,0,12,0,0,0,12,0,0,12,7,12], BROLL=[0,0,12,0,0,0,12,0,0,0,12,0,0,12,0,12];
+// Grid: the second dogfight track. 150 bpm in E phrygian: a bass bouncing octaves on every sixteenth, a pedal-tone arp racing
+// over it, kicks on every beat and stabs between them. In a fight: claps, open hats, alien chatter, and an FM voice on the melody
+const GRID_PROG=[[40,'m'],[40,'m'],[41,'M'],[41,'M'],[43,'M'],[43,'M'],[41,'M'],[38,'m']];   // Em Em F F G G F Dm
+const GRID_ARP=[0,3,0,4,0,5,0,6,0,5,0,4,0,3,1,2];   // (the root between each climbing note)
+const GRID_MEL=[
+  [[0,76,3],[3,77,3],[6,76,2],[8,71,4],[12,72,4]], [[0,74,4],[4,72,4],[8,71,6],[14,70,2]],
+  [[0,77,3],[3,79,3],[6,77,2],[8,72,4],[12,74,4]], [[0,76,6],[6,74,2],[8,72,8]],
+  [[0,79,3],[3,81,3],[6,79,2],[8,83,4],[12,84,4]], [[0,83,4],[4,81,4],[8,79,8]],
+  [[0,77,4],[4,76,2],[6,77,2],[8,81,8]],           [[0,76,8],[8,75,4],[12,71,4]]].map(notes);
 const SONGS={
   menu:{bpm:72, fade:1.5, step(s,i,t,sp){   // slow ambient drift: pads, sub swells, stray bells
     const pos=i%16, [r,tn]=MENU_PROG[(i>>4)%4];
@@ -618,8 +641,24 @@ const SONGS={
     pluck(t,r+24+[0,c[1],c[2],12][RIFF[pos]],pos%4===0?1:.7,s.base,s.bfx);
     const n=bar>=8 && BOSS_MEL[bar%8][pos]; if(n) lead(t,n[0],n[1]*sp,1,s.base,s.bfx);
   }},
+  grid:{bpm:150, step(s,i,t,sp){   // the frantic one: see GRID_PROG
+    const pos=i%16, bar=(i>>4)%16, [r,q]=GRID_PROG[bar%8], c=CH[q], T=[0,c[1],c[2],12,c[1]+12,c[2]+12,24];
+    bass(t,r+(pos%2?12:0),sp*.7,pos%4===0?.85:.5,s.base);
+    if(pos%4===0) kick(t,pos===0?.72:.55,s.base);
+    if(pos%4===2) stab(t,c.map(x=>r+24+x),.4,s.base,s.bfx);
+    pluck(t,r+24+T[GRID_ARP[pos]],(pos%2?.55:.85)*(bar%8<2&&bar<8?.7:1),s.base,s.bfx);
+    if(pos===0 && bar%8===0) crash(t,.7,s.base);
+    if(pos===0 && bar%8===7) riser(t,sp*16,1,s.base);
+    if(pos===4||pos===12) snare(t,.85,s.hot);
+    hat(t,pos%4===2?.8:.38,pos%4===2,s.hot);
+    if(Math.random()<.16) blip(t,[84,87,90,93,96,99][(Math.random()*6)|0],.8,s.hot,s.hfx);
+    const n=bar>=8 && GRID_MEL[bar%8][pos]; if(n) alien(t,n[0],n[1]*sp,1,s.hot,s.hfx);
+  }},
   sting:{bpm:120, hot:1, fade:.01}   // one-shot jingles schedule their own notes
 };
+// the dogfight playlist: asking for 'fight' keeps whichever of these is on, or starts the next; each plays its sixteen bars
+// twice and then hands over to the other, so a long fight changes tracks
+const FIGHT=['play','grid'], FIGHT_STEPS=512; let fightI=0;
 
 let song=null, timer=null, token=0, want=null, heat=0;
 function newSong(name,delay){
@@ -636,15 +675,17 @@ function fadeOut(s,secs){ const now=ac.currentTime;
 function play(name,delay=0,fade=.5){   // switch songs (null = silence); before the first click it just remembers
   want=name; token++;
   if(!ac) return;
-  if(song && song.name===name) return;
+  const fight=name==='fight'; if(fight){ if(song && song.fight) return; name=FIGHT[fightI++%FIGHT.length]; }   // (the dogfight playlist)
+  if(song && song.name===name && !fight){ song.fight=false; return; }   // (asked for by name: it stays put)
   if(song){ fadeOut(song,fade); song=null; }
-  if(name) song=newSong(name,delay);
+  if(name){ song=newSong(name,delay); song.fight=fight; }
   if(!timer) timer=setInterval(safeTick,25);
 }
 function tick(){
   if(!song || !song.def.step) return;
   const sp=60/song.def.bpm/4, now=ac.currentTime;
   if(song.t<now-.05){ const miss=Math.ceil((now-song.t)/sp); song.i+=miss; song.t+=miss*sp; }   // tab was asleep: skip ahead, never burst
+  if(song.fight && song.i>=FIGHT_STEPS){ const at=Math.max(0,song.t-now); fadeOut(song,1.2); song=newSong(FIGHT[fightI++%FIGHT.length],at); song.fight=true; return; }   // (twice through: over to the other dogfight track)
   while(song.t<now+.12){ song.def.step(song,song.i,song.t,sp); song.i++; song.t+=sp; }
 }
 function setIntensity(on){ const v=on?1:0; if(v===heat) return; heat=v;
@@ -3163,7 +3204,7 @@ function sectorLost(){   // SECTOR LOST: the overlay offers the same sector agai
 function retrySector(){   // back to how things stood when the sector began (cutters lost and the clock keep counting)
   score=levelStart.score; kills=levelStart.kills; bossHP=levelStart.bossHP; retries++;
   document.getElementById('overlay').classList.add('hidden'); commsReset();
-  setupLevel(level); beginLevel(); fadeIn=45; VRAudio.play('play'); VRAudio.sfx.launch();
+  setupLevel(level); beginLevel(); fadeIn=45; VRAudio.play('fight'); VRAudio.sfx.launch();
 }
 
 // ---- the jump menu: B, or any SKIP button, opens it. Pick exactly which part of the campaign to go to, or press the green
@@ -3234,11 +3275,11 @@ function jumpTo(id){
     return; }
   if(kind==='c'){   // the jump scene out of sector n, then on into the next one as normal
     setupLevel(L); toldShields=L>=1; tally={sb:0,cb:0,lost:false,horde:false}; VRAudio.play('menu',0,1);
-    const next=L+1; playCine(chaseShots(L),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('play'); VRAudio.sfx.launch(); });
+    const next=L+1; playCine(chaseShots(L),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('fight'); VRAudio.sfx.launch(); });
     return; }
   setupLevel(L);
   toldShields=!(kind==='s' && L===1);   // the shields card shows when you jump to the start of Ember Reach, where they come back
-  beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch();
+  beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch();
   if(kind==='b'){   // the flagship: the sector's packs (or the hordes) are done, and it's on its way
     lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
     if(horde){ horde.i=LV.horde.length; horde.left=0; horde.rest=0; }
@@ -3435,7 +3476,7 @@ function startRun(){
   cine=null; document.body.classList.remove('cine'); commsReset();
   setupLevel(0);
   document.getElementById('overlay').classList.add('hidden');
-  playCine(introShots(),()=>{ beginLevel(); fadeIn=45; VRAudio.play('play'); VRAudio.sfx.launch(); });
+  playCine(introShots(),()=>{ beginLevel(); fadeIn=45; VRAudio.play('fight'); VRAudio.sfx.launch(); });
 }
 document.getElementById('o-btn').addEventListener('click', ()=>state==='failed'?retrySector():state==='deckfail'?retryDeck():startRun());   // ('over' and 'win' start a new run)
 function setupLevel(i){   // the sector itself: backdrop, station, rocks, standing patrols
@@ -3512,7 +3553,7 @@ function respawn(){   // a backup cutter launches from the station (or the jump 
     if(d<360){ const k=3*(1-d/360)+.6; e.vx+=dx/d*k; e.vy+=dy/d*k; e.stun=50; e.cool=Math.max(e.cool,110); } }
   shockwaves.push({x,y,delay:0,r0:4,max:60,life:0,maxlife:30,col:'#43f0ff'});
   shockwaves.push({x,y,delay:4,r0:10,max:360,life:0,maxlife:40,col:'#9ff6ff'});
-  VRAudio.play(boss?'boss':'play'); VRAudio.sfx.launch();
+  VRAudio.play(boss?'boss':'fight'); VRAudio.sfx.launch();
   say('you','respawn');
   updateHUD();
 }
@@ -5094,7 +5135,7 @@ function update(){
     if(winTimer===150) VRAudio.jingle('win','menu');
     if(winTimer===175){
       const next=level+1;   // the arrival shot builds the next sector; a skipped scene has to build it here
-      if(jumpNext) playCine(chaseShots(level),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('play'); VRAudio.sfx.launch(); });
+      if(jumpNext) playCine(chaseShots(level),()=>{ if(level!==next) setupLevel(next); beginLevel(); VRAudio.play('fight'); VRAudio.sfx.launch(); });
       else if(LV.big) playCine(endingShots(),()=>{ state='win'; endScreen(); });   // Broodhome: the end of it all
       else playCine(finaleShots(sceneLines(level)),()=>startDeck('defend'));          // the Cradle: home, the medal, and the boarders
     }
@@ -5178,7 +5219,7 @@ function bossEscaped(){
   shockwaves.push({x:b.x,y:b.y,delay:0,r0:b.r+20,max:4,life:0,maxlife:22,col:'#9ff6ff'});
   for(let i=0;i<40;i++){ const a=b.a+rnd(-.25,.25), sp=rnd(3,9);
     particles.push({x:b.x,y:b.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:rnd(14,30),max:30,col:Math.random()<.5?'#9ff6ff':'#ffffff',r:rnd(1,2),grav:0}); }
-  VRAudio.play('play',0,1.5);
+  VRAudio.play('fight',0,1.5);
   say('cmd','cmdFlee'); say('you','youClear');
 }
 function updateBoss(){
@@ -5540,7 +5581,7 @@ function startEVA(){
   Object.assign(ship,{suit:true,alive:true,r:4,x:p.x,y:p.y,vx:p.vx*.6,vy:p.vy*.6,invuln:90,o2:O2_MAX,cool:0,warned:false});   // (a small target)
   const h=evaHome(); ship.a=Math.atan2(h.y-ship.y,h.x-ship.x);   // you come round facing home
   pod=null; state='play'; showMap=false;
-  VRAudio.play(boss?'boss':'play');
+  VRAudio.play(boss?'boss':'fight');
   alarmBanner('EJECTED · ON EVA','ONE THRUSTER · NO BRAKES · '+Math.round(O2_MAX/60)+'s OF AIR · FLY HOME TO '+h.name.toUpperCase(),220);
   say('cmd','evaStart',{post:h.name},2);
   updateHUD();
@@ -7272,8 +7313,8 @@ function dkLose(why,boom){ const K=DK; if(K.done||K.lost) return; K.lost=1; K.lo
 }
 function deckOver(){   // the fight's won: back out into space for the next scene
   const kind=DK.kind; endDeck();
-  if(kind==='defend') playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
-  else playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); });
+  if(kind==='defend') playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); });
+  else playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); });
 }
 function deckFail(){   // the card: hold the ship (or board the flagship) again, from the top
   const K=DK, def=K.kind==='defend', sys=K.lostWhy.charAt(0)+K.lostWhy.slice(1).toLowerCase();
@@ -8562,10 +8603,10 @@ function finalCeremonyShots(){
 // the jump menu's Part Two: straight to any of it
 function partTwoJump(id){
   toldShields=true;
-  const at=(L)=>{ setupLevel(L); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); };
+  const at=(L)=>{ setupLevel(L); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); };
   if(id==='t1'){ setupLevel(1); bossDead=true; cerT=0; VRAudio.play('menu',0,1); playCine(twistShots(),()=>startDeck('defend')); return; }
   if(id==='d1'){ setupLevel(1); startDeck('defend'); return; }
-  if(id==='c4'){ setupLevel(1); playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
+  if(id==='c4'){ setupLevel(1); playCine(afterDefenseShots(),()=>{ if(LV.world!=='earth') setupLevel(2); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); }); return; }
   if(id[0]==='g' && id!=='gb'){ const n=+id[1]; at(2);   // an Earth horde: the ones before it are already broken ('gb', the flagship, is below)
     if(n>1){ lvlBanner=0; notes=[]; noteT=0; horde.i=n-1; horde.left=0; horde.rest=50; levelKills=LV.horde.slice(0,n-1).reduce((a,b)=>a+b,0); } return; }
   if(id==='gb'||id==='b6'){ at(id==='gb'?2:3); lvlBanner=0; notes=[]; noteT=0; for(const e of enemies) e.alive=false; enemies=[]; levelKills=quota;
@@ -8576,7 +8617,7 @@ function partTwoJump(id){
     boss.x=clamp(ship.x+500,600,WORLD-600); boss.y=clamp(ship.y-200,500,WORLD-500); commsReset(); bossBanner=0;
     playCine(boardShots(),()=>startDeck('assault')); return; }
   if(id==='d2'){ setupLevel(2); startDeck('assault'); return; }
-  if(id==='c5'){ setupLevel(2); boss=null; playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('play'); VRAudio.sfx.launch(); }); return; }
+  if(id==='c5'){ setupLevel(2); boss=null; playCine(seizedShots(),()=>{ if(!LV.big) setupLevel(3); beginLevel(); fadeIn=30; VRAudio.play('fight'); VRAudio.sfx.launch(); }); return; }
   if(id==='s6'){ at(3); return; }
   if(id==='e3'){ setupLevel(3); bossDead=true; clearT=runT; VRAudio.play('menu',0,1); playCine(endingShots(),()=>{ state='win'; endScreen(); }); return; }
 }

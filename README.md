@@ -2,6 +2,12 @@
 
 A single-file space shooter: one HTML page with a canvas and synthesized Web Audio. It has no build step, no dependencies and no sound files.
 
+The dogfights alternate between two tracks, each played twice through before handing over:
+- **The Hunt:** an arpeggio and a pulse, with drums and a lead joining as the reavers close in.
+- **Grid:** frantic, at 150 bpm, with a bass bouncing octaves under a racing arpeggio. Once the fight's on, an alien voice bends up into the melody over chirps of alien chatter.
+
+Flagships get a track of their own.
+
 ## Play
 
 **Online:** https://mjweiss1936-design.github.io/void-reavers/void-reavers.html
