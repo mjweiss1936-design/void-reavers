@@ -8,6 +8,11 @@ The dogfights alternate between two tracks, each played twice through before han
 
 Flagships get a track of their own.
 
+The fights on foot have **Raid**, a covert operation that goes loud, in D minor:
+- It starts quiet, with a low pulse, a dark pad, ticking and a sonar ping.
+- It builds every few bars: hammered metal in threes, then kick, snare and a driving pulse, then grim horns, a low choir and the boom of struck girders.
+- When boarders close in, it turns frantic on top of all that.
+
 **Homecoming** plays at the end of the war, once the win fanfare after the Matriarch's fall has played out. It's a slow hymn in D major, solemn the first time through, with bells over warm chords and a timpani. Then it lifts into brass and voices with timpani and snare rolls. Each phrase turns briefly minor, because not everyone came home. It carries on through the homecoming, the celebration and the last medal.
 
 ## Play

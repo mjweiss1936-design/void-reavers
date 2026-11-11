@@ -600,6 +600,12 @@ function choir(t,ms,dur,v,o,fx){ const g=ac.createGain(), pk=.085*v;   // voices
   const mix=gain(1,filt('bandpass',760,3.5,g)); mix.connect(filt('bandpass',1180,4.5,g));
   const lfo=ac.createOscillator(), dep=ac.createGain(); lfo.frequency.value=5.2; dep.gain.value=9; lfo.connect(dep); lfo.start(t); lfo.stop(t+dur+.7);
   for(const m of ms) for(const dt of [-12,5,14]){ const s=osc('sawtooth',mtof(m),t,dur+.7,mix); s.detune.setValueAtTime(dt,t); dep.connect(s.detune); } }
+function anvil(t,f,v,o,fx){ const g=vca(t,.07*v,.001,.45,o); if(fx) g.connect(fx);   // metal struck hard: a few clashing partials ringing off, and the crack of the hit
+  for(const [mul,a] of [[1,1],[2.76,.6],[5.4,.35],[8.93,.2]]) osc('sine',f*mul,t,.5,gain(a,g));
+  nz(t,.03,filt('bandpass',3800,1.2,vca(t,.5*v,.001,.025,o))); }
+function pipe(t,f,v,o){ const g=vca(t,.12*v,.002,.9,o);   // a deep boom of metal, like a girder struck
+  for(const [mul,a] of [[1,1],[1.48,.5],[2.31,.35],[3.9,.18]]) osc('triangle',f*mul,t,1,gain(a,g));
+  nz(t,.06,filt('lowpass',900,1,vca(t,.35*v,.002,.05,o))); }
 
 // ---- music: a step sequencer, 16th notes scheduled ~120ms ahead on the audio clock ----
 // every song has a "base" layer that always plays and a "hot" layer that swells in while reavers are close
@@ -637,6 +643,16 @@ const ANTHEM_MEL=[
   [[0,74,8],[8,69,4],[12,66,4]], [[0,71,6],[6,73,2],[8,74,8]], [[0,76,4],[4,74,4],[8,71,4],[12,67,4]], [[0,69,12],[12,73,4]],
   [[0,69,4],[4,74,4],[8,78,8]],  [[0,76,6],[6,74,2],[8,71,8]], [[0,70,8],[8,69,4],[12,67,4]],             [[0,69,8],[8,73,8]]].map(notes);
 const chordBelow=(m,cr,c)=>{ for(let d=3;d<=9;d++){ const x=m-d; if(c.some(k=>((x-cr-k)%12+12)%12===0)) return x; } return m-12; };   // (the harmony: the chord's next note down, a third to a sixth below)
+// Raid: the fights on foot. A covert operation that goes loud: D minor at 100 bpm, Dm Dm Bb Gm Dm Dm Eb A (the Eb is the menace,
+// the A the tension). It builds every four bars: a low pulse, a dark pad, ticking and a sonar ping; then hammered metal in threes;
+// then kick, snare and the pulse in sixteenths; then grim horns, a low choir and girders booming. With boarders close it goes
+// frantic on top of that: sixteenth hats, snare rolls, extra anvils, timpani
+const RAID_PROG=[[38,'m'],[38,'m'],[46,'M'],[43,'m'],[38,'m'],[38,'m'],[39,'M'],[45,'M']];   // Dm Dm Bb Gm Dm Dm Eb A
+const RAID_OST=[0,0,12,0,0,0,7,0,0,0,12,0,0,7,12,7];   // (the bass ostinato, on the chord's root)
+const RAID_ANV={0:62,3:64,6:60,8:62,11:64,14:60};   // the metal, three-three-two twice a bar, and its pitch
+const RAID_MEL=[
+  [[0,62,8],[8,65,4],[12,64,4]], [[0,62,12],[12,57,4]], [[0,58,8],[8,62,4],[12,65,4]], [[0,67,8],[8,65,4],[12,62,4]],
+  [[0,69,8],[8,67,4],[12,65,4]], [[0,65,8],[8,64,8]],   [[0,63,8],[8,67,4],[12,70,4]], [[0,69,8],[8,73,4],[12,69,4]]].map(notes);
 const SONGS={
   menu:{bpm:72, fade:1.5, step(s,i,t,sp){   // slow ambient drift: pads, sub swells, stray bells
     const pos=i%16, [r,tn]=MENU_PROG[(i>>4)%4];
@@ -696,6 +712,23 @@ const SONGS={
     if(n){ if(B){ brass(t,n[0],n[1]*sp,1,s.base,s.bfx); brass(t,chordBelow(n[0],cr,c),n[1]*sp,.42,s.base,s.bfx); }
       else bell(t,n[0],.55,s.base,s.bfx); }
     if(B && (pos===4||pos===12)) bell(t,cr+24+c[(pos>>2)%3],.28,s.base,s.bfx);   // a glint of bells between
+  }},
+  raid:{bpm:100, fade:1, step(s,i,t,sp){   // Raid: see RAID_PROG
+    const pos=i%16, bar=(i>>4)%16, [r,q]=RAID_PROG[bar%8], c=CH[q], L=Math.min(3,i>>6);   // (L: how far it's built, a step every four bars)
+    if(L>=2 || pos%2===0) bass(t,r+RAID_OST[pos],sp*.7,(pos%4===0?.7:.45)*(L?1:.7),s.base);
+    if(pos===0) pad(t,c.map(x=>r+12+x),sp*16,.7,s.base,s.bfx);
+    if(pos%4===2) hat(t,.22,false,s.base);
+    if(L<2 && pos===0 && bar%2===0) bell(t,86,.22,s.base,s.bfx);   // (a sonar ping, while it's still quiet)
+    if(L>=1 && RAID_ANV[pos]) anvil(t,mtof(RAID_ANV[pos]),pos%8===0?.9:.6,s.base,s.bfx);
+    if(L>=2){ if(pos===0||pos===8||(pos===14&&bar%2)) kick(t,.75,s.base); if(pos===4||pos===12) snare(t,.55,s.base); }
+    if(L>=3){ const n=RAID_MEL[bar%8][pos]; if(n) brass(t,n[0],n[1]*sp,.75,s.base,s.bfx);
+      if(pos===0) choir(t,c.map(x=>r+12+x),sp*16,.45,s.base,s.bfx);
+      if(pos===0 && bar%2===0) pipe(t,mtof(r),.8,s.base);
+      if(pos%2) hat(t,.18,false,s.base); }
+    hat(t,pos%2?.3:.5,pos%8===6,s.hot);   // with them close: frantic
+    if(pos%4===2 || pos===15) snare(t,.32,s.hot);
+    if(pos===10||pos===13) anvil(t,mtof(69),.55,s.hot,s.hfx);
+    if(pos===0||pos===8) timp(t,r<38?r+12:r,.5,s.hot);
   }},
   sting:{bpm:120, hot:1, fade:.01}   // one-shot jingles schedule their own notes
 };
@@ -6877,7 +6910,7 @@ function startDeck(kind){
     for(let i=0;i<14;i++){ const p=near[i%near.length]; dkSpawn(['squid','blob','squid','blob','brute'][i%5],p.x+rnd(-12,12),p.y+rnd(-12,12),20+i*6); } }
   state='deck'; showMap=false; cine=null; fadeIn=40; flash=0; shake=0; heat=0; dkMouse.down=false;
   document.body.classList.remove('cine'); deckDom(true); touchReset(); for(const k in keys) keys[k]=false;
-  commsReset(); VRAudio.setEngine(false,false,0); VRAudio.play(kind==='defend'?'play':'boss',0,.8);
+  commsReset(); VRAudio.setEngine(false,false,0); VRAudio.play('raid',0,.8);   // (the fights on foot have a track of their own)
   const v={fire:TOUCH?'FIRE':'Space',mouse:TOUCH?'':' Or aim it with the mouse and hold the button.',
     dash:TOUCH?' Tap ROLL to jump and roll clear.':' Shift or a right-click: jump and roll clear of their bolts.'};   // (a phone's radio strip has room for one line)
   if(kind==='defend'){ DK.banner={title:'REPEL BOARDERS',sub:'CARRIER RESOLUTE · THEY COME ABOARD STERN TO BOW · HOLD THE ENGINES, THE REACTOR, THE BRIDGE',t:0,life:300}; say('cmd','deckStart',null,2); }
